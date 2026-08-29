@@ -101,60 +101,139 @@ Everything has a working default, so nothing must be set to try it out.
 
 ## The database — hooking up real bookings
 
-There is no database server to install. Bookings live in a single JSON file
-that the app reads into memory on boot and writes back atomically (write to a
-temp file, then rename, so a crash mid-write cannot leave a half-written file).
-For one stylist that is not a compromise — the whole dataset is a few hundred
-KB, every query is an array operation, and there is nothing to administer,
-patch or pay for.
+Two backends, one interface. Which one runs is decided entirely by whether
+`SUPABASE_URL` and `SUPABASE_SERVICE_KEY` are set.
+
+| | Where the data lives | Use it when |
+|---|---|---|
+| **Supabase** | Postgres + Storage | **Production.** No disk to attach, survives every redeploy, bookings readable in the Supabase table editor |
+| **JSON file** | `$DATA_DIR/` | Local development, the audit suite, or a host where a volume is simpler than a database |
+
+Either way the working copy is **in memory**. The availability engine reads the
+whole dataset many times per request — once per candidate slot — so putting a
+network round trip behind each of those would make the calendar slow for no
+benefit at this size. Reads are instant; `write()` persists.
 
 ```
-$DATA_DIR/
-  db.json              services, hours, rules, blocked dates, bookings, counter
-  uploads/<booking>/   the photos that client attached
+db.json / hbc_state       services, hours, rules, blocked dates, counter
+bookings / hbc_bookings   one record per appointment
+uploads/<booking>/<n>     the photos that client attached
 ```
 
-**It already works locally.** `npm start` and book something — it is saved.
-What follows is about making that survive being on the internet.
+**It already works locally.** `npm start` and book something — it saves to
+`./data`. Everything below is about making that survive being on the internet.
 
-### Step 1 — Understand the one way this goes wrong
+---
+
+### Supabase — the recommended path
+
+Six steps, none of which involve a disk.
+
+**1. Run the schema.** Supabase dashboard → **SQL Editor** → New query → paste
+[`supabase/schema.sql`](supabase/schema.sql) → Run. It creates two tables:
+
+- `hbc_bookings` — one row per appointment, with `date`, `status`, `ref` and
+  `client_name` promoted into real columns so the table is sortable and
+  readable in the dashboard, plus the complete record as `jsonb`.
+- `hbc_state` — a single row holding services, hours, rules, blocked dates,
+  the reference counter, the alert log and the push keys. All configuration:
+  small, read constantly, changed rarely.
+
+It also enables row-level security with no policies. The app uses the
+`service_role` key, which bypasses RLS — so that is not what protects this data
+day to day. It is there so that a leaked **anon** key, the one that is safe to
+publish and therefore the one most likely to end up somewhere public, cannot
+read a single client's phone number.
+
+**2. Create the bucket.** Storage → **New bucket** → name `booking-photos`,
+**Public OFF**. These are clients' private photographs. The app serves the
+bytes itself through the authenticated admin route, so nothing is ever
+reachable by URL alone.
+
+**3. Set two environment variables** (Settings → API):
+
+```bash
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_SERVICE_KEY=<the service_role key>
+```
+
+> The **service_role** key, not the anon key. It is full access: server only,
+> never in a browser, never committed. It cannot reach a browser here — the
+> booking page talks to this app's API and never to Supabase directly.
+
+**4. Move any existing bookings.**
+
+```bash
+node tools/supabase-migrate.js            # dry run — shows what would move
+node tools/supabase-migrate.js --apply    # bookings, settings and photos
+```
+
+Safe to re-run; every write is an upsert keyed on the booking id, so a run that
+fails halfway can just be run again. It never deletes your local files, and it
+reads the row count back from Supabase at the end rather than trusting its own
+writes.
+
+**5. Restart, and check the banner.**
+
+```
+bookings     Supabase — 19 loaded
+```
+
+If it says `local file` instead, the two variables are not reaching the
+process.
+
+**6. Back it up.** See [Backups](#backups) below — it reads from Supabase once
+configured, not from the stale local copy.
+
+#### What happens when Supabase is unreachable
+
+Two deliberate behaviours, because the failure this app exists to prevent is a
+client holding a confirmation for a booking the stylist never received.
+
+- **At boot it refuses to start.** Coming up healthy on an empty database is
+  worse than not coming up: the first write would overwrite every real booking
+  with nothing, and the only symptom until then is a quiet diary.
+- **Mid-booking it returns 503, not 201.** The `POST /api/bookings` response is
+  not sent until the row is actually stored. If the write fails the slot is
+  released and the client is told plainly to try again — rather than being
+  handed a confirmation for an appointment that does not exist.
+
+Verified by forcing an outage: 503 returned, no row written, and the slot
+bookable again immediately afterwards.
+
+---
+
+### The JSON file — the alternative
+
+If you would rather not use Supabase, the file backend needs a persistent disk,
+and there is exactly one way it goes wrong.
 
 `DATA_DIR` defaults to `./data`, inside the checkout. On most hosts the
 container filesystem is **rebuilt on every deploy**, so that default means the
 site runs perfectly, takes real bookings, and loses all of them the next time
-you push. Nothing errors. You find out when a client turns up.
-
-So the whole job is: put `DATA_DIR` on a disk that persists, and back it up.
-
-The server prints where it is writing on every boot, and flags the default:
+you push. Nothing errors. You find out when a client turns up. The startup
+banner flags it:
 
 ```
-data         /home/user/Hairbychrissy/data  (default — set DATA_DIR to a persistent disk in production)
+bookings     local file — /app/data  (default — set DATA_DIR to a persistent disk, or configure Supabase)
 ```
-
-If that line still says "default" in production, stop and fix it.
-
-### Step 2 — Pick a host and attach a disk
-
-Any host that runs Node and offers a persistent volume. The app is a single
-process with no build step, so the smallest instance is plenty.
 
 | Host | Create the disk | Then set |
 |---|---|---|
-| **Fly.io** | `fly volumes create hbc_data --size 1` and add a `[mounts]` block for `/data` | `DATA_DIR=/data` |
+| **Fly.io** | `fly volumes create hbc_data --size 1` and a `[mounts]` block for `/data` | `DATA_DIR=/data` |
 | **Render** | Add a **Disk**, mount path `/var/data` | `DATA_DIR=/var/data` |
 | **Railway** | Add a **Volume**, mount path `/data` | `DATA_DIR=/data` |
 | **A VPS** | Any directory you include in backups | `DATA_DIR=/srv/hbc-data` |
 
-> **One process only.** The store keeps the database in memory, so two
-> instances would each hold their own copy and overwrite each other. Set the
-> instance/replica count to **1**. This is the ceiling on the JSON store, and
-> it is a real one — see [When to outgrow this](#when-to-outgrow-this).
+`DATA_DIR` is one variable rather than two on purpose: the database and the
+photos must move together, or the pictures orphan on the next restart while the
+bookings stay put and make it look as though nothing went wrong.
 
-### Step 3 — Set the environment
+---
+
+### The rest of the environment
 
 ```bash
-DATA_DIR=/data                       # the mount path from step 2
 ADMIN_PASSWORD=<something long>      # the dashboard warns while "chrissy" is in use
 SESSION_SECRET=<32+ random chars>    # openssl rand -base64 32
 PUBLIC_URL=https://api.yourhost.com  # this app's own public URL
@@ -164,10 +243,16 @@ ALLOWED_ORIGINS=https://yameenbux.github.io
 `ALLOWED_ORIGINS` is an explicit allowlist and must **never** be `*`: the admin
 routes share this origin and carry a session cookie.
 
-### Step 4 — Point the published site at it
+> **One process only.** The working copy is in memory, so two instances would
+> each hold their own and overwrite each other. Set the replica count to **1**.
+> This is the real ceiling of the design — see
+> [When to outgrow this](#when-to-outgrow-this) — and Supabase does not lift it
+> on its own.
 
-The GitHub Pages site is static and cannot run the booking engine, so it
-defaults to enquiry mode. To switch it to the real calendar:
+### Pointing the published site at it
+
+The GitHub Pages site is static and defaults to enquiry mode. To switch it to
+the real calendar:
 
 > **Settings → Secrets and variables → Actions → Variables → New variable**
 > `HBC_API` = `https://api.yourhost.com`
@@ -179,58 +264,58 @@ Push anything, and the deploy injects that into `index.html`, `book.html` and
 curl -s https://yameenbux.github.io/Hairbychrissy/book.html | grep hbc-api
 ```
 
-The booking page should now show a live calendar instead of the enquiry notice.
-
-### Step 5 — Back it up
+### Backups
 
 ```bash
 npm run backup                 # -> backups/hbc-2026-08-29T2130.tar.gz
 npm run backup /mnt/elsewhere  # or write it somewhere else
 ```
 
-Reads `DATA_DIR`, so it archives whatever the server is actually using —
-database and photos together, since a booking without its photos is half a
-record. Restoring is a plain `tar`, deliberately not a format of ours:
+Reads from **whichever backend is configured** and says which. With Supabase
+set it pulls from Postgres and Storage, not from the local files — archiving a
+stale local copy while the real data lives elsewhere is worse than having no
+backup, because it looks like one.
+
+The archive has the same shape either way, so a Supabase backup restores into a
+local checkout and vice versa. Restoring is deliberately a plain `tar`, not a
+format of ours:
 
 ```bash
 tar -xzf hbc-2026-08-29T2130.tar.gz -C "$DATA_DIR"
 ```
 
-Put it on a schedule — nightly is ample for a diary:
+Nightly is ample for a diary:
 
 ```cron
-0 3 * * *  cd /srv/hbc && DATA_DIR=/data npm run backup /srv/backups
+0 3 * * *  cd /srv/hbc && npm run backup /srv/backups
 ```
 
 **Archives are gitignored** (`backups/`, `*.tar.gz`). One of them is the entire
 client list, their phone numbers and their photos in a single portable file.
 
-### Step 6 — Check it survived
+### Check it survived
 
 The only test that matters is a restart, because that is what a deploy is:
 
 ```bash
 curl -s $PUBLIC_URL/api/bookings/HBC-1001   # book something first
-# restart / redeploy the app
+# restart / redeploy
 curl -s $PUBLIC_URL/api/bookings/HBC-1001   # must still be there
 ```
 
-If the reference comes back and the next booking continues the numbering
-rather than resetting to `HBC-1001`, the disk is wired up correctly.
+If the reference comes back and the next booking continues the numbering rather
+than resetting to `HBC-1001`, it is wired up correctly.
 
 ### When to outgrow this
 
-The JSON store is the right answer here, and it is worth being honest about
-where it stops:
-
 | Signal | Why it breaks | Move to |
 |---|---|---|
-| A second stylist, or you need 2+ app instances | Each process holds its own in-memory copy and they overwrite each other | SQLite via `node:sqlite` (Node 22+), still one file, still zero dependencies |
-| Tens of thousands of bookings | The whole file is parsed on boot and rewritten on change | SQLite, then Postgres |
-| You need history — who changed what, when | There is one current state and no log | Postgres |
+| A second stylist, or 2+ app instances | Each process holds its own in-memory copy and they overwrite each other | Query Postgres directly instead of caching the whole dataset |
+| Tens of thousands of bookings | The whole set is loaded on boot | Paginate, and query by date range |
+| You need history — who changed what, when | There is one current state and no log | A Postgres audit table, or Supabase's own logs |
 
-Both `read()` and `write()` in `lib/store.js` are the only ways anything
-touches the data, so swapping the engine is a change to one 80-line file rather
+`read()` and `write()` in `lib/store.js` are the only ways anything touches the
+data, which is what made adding a second backend a change to one file rather
 than a change everywhere.
 
 ---
@@ -911,7 +996,8 @@ than one built on this year's framework.
 |---|---|
 | **Runtime** | Node 18+, ES modules, `node:http`, `node:crypto`, `node:fs` |
 | **Server** | Hand-rolled HTTP router, JSON body parsing, static file serving with correct MIME and cache headers |
-| **Storage** | JSON file store with atomic writes (write-temp-then-rename) and a debounced persist |
+| **Storage** | Two backends behind one interface — Supabase Postgres + Storage, or a JSON file with atomic writes (write-temp-then-rename) and a debounced persist |
+| **Supabase** | PostgREST and Storage over plain `fetch` — no SDK, so the zero-dependency property survives. Upserts diffed so a booking writes one row, not the whole table |
 | **Real time** | Server-Sent Events — every open browser repaints when anyone books or Chrissy changes her hours |
 | **Notifications** | Self-hosted Web Push (VAPID, ES256, JWT signing) + transactional email with an HTML and plain-text part |
 | **Auth** | HMAC-signed session cookie, `SameSite=Lax`, constant-time password comparison |
@@ -936,7 +1022,11 @@ where a thing that looked finished was not:
 - **Designing for failure, not just success.** Photos upload *after* the
   booking exists so a failed photo can never cost someone their slot. The
   day-ahead email writes its sent-flag *before* the send, so an email service
-  that is down cannot become an email a minute for the rest of the day.
+  that is down cannot become an email a minute for the rest of the day. The
+  booking response is withheld until the row is actually stored, so a database
+  outage returns 503 rather than handing someone a confirmation for an
+  appointment nobody has; and the server refuses to boot on an unreachable
+  database rather than come up empty and overwrite the real one.
 - **Web security in the small.** Magic-byte type sniffing rather than trusting
   an extension; path traversal blocked in both directions; one-time tokens
   because booking references are sequential and guessable; CORS as an explicit

@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { read, write, nextRef, flush } from './lib/store.js';
+import { read, write, nextRef, flush, commit, init as initStore, backend } from './lib/store.js';
 import { brand, reviews, gallery, faqs, offers, benefits, transformations, reels } from './lib/seed.js';
 import { slotsFor, monthSummary, validateSlot, validateAdminSlot, clashesWith, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
@@ -403,7 +403,7 @@ async function handlePublicApi(req, res, url) {
 
     let saved;
     try {
-      saved = savePhotos(booking.id, verified);
+      saved = await savePhotos(booking.id, verified);
     } catch (err) {
       console.error('[photos]', err.message);
       return json(res, 500, { error: 'Those photos could not be saved.' });
@@ -508,6 +508,30 @@ async function createBooking(req, res) {
   };
 
   write((db) => db.bookings.push(booking));
+
+  /*
+   * Do not tell anyone they are booked until the booking is actually stored.
+   *
+   * write() schedules the persist rather than awaiting it, which is right for
+   * a setting or an admin note. It is wrong here. If the database is
+   * unreachable, a fire-and-forget write would return a cheerful 201, the
+   * client would screenshot their confirmation, and Chrissy would have no
+   * record of them — the single failure this whole application exists to
+   * prevent. So the slot is given up and the client told the truth instead.
+   */
+  try {
+    await commit();
+  } catch (err) {
+    console.error('[booking] could not be saved:', err.message);
+    write((db) => {
+      const i = db.bookings.indexOf(booking);
+      if (i !== -1) db.bookings.splice(i, 1);
+    });
+    return json(res, 503, {
+      error: 'We could not save your booking just now. Nothing has been taken — please try again in a moment.',
+    });
+  }
+
   broadcast('bookings-changed', { date });
 
   if (effectivePayment === 'cash') {
@@ -945,8 +969,8 @@ async function handleAdminApi(req, res, url) {
     const record = (booking.photos || []).find((ph) => ph.file === file);
     if (!record) return json(res, 404, { error: 'No such photo.' });
 
-    const buf = readPhoto(booking.id, record.file);
-    if (!buf) return json(res, 404, { error: 'That photo is missing from disk.' });
+    const buf = await readPhoto(booking.id, record.file);
+    if (!buf) return json(res, 404, { error: 'That photo could not be found.' });
 
     return send(res, 200, buf, {
       'Content-Type': record.mime,
@@ -1222,6 +1246,27 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+/*
+ * Load the data BEFORE accepting a request, and refuse to start if it cannot
+ * be loaded. An app that comes up healthy on an empty database is worse than
+ * one that does not come up: the first write would overwrite every real
+ * booking with nothing, and the only symptom until then is a quiet diary.
+ */
+try {
+  await initStore();
+} catch (err) {
+  console.error('');
+  console.error('  Could not load the bookings database. Refusing to start.');
+  console.error(`  ${err.message}`);
+  console.error('');
+  console.error('  Starting on an empty database would overwrite real bookings,');
+  console.error('  so this is deliberate. Check SUPABASE_URL and');
+  console.error('  SUPABASE_SERVICE_KEY, and that the schema in');
+  console.error('  supabase/schema.sql has been run.');
+  console.error('');
+  process.exit(1);
+}
+
 server.listen(PORT, () => {
   console.log('');
   console.log('  H A I R  B Y  C H R I S S Y — booking platform');
@@ -1242,17 +1287,33 @@ server.listen(PORT, () => {
    * was never pointed at a mounted disk. A line at startup is the difference
    * between noticing on day one and noticing when a client turns up.
    */
-  console.log(`  data         ${DATA_DIR}${DATA_DIR_IS_DEFAULT ? '  (default — set DATA_DIR to a persistent disk in production)' : ''}`);
+  console.log(`  bookings     ${backend() === 'supabase'
+    ? `Supabase — ${read().bookings.length} loaded`
+    : `local file — ${DATA_DIR}${DATA_DIR_IS_DEFAULT ? '  (default — set DATA_DIR to a persistent disk, or configure Supabase)' : ''}`}`);
   if (usingDefaultPassword()) {
     console.log('  admin password: "chrissy"  — set ADMIN_PASSWORD before going live');
   }
   console.log('');
 });
 
+/*
+ * A deploy is a SIGTERM. Persisting is now a network call rather than a file
+ * write, so the last booking is only safe if we WAIT for it — the old
+ * fire-and-forget flush would have raced the process exit and lost it.
+ *
+ * The grace window is generous enough for a round trip and short enough that
+ * a hung database cannot stop the process going away. flush() falls back to
+ * writing a local copy if the network call fails.
+ */
+let shuttingDown = false;
 for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, () => {
-    flush();
-    server.close(() => process.exit(0));
-    setTimeout(() => process.exit(0), 500).unref();
+  process.on(sig, async () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    server.close();
+    const escape = setTimeout(() => process.exit(0), 8000).unref();
+    await flush();
+    clearTimeout(escape);
+    process.exit(0);
   });
 }
