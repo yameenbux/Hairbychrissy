@@ -1,0 +1,483 @@
+/**
+ * Studio dashboard.
+ * Chrissy sets her working week, blocks time off, edits her price list and
+ * manages bookings. Every save pushes down the live event stream, so a client
+ * with the booking page open sees the change without refreshing.
+ */
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const state = { data: null, view: 'today', draftHours: null, draftServices: null };
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n) => `£${Number(n || 0).toLocaleString('en-GB')}`;
+
+function shortDate(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  return `${DAY_NAMES[d.getUTCDay()].slice(0, 3)} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+}
+
+function duration(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && !path.endsWith('/login')) {
+    showLogin();
+    throw new Error('Session expired — please sign in again.');
+  }
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+function flash(el, message, kind = 'ok') {
+  el.className = `notice notice-${kind}`;
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.hidden = true; }, 4000);
+}
+
+/* ------------------------------------------------------------------ auth */
+
+function showLogin() {
+  $('#loginView').hidden = false;
+  $('#app').hidden = true;
+  $('#adminNav').hidden = true;
+}
+
+async function showApp() {
+  $('#loginView').hidden = true;
+  $('#app').hidden = false;
+  $('#adminNav').hidden = false;
+  await refresh();
+  setView(state.view);
+  connectLive();
+}
+
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('#loginError');
+  err.hidden = true;
+  try {
+    await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('#pw').value }) });
+    $('#pw').value = '';
+    await showApp();
+  } catch (e2) {
+    err.textContent = e2.message;
+    err.hidden = false;
+  }
+});
+
+$('#logoutBtn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await api('/api/admin/logout', { method: 'POST' }).catch(() => {});
+  showLogin();
+});
+
+/* -------------------------------------------------------------- routing */
+
+function setView(view) {
+  state.view = view;
+  $$('.view').forEach((v) => { v.hidden = v.dataset.view !== view; });
+  $$('#adminNav a[data-view]').forEach((a) => a.classList.toggle('active', a.dataset.view === view));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$$('#adminNav a[data-view]').forEach((a) =>
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    setView(a.dataset.view);
+  }),
+);
+
+/* ------------------------------------------------------------ data load */
+
+async function refresh() {
+  state.data = await api('/api/admin/state');
+  state.draftHours = structuredClone(state.data.workingHours);
+  state.draftServices = structuredClone(state.data.services);
+  renderToday();
+  renderBookings();
+  renderHours();
+  renderBlocked();
+  renderServices();
+  renderSettings();
+}
+
+/* --------------------------------------------------------------- today */
+
+function liveBookings() {
+  return state.data.bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'expired');
+}
+
+function renderToday() {
+  const { today } = state.data;
+  const d = new Date(`${today}T00:00:00Z`);
+  $('#todayHeading').textContent = `${DAY_NAMES[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+
+  const live = liveBookings();
+  const in7 = addDays(today, 7);
+  const in30 = addDays(today, 30);
+
+  const todays = live.filter((b) => b.date === today);
+  const week = live.filter((b) => b.date >= today && b.date < in7);
+  const month = live.filter((b) => b.date >= today && b.date < in30);
+
+  $('#kpiToday').textContent = todays.length;
+  $('#kpiWeek').textContent = week.length;
+  $('#kpiRevenue').textContent = money(month.reduce((sum, b) => sum + b.total, 0));
+  $('#kpiOwed').textContent = money(month.reduce((sum, b) => sum + b.balanceDue, 0));
+
+  const upcoming = live.filter((b) => b.date >= today).slice(0, 12);
+  $('#upcomingList').innerHTML = upcoming.length
+    ? upcoming.map(apptRow).join('')
+    : '<div class="empty">Nothing booked yet. Slots are open on the client site.</div>';
+  bindApptActions('#upcomingList');
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/* ------------------------------------------------------------ bookings */
+
+function apptRow(b) {
+  const cls =
+    b.status === 'cancelled' || b.status === 'expired' ? 'is-cancelled'
+      : b.status === 'pending-payment' ? 'is-pending'
+      : 'is-confirmed';
+
+  const payPill =
+    b.payment === 'cash'
+      ? '<span class="pill pill-cash">Cash</span>'
+      : '<span class="pill pill-card">Card</span>';
+
+  const statusPill =
+    b.status === 'cancelled' ? '<span class="pill pill-off">Cancelled</span>'
+      : b.status === 'expired' ? '<span class="pill pill-off">Expired unpaid</span>'
+      : b.status === 'pending-payment' ? '<span class="pill pill-warn">Awaiting deposit</span>'
+      : '<span class="pill pill-ok">Confirmed</span>';
+
+  const owed =
+    b.balanceDue > 0
+      ? `<span class="pill">${money(b.balanceDue)} on the day</span>`
+      : '<span class="pill pill-ok">Paid in full</span>';
+
+  const active = b.status !== 'cancelled' && b.status !== 'expired';
+
+  return `
+    <div class="appt ${cls}" data-id="${esc(b.id)}">
+      <div class="when">
+        <div class="time">${esc(b.start)}</div>
+        <div class="day">${esc(shortDate(b.date))}</div>
+      </div>
+      <div>
+        <div class="who">${esc(b.clientName)}</div>
+        <div class="what">${esc(b.serviceName)} · ${duration(b.duration)} · ends ${esc(b.end)} · ${money(b.total)}</div>
+        <div class="what muted">${esc(b.client.phone)} · ${esc(b.client.email)} · ${esc(b.ref)}</div>
+        <div class="tags">${statusPill}${payPill}${owed}</div>
+      </div>
+      <div class="actions">
+        ${b.balanceDue > 0 && active ? '<button class="btn btn-sm btn-ghost" data-action="mark-paid">Mark paid</button>' : ''}
+        ${active ? '<button class="btn btn-sm btn-danger" data-action="cancel">Cancel</button>' : ''}
+      </div>
+      ${b.client.notes ? `<div class="notes"><strong class="white">Client notes:</strong> ${esc(b.client.notes)}</div>` : ''}
+    </div>`;
+}
+
+function bindApptActions(scope) {
+  $$(`${scope} .appt [data-action]`).forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.closest('.appt').dataset.id;
+      const action = btn.dataset.action;
+      if (action === 'cancel' && !confirm('Cancel this appointment? The slot goes back on sale straight away.')) return;
+      btn.disabled = true;
+      try {
+        await api(`/api/admin/bookings/${encodeURIComponent(id)}/${action}`, { method: 'POST' });
+        await refresh();
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function renderBookings() {
+  const filter = $('#bookingFilter').value;
+  const query = $('#bookingSearch').value.trim().toLowerCase();
+  const { today } = state.data;
+
+  let list = state.data.bookings;
+  const dead = (b) => b.status === 'cancelled' || b.status === 'expired';
+
+  if (filter === 'upcoming') list = list.filter((b) => b.date >= today && !dead(b));
+  else if (filter === 'today') list = list.filter((b) => b.date === today);
+  else if (filter === 'past') list = list.filter((b) => b.date < today && !dead(b));
+  else if (filter === 'cancelled') list = list.filter(dead);
+
+  if (query) {
+    list = list.filter((b) =>
+      [b.clientName, b.ref, b.client.phone, b.client.email, b.serviceName]
+        .join(' ')
+        .toLowerCase()
+        .includes(query),
+    );
+  }
+
+  $('#bookingList').innerHTML = list.length
+    ? list.map(apptRow).join('')
+    : '<div class="empty">No bookings match that view.</div>';
+  bindApptActions('#bookingList');
+}
+
+$('#bookingFilter').addEventListener('change', renderBookings);
+$('#bookingSearch').addEventListener('input', renderBookings);
+
+/* --------------------------------------------------------------- hours */
+
+function renderHours() {
+  const h = state.draftHours;
+  $('#hoursRows').innerHTML = DAY_ORDER.map((d) => {
+    const day = h[String(d)] || { open: false, start: '09:00', end: '18:00', breakStart: '', breakEnd: '' };
+    return `
+      <div class="hours-row ${day.open ? '' : 'is-closed'}" data-day="${d}">
+        <div class="dayname">${DAY_NAMES[d]}</div>
+        <label class="toggle">
+          <input type="checkbox" data-f="open" ${day.open ? 'checked' : ''}>
+          <span class="track" aria-hidden="true"></span>
+          <span class="state">${day.open ? 'Open' : 'Closed'}</span>
+        </label>
+        <div class="time-fields field"><label>Start</label><input class="input" type="time" data-f="start" value="${esc(day.start || '09:00')}"></div>
+        <div class="time-fields field"><label>Finish</label><input class="input" type="time" data-f="end" value="${esc(day.end || '18:00')}"></div>
+        <div class="time-fields field"><label>Break from</label><input class="input" type="time" data-f="breakStart" value="${esc(day.breakStart || '')}"></div>
+        <div class="time-fields field"><label>Break to</label><input class="input" type="time" data-f="breakEnd" value="${esc(day.breakEnd || '')}"></div>
+      </div>`;
+  }).join('');
+
+  $$('#hoursRows [data-f]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const row = input.closest('.hours-row');
+      const day = row.dataset.day;
+      const field = input.dataset.f;
+      state.draftHours[day][field] = field === 'open' ? input.checked : input.value;
+      if (field === 'open') {
+        row.classList.toggle('is-closed', !input.checked);
+        row.querySelector('.toggle .state').textContent = input.checked ? 'Open' : 'Closed';
+      }
+    });
+  });
+}
+
+$('#hoursForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#hoursMsg');
+  try {
+    await api('/api/admin/hours', { method: 'PUT', body: JSON.stringify({ workingHours: state.draftHours }) });
+    await refresh();
+    flash(msg, 'Saved. Your client calendar has already updated.', 'ok');
+  } catch (err) {
+    flash(msg, err.message, 'error');
+  }
+});
+
+$('#hoursReset').addEventListener('click', () => {
+  state.draftHours = structuredClone(state.data.workingHours);
+  renderHours();
+});
+
+/* ------------------------------------------------------------ time off */
+
+function renderBlocked() {
+  const list = state.data.blockedDates;
+  $('#blockedList').innerHTML = list.length
+    ? list
+        .map(
+          (b) => `
+        <div class="blocked-row">
+          <div>
+            <div class="d">${esc(shortDate(b.date))} ${new Date(`${b.date}T00:00:00Z`).getUTCFullYear()}</div>
+            <div class="r">${esc(b.reason)}</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" data-unblock="${esc(b.date)}">Unblock</button>
+        </div>`,
+        )
+        .join('')
+    : '<div class="empty">No dates blocked. Your working week applies as set.</div>';
+
+  $$('#blockedList [data-unblock]').forEach((btn) =>
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      await api(`/api/admin/blocked-dates?date=${encodeURIComponent(btn.dataset.unblock)}`, { method: 'DELETE' });
+      await refresh();
+    }),
+  );
+}
+
+$('#blockForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('#blockError');
+  err.hidden = true;
+  try {
+    await api('/api/admin/blocked-dates', {
+      method: 'POST',
+      body: JSON.stringify({ date: $('#bFrom').value, until: $('#bTo').value, reason: $('#bReason').value }),
+    });
+    $('#bFrom').value = '';
+    $('#bTo').value = '';
+    $('#bReason').value = '';
+    await refresh();
+  } catch (e2) {
+    err.textContent = e2.message;
+    err.hidden = false;
+  }
+});
+
+/* ------------------------------------------------------------ services */
+
+function renderServices() {
+  $('#serviceRows').innerHTML = state.draftServices
+    .map(
+      (s, i) => `
+      <div class="svc-row" data-i="${i}">
+        <div class="field"><label>Service name</label><input class="input" data-f="name" value="${esc(s.name)}"></div>
+        <div class="field"><label>Category</label><input class="input" data-f="category" value="${esc(s.category)}"></div>
+        <div class="field"><label>Minutes</label><input class="input" data-f="duration" type="number" min="15" max="600" step="15" value="${s.duration}"></div>
+        <div class="field"><label>Price £</label><input class="input" data-f="price" type="number" min="0" step="5" value="${s.price}"></div>
+        <div class="field"><label>Deposit £</label><input class="input" data-f="deposit" type="number" min="0" step="5" value="${s.deposit}"></div>
+        <button class="svc-remove" type="button" data-remove="${i}" title="Remove this service" aria-label="Remove ${esc(s.name)}">×</button>
+      </div>`,
+    )
+    .join('');
+
+  $$('#serviceRows [data-f]').forEach((input) =>
+    input.addEventListener('input', () => {
+      const i = Number(input.closest('.svc-row').dataset.i);
+      const f = input.dataset.f;
+      state.draftServices[i][f] = ['duration', 'price', 'deposit'].includes(f) ? Number(input.value) : input.value;
+    }),
+  );
+
+  $$('#serviceRows [data-remove]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      if (state.draftServices.length === 1) {
+        flash($('#servicesMsg'), 'Keep at least one service on the list.', 'error');
+        return;
+      }
+      state.draftServices.splice(Number(btn.dataset.remove), 1);
+      renderServices();
+    }),
+  );
+}
+
+$('#serviceAdd').addEventListener('click', () => {
+  state.draftServices.push({ id: '', name: 'New service', category: 'EXTENSIONS', duration: 60, price: 0, deposit: 0, blurb: '' });
+  renderServices();
+});
+
+$('#servicesReset').addEventListener('click', () => {
+  state.draftServices = structuredClone(state.data.services);
+  renderServices();
+});
+
+$('#servicesSave').addEventListener('click', async () => {
+  const msg = $('#servicesMsg');
+  try {
+    await api('/api/admin/services', { method: 'PUT', body: JSON.stringify({ services: state.draftServices }) });
+    await refresh();
+    flash(msg, 'Price list saved and live on the client site.', 'ok');
+  } catch (err) {
+    flash(msg, err.message, 'error');
+  }
+});
+
+/* ------------------------------------------------------------ settings */
+
+function renderSettings() {
+  const r = state.data.rules;
+  $('#rSlot').value = r.slotInterval;
+  $('#rBuffer').value = r.bufferMins;
+  $('#rLead').value = r.leadTimeHours;
+  $('#rHorizon').value = r.horizonDays;
+  $('#rCancel').value = r.cancellationHours;
+
+  const card = $('#cardModeNote');
+  if (state.data.cardMode === 'demo') {
+    card.className = 'notice notice-warn';
+    card.innerHTML =
+      '<strong>Card payments are in draft mode.</strong> Clients can choose card and complete a simulated checkout, but no money moves. Add a Stripe secret key to the server to switch on real card payments — nothing else needs changing. Cash bookings work exactly as they will live.';
+  } else {
+    card.className = 'notice notice-ok';
+    card.innerHTML = '<strong>Card payments are live via Stripe.</strong> Deposits are taken at the point of booking.';
+  }
+
+  const pw = $('#passwordNote');
+  if (state.data.defaultPassword) {
+    pw.className = 'notice notice-error';
+    pw.innerHTML =
+      '<strong>You are using the default password.</strong> Before this site goes public, set <code>ADMIN_PASSWORD</code> on the server to something only you know.';
+  } else {
+    pw.className = 'notice notice-ok';
+    pw.textContent = 'A custom admin password is set.';
+  }
+}
+
+$('#rulesForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = $('#rulesMsg');
+  try {
+    await api('/api/admin/rules', {
+      method: 'PUT',
+      body: JSON.stringify({
+        slotInterval: Number($('#rSlot').value),
+        bufferMins: Number($('#rBuffer').value),
+        leadTimeHours: Number($('#rLead').value),
+        horizonDays: Number($('#rHorizon').value),
+        cancellationHours: Number($('#rCancel').value),
+      }),
+    });
+    await refresh();
+    flash(msg, 'Settings saved.', 'ok');
+  } catch (err) {
+    flash(msg, err.message, 'error');
+  }
+});
+
+/* ---------------------------------------------------------- live feed */
+
+function connectLive() {
+  const dot = $('#adminLive');
+  const source = new EventSource('/api/stream');
+  source.addEventListener('hello', () => {
+    dot.dataset.state = 'live';
+    dot.textContent = 'Live';
+  });
+  source.addEventListener('bookings-changed', () => refresh().catch(() => {}));
+  source.onerror = () => {
+    dot.dataset.state = 'offline';
+    dot.textContent = 'Reconnecting…';
+  };
+}
+
+/* ---------------------------------------------------------------- init */
+
+api('/api/admin/session')
+  .then((s) => {
+    if (s.defaultPassword) {
+      $('#loginHint').textContent = 'Draft build: the password is “chrissy” until one is set on the server.';
+    }
+    return s.authenticated ? showApp() : showLogin();
+  })
+  .catch(showLogin);

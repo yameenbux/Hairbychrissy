@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio dashboard — Hair by Chrissy</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="stripe"></div>
+
+<header class="topnav">
+  <div class="shell topnav-inner">
+    <a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
+    <nav class="navlinks" id="adminNav" hidden>
+      <a href="#" data-view="today">Today</a>
+      <a href="#" data-view="bookings">Bookings</a>
+      <a href="#" data-view="hours">My hours</a>
+      <a href="#" data-view="time-off">Time off</a>
+      <a href="#" data-view="services">Services</a>
+      <a href="#" data-view="settings">Settings</a>
+      <a href="#" id="logoutBtn">Sign out</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================================================================ LOGIN -->
+<section class="band" id="loginView">
+  <div class="shell" style="max-width:440px">
+    <span class="label label-muted" style="display:block;margin-bottom:var(--sm)">Studio dashboard</span>
+    <h1 class="display-md" style="margin-bottom:var(--lg)">Sign in.</h1>
+    <form id="loginForm">
+      <div class="field">
+        <label for="pw">Password</label>
+        <input class="input" id="pw" type="password" autocomplete="current-password" autofocus>
+      </div>
+      <div class="notice notice-error" id="loginError" hidden style="margin-bottom:var(--md)"></div>
+      <button class="btn btn-solid" type="submit" style="width:100%">Sign in</button>
+    </form>
+    <p class="caption" id="loginHint" style="margin-top:var(--lg)"></p>
+  </div>
+</section>
+
+<!-- ============================================================ DASHBOARD -->
+<main id="app" hidden>
+
+  <!-- ---------------------------------------------------------- TODAY -->
+  <section class="band-tight view" data-view="today" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">Dashboard</span>
+        <h1 class="display-md" id="todayHeading">Today</h1>
+      </div>
+      <div class="spec-grid" style="margin-bottom:var(--xl)">
+        <div class="spec-cell"><div class="value" id="kpiToday">0</div><span class="key">Appointments today</span></div>
+        <div class="spec-cell"><div class="value" id="kpiWeek">0</div><span class="key">Next 7 days</span></div>
+        <div class="spec-cell"><div class="value" id="kpiRevenue">£0</div><span class="key">Booked, next 30 days</span></div>
+        <div class="spec-cell"><div class="value" id="kpiOwed">£0</div><span class="key">To collect on the day</span></div>
+      </div>
+
+      <div class="spread" style="margin-bottom:var(--md)">
+        <span class="label">Coming up</span>
+        <span class="live-dot" id="adminLive" data-state="connecting">Live</span>
+      </div>
+      <div id="upcomingList"></div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------- BOOKINGS -->
+  <section class="band-tight view" data-view="bookings" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">All appointments</span>
+        <h1 class="display-md">Bookings</h1>
+      </div>
+      <div class="row" style="margin-bottom:var(--lg)">
+        <select class="select" id="bookingFilter" style="max-width:240px">
+          <option value="upcoming">Upcoming</option>
+          <option value="today">Today</option>
+          <option value="past">Past</option>
+          <option value="cancelled">Cancelled &amp; expired</option>
+          <option value="all">Everything</option>
+        </select>
+        <input class="input" id="bookingSearch" placeholder="Search name, reference or phone" style="max-width:320px">
+      </div>
+      <div id="bookingList"></div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- HOURS -->
+  <section class="band-tight view" data-view="hours" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">Availability</span>
+        <h1 class="display-md">My working week.</h1>
+        <p class="lede" style="margin-top:var(--md)">Turn a day on and set your start and finish. Anything you save here changes what clients can book straight away — their calendar updates without a refresh.</p>
+      </div>
+      <form id="hoursForm">
+        <div id="hoursRows"></div>
+        <div class="notice" id="hoursMsg" hidden style="margin-top:var(--lg)"></div>
+        <div class="row" style="margin-top:var(--lg)">
+          <button class="btn btn-solid" type="submit">Save my hours</button>
+          <button class="btn btn-ghost" type="button" id="hoursReset">Undo changes</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------- TIME OFF -->
+  <section class="band-tight view" data-view="time-off" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">Availability</span>
+        <h1 class="display-md">Time off.</h1>
+        <p class="lede" style="margin-top:var(--md)">Block out holidays, training days or anything else. Blocked dates disappear from the client calendar immediately.</p>
+      </div>
+      <div class="grid grid-2" style="align-items:start">
+        <form id="blockForm" class="card">
+          <span class="label" style="display:block;margin-bottom:var(--md)">Block dates</span>
+          <div class="grid grid-2" style="gap:var(--md)">
+            <div class="field"><label for="bFrom">From</label><input class="input" id="bFrom" type="date" required></div>
+            <div class="field"><label for="bTo">To (optional)</label><input class="input" id="bTo" type="date"></div>
+          </div>
+          <div class="field"><label for="bReason">Reason (only you see this)</label><input class="input" id="bReason" placeholder="Holiday"></div>
+          <div class="notice notice-error" id="blockError" hidden style="margin-bottom:var(--md)"></div>
+          <button class="btn btn-solid" type="submit" style="width:100%">Block these dates</button>
+        </form>
+        <div>
+          <span class="label" style="display:block;margin-bottom:var(--md)">Currently blocked</span>
+          <div id="blockedList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------- SERVICES -->
+  <section class="band-tight view" data-view="services" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">Price list</span>
+        <h1 class="display-md">Services &amp; prices.</h1>
+        <p class="lede" style="margin-top:var(--md)">How long a service takes decides how many slots fit in a day, so keep durations honest. The deposit is what card clients pay to hold the slot.</p>
+      </div>
+      <div id="serviceRows"></div>
+      <div class="notice" id="servicesMsg" hidden style="margin-top:var(--lg)"></div>
+      <div class="row" style="margin-top:var(--lg)">
+        <button class="btn btn-solid" type="button" id="servicesSave">Save price list</button>
+        <button class="btn" type="button" id="serviceAdd">Add a service</button>
+        <button class="btn btn-ghost" type="button" id="servicesReset">Undo changes</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------- SETTINGS -->
+  <section class="band-tight view" data-view="settings" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">Booking rules</span>
+        <h1 class="display-md">Settings.</h1>
+      </div>
+      <form id="rulesForm" style="max-width:640px">
+        <div class="grid grid-2" style="gap:var(--md)">
+          <div class="field">
+            <label for="rSlot">Slot spacing (minutes)</label>
+            <input class="input" id="rSlot" type="number" min="5" max="120" step="5">
+            <div class="hint">How far apart offered start times are.</div>
+          </div>
+          <div class="field">
+            <label for="rBuffer">Gap between clients (minutes)</label>
+            <input class="input" id="rBuffer" type="number" min="0" max="120" step="5">
+            <div class="hint">Clean-down time held after every appointment.</div>
+          </div>
+          <div class="field">
+            <label for="rLead">Minimum notice (hours)</label>
+            <input class="input" id="rLead" type="number" min="0" max="720">
+            <div class="hint">How far ahead a client must book.</div>
+          </div>
+          <div class="field">
+            <label for="rHorizon">Book up to (days ahead)</label>
+            <input class="input" id="rHorizon" type="number" min="1" max="365">
+          </div>
+          <div class="field">
+            <label for="rCancel">Free cancellation window (hours)</label>
+            <input class="input" id="rCancel" type="number" min="0" max="336">
+          </div>
+        </div>
+        <div class="notice" id="rulesMsg" hidden style="margin:var(--md) 0"></div>
+        <button class="btn btn-solid" type="submit">Save settings</button>
+      </form>
+
+      <div class="hairline" style="margin:var(--xl) 0"></div>
+      <span class="label" style="display:block;margin-bottom:var(--md)">Payments</span>
+      <div class="notice" id="cardModeNote"></div>
+
+      <div class="hairline" style="margin:var(--xl) 0"></div>
+      <span class="label" style="display:block;margin-bottom:var(--md)">Security</span>
+      <div class="notice" id="passwordNote"></div>
+    </div>
+  </section>
+</main>
+
+<script src="/js/admin.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card payment (demo) — Hair by Chrissy</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="stripe"></div>
+<header class="topnav">
+  <div class="shell topnav-inner">
+    <a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
+    <span class="label label-muted">Secure checkout</span>
+  </div>
+</header>
+
+<section class="band">
+  <div class="shell" style="max-width:560px">
+    <div class="notice notice-warn" style="margin-bottom:var(--xl)">
+      <strong>Simulated checkout.</strong> This is the draft stand-in for Stripe. No card details are stored and no money moves. Adding a Stripe key to the server replaces this page with real Stripe Checkout.
+    </div>
+
+    <span class="label label-muted" style="display:block;margin-bottom:var(--sm)">Deposit payment</span>
+    <h1 class="display-md" style="margin-bottom:var(--lg)">Secure your slot.</h1>
+
+    <div class="card" id="detail"><div class="empty">Loading…</div></div>
+
+    <form id="cardForm" style="margin-top:var(--xl)" novalidate>
+      <div class="field">
+        <label for="cardNo">Card number</label>
+        <input class="input" id="cardNo" inputmode="numeric" value="4242 4242 4242 4242" autocomplete="off">
+      </div>
+      <div class="grid grid-2" style="gap:var(--md)">
+        <div class="field">
+          <label for="exp">Expiry</label>
+          <input class="input" id="exp" value="12 / 30" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cvc">CVC</label>
+          <input class="input" id="cvc" value="123" autocomplete="off">
+        </div>
+      </div>
+      <div id="err" class="notice notice-error" hidden style="margin-bottom:var(--md)"></div>
+      <button class="btn btn-solid" type="submit" id="payBtn" style="width:100%">Pay deposit</button>
+      <a class="textlink" href="/" style="margin-top:var(--md)">Cancel and go back</a>
+    </form>
+  </div>
+</section>
+
+<script>
+const ref = (new URLSearchParams(location.search).get('ref') || '').toUpperCase();
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = (n) => '£' + Number(n).toLocaleString('en-GB');
+const detail = document.getElementById('detail');
+let booking = null;
+
+fetch('/api/bookings/' + encodeURIComponent(ref))
+  .then(r => r.json().then(d => { if (!r.ok) throw new Error(d.error || 'Not found'); return d; }))
+  .then(b => {
+    booking = b;
+    detail.innerHTML = `
+      <dl style="margin:0;display:grid;grid-template-columns:1fr auto;gap:var(--xs) var(--md)">
+        <dt class="label label-muted" style="font-size:12px">Service</dt><dd style="margin:0;text-align:right" class="white">${esc(b.serviceName)}</dd>
+        <dt class="label label-muted" style="font-size:12px">When</dt><dd style="margin:0;text-align:right" class="white">${esc(b.dateLong)}, ${esc(b.start)}</dd>
+        <dt class="label label-muted" style="font-size:12px">Reference</dt><dd style="margin:0;text-align:right" class="white">${esc(b.ref)}</dd>
+      </dl>
+      <div class="hairline" style="margin:var(--md) 0"></div>
+      <div class="spread">
+        <span class="label">Deposit due now</span>
+        <span class="white" style="font-size:32px;font-weight:700;letter-spacing:-.5px">${money(b.depositDue)}</span>
+      </div>
+      <p class="caption" style="margin-top:var(--xs)">${money(b.balanceDue)} balance payable in the studio.</p>`;
+    document.getElementById('payBtn').textContent = 'Pay ' + money(b.depositDue) + ' deposit';
+  })
+  .catch(e => { detail.innerHTML = '<div class="notice notice-error">' + esc(e.message) + '</div>'; });
+
+document.getElementById('cardForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('payBtn');
+  const err = document.getElementById('err');
+  err.hidden = true;
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+  try {
+    const res = await fetch('/api/pay/demo/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Payment failed');
+    location.href = '/confirmed?ref=' + encodeURIComponent(ref);
+  } catch (e2) {
+    err.textContent = e2.message;
+    err.hidden = false;
+    btn.disabled = false;
+    btn.textContent = 'Pay deposit';
+  }
+});
+</script>
+</body>
+</html>
