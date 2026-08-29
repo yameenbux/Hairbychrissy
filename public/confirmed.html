@@ -2,20 +2,29 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Booking confirmed — Hair by Chrissy</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/app.css">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#33261c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hair by Chrissy">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="stylesheet" href="./css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%234a382a'/><rect x='6' y='5' width='4' height='22' fill='%23dcc189'/><rect x='12' y='5' width='4' height='22' fill='%23b8944f'/><rect x='18' y='5' width='4' height='22' fill='%238a6d3a'/></svg>">
 </head>
 <body>
 <div class="stripe"></div>
 <header class="topnav">
   <div class="shell topnav-inner">
-    <a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
-    <nav class="navlinks"><a href="/">Back to site</a></nav>
+    <a class="wordmark" href="./"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
+    <nav class="navlinks"><a href="./">Back to site</a></nav>
   </div>
 </header>
 
@@ -33,7 +42,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 const money = (n) => n === 0 ? 'Nothing to pay' : '£' + Number(n).toLocaleString('en-GB');
 
 if (!ref) {
-  out.innerHTML = '<div class="notice notice-error">No booking reference supplied. <a class="textlink" href="/">Back to booking</a></div>';
+  out.innerHTML = '<div class="notice notice-error">No booking reference supplied. <a class="link-underline" href="./">Back to booking</a></div>';
 } else {
   fetch('/api/bookings/' + encodeURIComponent(ref))
     .then(r => r.json().then(d => { if (!r.ok) throw new Error(d.error || 'Not found'); return d; }))
@@ -47,42 +56,44 @@ function render(b) {
   const cancelled = b.status === 'cancelled';
   const awaiting = b.status === 'pending-payment';
 
-  const payLine = b.payment === 'cash'
+  const payLine = b.priceOnRequest
+    ? 'A consultation — nothing to pay. We agree the price when I have seen your hair.'
+    : b.payment === 'cash'
     ? 'Paying cash in the studio — ' + money(b.total) + ' due on the day.'
     : (b.paymentStatus === 'deposit-paid'
         ? 'Deposit of ' + money(b.depositDue) + ' received. ' + money(b.balanceDue) + ' due on the day.'
-        : b.paymentStatus === 'paid-in-full'
+        : b.paymentStatus === 'paid-in-full' || b.balanceDue === 0
           ? 'Paid in full. Nothing to pay on the day.'
           : 'Deposit of ' + money(b.depositDue) + ' not yet received.');
 
   out.innerHTML = `
-    <span class="label label-muted" style="display:block;margin-bottom:var(--sm)">${cancelled ? 'Cancelled' : awaiting ? 'Awaiting payment' : 'Confirmed'}</span>
-    <h1 class="display-lg" style="margin-bottom:var(--md)">${cancelled ? 'This booking was cancelled.' : awaiting ? 'Almost there.' : "You're booked in."}</h1>
+    <span class="label label-muted" style="display:block;margin-bottom:12px">${cancelled ? 'Cancelled' : awaiting ? 'Awaiting payment' : 'Confirmed'}</span>
+    <h1 class="display" style="margin-bottom:16px">${cancelled ? 'This booking was cancelled.' : awaiting ? 'Almost there.' : "You're booked in."}</h1>
     <p class="lede">${cancelled
       ? 'Nothing further is needed. You are welcome to book a new slot at any time.'
       : awaiting
         ? 'Your slot is held while payment completes. If you closed the payment page, book again and the slot will be released shortly.'
         : 'A confirmation has been recorded against reference <strong class="white">' + esc(b.ref) + '</strong>. The studio address is sent to your email before the appointment.'}</p>
 
-    <div class="card" style="margin-top:var(--xl)">
-      <div class="stripe" style="margin:calc(var(--lg) * -1) calc(var(--lg) * -1) var(--lg)"></div>
+    <div class="panel" style="margin-top:40px">
+      <div class="stripe" style="margin:calc(24px * -1) calc(24px * -1) 24px"></div>
       <div class="spec-grid" style="grid-template-columns:repeat(2,1fr)">
-        <div class="spec-cell"><div class="value" style="font-size:20px">${esc(b.serviceName)}</div><span class="key">Service</span></div>
-        <div class="spec-cell"><div class="value" style="font-size:20px">${esc(b.ref)}</div><span class="key">Reference</span></div>
-        <div class="spec-cell"><div class="value" style="font-size:20px">${esc(b.dateLong)}</div><span class="key">Date</span></div>
-        <div class="spec-cell"><div class="value" style="font-size:20px">${esc(b.start)} – ${esc(b.end)}</div><span class="key">Time</span></div>
+        <div class="spec-cell"><div class="value" style="font-size:var(--t-md)">${esc(b.serviceName)}</div><span class="key">Service</span></div>
+        <div class="spec-cell"><div class="value" style="font-size:var(--t-md)">${esc(b.ref)}</div><span class="key">Reference</span></div>
+        <div class="spec-cell"><div class="value" style="font-size:var(--t-md)">${esc(b.dateLong)}</div><span class="key">Date</span></div>
+        <div class="spec-cell"><div class="value" style="font-size:var(--t-md)">${esc(b.start)} – ${esc(b.end)}</div><span class="key">Time</span></div>
       </div>
-      <div style="padding:var(--lg) 0 0">
+      <div style="padding:24px 0 0">
         <p class="body-sm strong" style="margin:0">${esc(payLine)}</p>
       </div>
     </div>
 
-    <div class="row" style="margin-top:var(--xl)">
-      <a class="btn btn-solid" href="/">Back to the site</a>
-      <button class="btn" type="button" onclick="window.print()">Print / save</button>
+    <div class="row" style="margin-top:40px">
+      <a class="btn btn-cta" href="./#book">Book your slot</a>
+      <button class="link-underline" type="button" onclick="window.print()" style="background:none;border:0;border-bottom:1px solid var(--hairline);cursor:pointer">Print or save this</button>
     </div>
 
-    <p class="caption" style="margin-top:var(--lg)">Need to move or cancel? Message @hairbychrissy_x on Instagram quoting ${esc(b.ref)}.</p>
+    <p class="caption" style="margin-top:24px">Need to move or cancel? Message @hairbychrissy_x on Instagram quoting ${esc(b.ref)}.</p>
   `;
 }
 </script>

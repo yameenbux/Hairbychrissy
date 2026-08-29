@@ -14,11 +14,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { read, write, nextRef, flush } from './lib/store.js';
-import { brand, reviews, gallery, faqs } from './lib/seed.js';
-import { slotsFor, monthSummary, validateSlot, getService, dateClosedReason } from './lib/availability.js';
+import { brand, reviews, gallery, faqs, offers, benefits, transformations, reels } from './lib/seed.js';
+import { slotsFor, monthSummary, validateSlot, validateAdminSlot, clashesWith, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
-import { isLiveStripe, createCheckoutSession, publicUrl } from './lib/payments.js';
+import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
+import {
+  notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
+  saveSubscription, removeSubscription, listSubscriptions, channelStatus,
+  recentNotifications, latestNotification,
+} from './lib/notify.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -31,6 +36,9 @@ const MIME = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
   '.svg': 'image/svg+xml',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -41,13 +49,41 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
+/**
+ * Origins allowed to call the booking API cross-origin, so the site can be
+ * published as flat files (GitHub Pages) while the API lives elsewhere.
+ * Set ALLOWED_ORIGINS as a comma-separated list. Deliberately an allowlist and
+ * never "*": the admin routes share this origin and carry a session cookie.
+ */
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+function corsHeaders(req) {
+  const origin = req.headers.origin;
+  if (!origin || !ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ''))) return {};
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Max-Age': '600',
+    Vary: 'Origin',
+  };
+}
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, { 'Cache-Control': 'no-store', ...headers });
   res.end(body);
 }
 
 function json(res, status, data, headers = {}) {
-  send(res, status, JSON.stringify(data), { 'Content-Type': 'application/json; charset=utf-8', ...headers });
+  send(res, status, JSON.stringify(data), {
+    'Content-Type': 'application/json; charset=utf-8',
+    ...(res._cors || {}),
+    ...headers,
+  });
 }
 
 function readBody(req, limit = 64 * 1024) {
@@ -103,6 +139,7 @@ function handleStream(req, res) {
     'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
+    ...corsHeaders(req),
   });
   res.write('retry: 4000\n\n');
   res.write(`event: hello\ndata: ${JSON.stringify({ at: Date.now() })}\n\n`);
@@ -135,15 +172,31 @@ function serveStatic(res, urlPath) {
     return send(res, 403, 'Forbidden');
   }
   fs.stat(target, (err, stat) => {
-    if (err || !stat.isFile()) return send(res, 404, 'Not found');
+    if (err || !stat.isFile()) return serveNotFound(res);
     const type = MIME[path.extname(target).toLowerCase()] || 'application/octet-stream';
-    const cacheable = /\.(jpg|jpeg|png|webp|avif|svg|woff2|ico)$/i.test(target);
+    const cacheable = /\.(jpg|jpeg|png|webp|avif|svg|woff2|ico|mp4|webm)$/i.test(target);
     res.writeHead(200, {
       'Content-Type': type,
       'Content-Length': stat.size,
       'Cache-Control': cacheable ? 'public, max-age=3600' : 'no-store',
     });
     fs.createReadStream(target).pipe(res);
+  });
+}
+
+/**
+ * The 404 page, not the word "Not found".
+ *
+ * public/404.html has existed since the rebuild and GitHub Pages serves it
+ * automatically, so it was only ever missing under Node — which is to say it
+ * was missing everywhere it is actually being used right now. A dead end is
+ * still a page a client is looking at, and it is the one page with nothing to
+ * lose by asking them to book.
+ */
+function serveNotFound(res) {
+  fs.readFile(path.join(PUBLIC, '404.html'), (err, buf) => {
+    if (err) return send(res, 404, 'Not found');
+    send(res, 404, buf, { 'Content-Type': 'text/html; charset=utf-8' });
   });
 }
 
@@ -168,6 +221,7 @@ function publicBooking(b) {
     serviceName: service?.name || b.serviceName,
     duration: b.duration,
     total: b.total,
+    priceOnRequest: Boolean(b.priceOnRequest),
     depositDue: b.depositDue,
     balanceDue: b.balanceDue,
     payment: b.payment,
@@ -177,10 +231,37 @@ function publicBooking(b) {
   };
 }
 
+/**
+ * Tell Chrissy about a booking. Deliberately fire-and-forget: a slow webhook
+ * or an unreachable push service must never delay or fail a client's
+ * confirmation, so nothing here is awaited.
+ */
+function notifyNewBooking(booking) {
+  const service = getService(booking.serviceId);
+  const message = bookingMessage({ ...booking, dateLong: longDate(booking.date) }, service);
+  notify(message)
+    .then(() => broadcast('notification', {}))
+    .catch((err) => console.error('[notify]', err.message));
+}
+
+/** Photographs actually present, so the page never probes for missing files. */
+function availablePhotos() {
+  try {
+    return fs.readdirSync(path.join(PUBLIC, 'images')).filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f));
+  } catch {
+    return [];
+  }
+}
+
 function siteConfig() {
   const db = read();
   return {
+    photos: availablePhotos(),
     brand,
+    offers,
+    benefits,
+    transformations,
+    reels,
     reviews,
     gallery,
     faqs,
@@ -248,6 +329,35 @@ async function handlePublicApi(req, res, url) {
       booking.paidAt = new Date().toISOString();
     });
     broadcast('bookings-changed', { date: booking.date });
+    notifyNewBooking(booking);
+    return json(res, 200, publicBooking(booking));
+  }
+
+  if (p === '/api/pay/stripe/verify' && req.method === 'POST') {
+    const { ref } = await readJson(req).catch(() => ({}));
+    const booking = read().bookings.find((b) => b.ref === clean(ref, 24).toUpperCase());
+    if (!booking) return json(res, 404, { error: 'No booking found with that reference.' });
+    if (!isLiveStripe() || !booking.stripeSessionId) {
+      return json(res, 200, publicBooking(booking));
+    }
+    if (booking.paymentStatus === 'deposit-paid' || booking.paymentStatus === 'paid-in-full') {
+      return json(res, 200, publicBooking(booking));
+    }
+
+    try {
+      const session = await retrieveCheckoutSession(booking.stripeSessionId);
+      if (session.payment_status === 'paid') {
+        write(() => {
+          booking.paymentStatus = 'deposit-paid';
+          booking.status = 'confirmed';
+          booking.paidAt = new Date().toISOString();
+        });
+        broadcast('bookings-changed', { date: booking.date });
+        notifyNewBooking(booking);
+      }
+    } catch (err) {
+      console.error('[stripe:verify]', err.message);
+    }
     return json(res, 200, publicBooking(booking));
   }
 
@@ -283,9 +393,23 @@ async function createBooking(req, res) {
 
   const { service, startMin, endMin } = check;
 
-  // Card clients pay a deposit now; cash clients settle the whole amount in studio.
-  const depositDue = payment === 'card' ? Math.min(service.deposit, service.price) : 0;
-  const balanceDue = service.price - depositDue;
+  /**
+   * Three shapes, because her price list has three:
+   *
+   *   price on request  — extensions. Nothing to charge until it is quoted, so
+   *                       the appointment is held and no payment is offered.
+   *   deposit set       — a deposit online, balance in the studio.
+   *   no deposit        — her styling prices are small, so paying by card means
+   *                       paying the whole thing now. A zero-value checkout
+   *                       would be rejected by Stripe anyway.
+   */
+  const quoted = Boolean(service.priceOnRequest);
+  const total = quoted ? 0 : service.price;
+  const wantsCard = payment === 'card' && !quoted && total > 0;
+  const depositDue = wantsCard ? (service.deposit > 0 ? Math.min(service.deposit, total) : total) : 0;
+  const balanceDue = total - depositDue;
+  // A quoted service cannot take a card payment, so it is always held as cash.
+  const effectivePayment = wantsCard ? 'card' : 'cash';
 
   const booking = {
     id: `bk_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
@@ -299,20 +423,22 @@ async function createBooking(req, res) {
     endMin,
     duration: service.duration,
     client: { name, email, phone, notes },
-    total: service.price,
+    total,
+    priceOnRequest: quoted,
     depositDue,
     balanceDue,
-    payment,
+    payment: effectivePayment,
     // Cash bookings are confirmed immediately. Card bookings wait for payment.
-    paymentStatus: payment === 'cash' ? 'due-in-studio' : 'awaiting-deposit',
-    status: payment === 'cash' ? 'confirmed' : 'pending-payment',
+    paymentStatus: effectivePayment === 'cash' ? (quoted ? 'to-be-quoted' : 'due-in-studio') : 'awaiting-deposit',
+    status: effectivePayment === 'cash' ? 'confirmed' : 'pending-payment',
     createdAt: new Date().toISOString(),
   };
 
   write((db) => db.bookings.push(booking));
   broadcast('bookings-changed', { date });
 
-  if (payment === 'cash') {
+  if (effectivePayment === 'cash') {
+    notifyNewBooking(booking);
     return json(res, 201, { booking: publicBooking(booking), next: 'confirmed' });
   }
 
@@ -336,6 +462,7 @@ async function createBooking(req, res) {
         booking.paymentNote = 'Card checkout unavailable at time of booking.';
       });
       broadcast('bookings-changed', { date });
+      notifyNewBooking(booking);
       return json(res, 201, {
         booking: publicBooking(booking),
         next: 'confirmed',
@@ -347,7 +474,7 @@ async function createBooking(req, res) {
   return json(res, 201, {
     booking: publicBooking(booking),
     next: 'checkout',
-    checkoutUrl: `/pay/demo?ref=${booking.ref}`,
+    checkoutUrl: `/pay-demo?ref=${booking.ref}`,
     demo: true,
   });
 }
@@ -387,7 +514,18 @@ async function handleAdminApi(req, res, url) {
       blockedDates: [...db.blockedDates].sort((a, b) => (a.date < b.date ? -1 : 1)),
       services: db.services,
       rules: db.rules,
-      bookings: bookings.map((b) => ({ ...publicBooking(b), id: b.id, client: b.client, createdAt: b.createdAt })),
+      bookings: bookings.map((b) => ({
+        ...publicBooking(b),
+        id: b.id,
+        client: b.client,
+        createdAt: b.createdAt,
+        // Her own working record of the appointment, never shown to clients.
+        adminNote: b.adminNote || '',
+        source: b.source || 'online',
+        completedAt: b.completedAt || null,
+        noShowAt: b.noShowAt || null,
+        rescheduledFrom: b.rescheduledFrom || null,
+      })),
       today,
       cardMode: isLiveStripe() ? 'live' : 'demo',
       defaultPassword: usingDefaultPassword(),
@@ -499,6 +637,7 @@ async function handleAdminApi(req, res, url) {
         category: clean(s.category, 40).toUpperCase() || 'EXTENSIONS',
         duration,
         price,
+        priceOnRequest: Boolean(s.priceOnRequest),
         deposit,
         blurb: clean(s.blurb, 300),
       });
@@ -512,17 +651,225 @@ async function handleAdminApi(req, res, url) {
     return json(res, 200, { services: next });
   }
 
+  /* ---------------------------------------------------- notifications */
+
+  if (p === '/api/admin/notifications' && req.method === 'GET') {
+    const hour = Number(process.env.DAY_AHEAD_HOUR);
+    return json(res, 200, {
+      channels: channelStatus(),
+      log: recentNotifications(20),
+      dayAhead: {
+        enabled: Number.isInteger(hour) && hour >= 0 && hour <= 23,
+        hour: Number.isInteger(hour) ? hour : null,
+        sentFor: db.dayAheadSentFor || null,
+        today: nowIn(db.rules.timezone).date,
+      },
+      vapidPublicKey: getVapid().publicKey,
+      devices: listSubscriptions().map((sub) => ({
+        id: sub.id,
+        label: sub.label,
+        createdAt: sub.createdAt,
+        lastOk: sub.lastOk,
+        failures: sub.failures,
+        host: (() => { try { return new URL(sub.endpoint).host; } catch { return 'unknown'; } })(),
+      })),
+    });
+  }
+
+  /**
+   * Called by the service worker when a push wakes it. The push itself carries
+   * no payload, so no client's name or number ever passes through Google's or
+   * Apple's push service — the worker comes back here, authenticated, for the
+   * detail.
+   */
+  if (p === '/api/admin/notifications/latest' && req.method === 'GET') {
+    const latest = latestNotification();
+    if (!latest) return json(res, 200, { title: 'New booking', body: 'Open your dashboard to see it.' });
+    return json(res, 200, { title: latest.title, body: latest.body, ref: latest.ref, at: latest.at });
+  }
+
+  if (p === '/api/admin/notifications/test' && req.method === 'POST') {
+    const entry = await notify({
+      kind: 'test',
+      title: 'Test notification',
+      body: 'If you can read this, alerts are reaching you. A real booking looks like this, with the client, service, time and how they are paying.',
+    });
+    broadcast('notification', {});
+    return json(res, 200, { notification: entry });
+  }
+
+  /**
+   * Send today's run-down on demand. Useful as a real test — it exercises
+   * every channel with a message shaped like the ones she will actually get,
+   * rather than a line of filler — and useful in its own right on a morning
+   * she wants it again after clearing the notification.
+   */
+  if (p === '/api/admin/notifications/day-ahead' && req.method === 'POST') {
+    const today = nowIn(db.rules.timezone).date;
+    const list = db.bookings
+      .filter((b) => b.date === today && b.status !== 'cancelled' && b.status !== 'expired')
+      .sort((a, b) => a.startMin - b.startMin);
+    const entry = await notify(dayAheadMessage(longDate(today), list));
+    broadcast('notification', {});
+    return json(res, 200, { notification: entry });
+  }
+
+  if (p === '/api/admin/push/subscribe' && req.method === 'POST') {
+    const body = await readJson(req);
+    try {
+      const record = saveSubscription(body.subscription, clean(body.label, 60));
+      return json(res, 200, { device: { id: record.id, label: record.label } });
+    } catch (err) {
+      return json(res, 400, { error: err.message });
+    }
+  }
+
+  if (p === '/api/admin/push/unsubscribe' && req.method === 'POST') {
+    const body = await readJson(req).catch(() => ({}));
+    removeSubscription({ endpoint: clean(body.endpoint, 500), id: clean(body.id, 60) });
+    return json(res, 200, { devices: listSubscriptions().length });
+  }
+
+  /**
+   * A booking Chrissy places herself.
+   *
+   * Most of her enquiries arrive as Instagram DMs, not through the website,
+   * and until now there was nowhere to put them. That is not a convenience
+   * gap: an appointment she has agreed to but not recorded is a slot the
+   * public calendar is still selling, so the first thing this fixes is
+   * double bookings.
+   *
+   * She is allowed to override her own hours, notice period and time off —
+   * those are business decisions. She is never allowed to override a clash.
+   */
+  if (p === '/api/admin/bookings' && req.method === 'POST') {
+    let body;
+    try {
+      body = await readJson(req);
+    } catch (err) {
+      return json(res, 400, { error: err.message });
+    }
+
+    const serviceId = clean(body.serviceId, 60);
+    const date = clean(body.date, 10);
+    const start = clean(body.start, 5);
+    const name = clean(body.name, 80);
+    // Taken over the phone, so an email is genuinely optional — she may only
+    // have a number. A phone number is the one contact detail she must hold.
+    const email = clean(body.email, 120).toLowerCase();
+    const phone = clean(body.phone, 20);
+    const notes = clean(body.notes, 600);
+    const adminNote = clean(body.adminNote, 600);
+    const paidNow = body.paid === true;
+
+    if (name.length < 2) return json(res, 400, { error: 'Give the client a name.' });
+    if (email && !isEmail(email)) return json(res, 400, { error: 'That email address does not look right.' });
+    if (!isPhone(phone)) return json(res, 400, { error: 'Give a contact number for the client.' });
+    if (!isValidDate(date)) return json(res, 400, { error: 'Choose a date.' });
+
+    const durationOverride = Number(body.duration);
+    const check = validateAdminSlot(date, start, serviceId, {
+      duration: Number.isFinite(durationOverride) ? durationOverride : null,
+    });
+    if (!check.ok) return json(res, 409, { error: check.error });
+
+    // Warnings are surfaced once and only once. She confirms, and it goes in.
+    if (check.warnings.length && body.override !== true) {
+      return json(res, 409, { error: 'Confirm before this is booked.', warnings: check.warnings, needsOverride: true });
+    }
+
+    const { service, startMin, endMin, duration } = check;
+    const quoted = Boolean(service.priceOnRequest);
+    const total = quoted ? 0 : service.price;
+
+    const booking = {
+      id: `bk_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+      ref: nextRef(),
+      serviceId: service.id,
+      serviceName: service.name,
+      date,
+      start: toHHMM(startMin),
+      end: toHHMM(endMin),
+      startMin,
+      endMin,
+      duration,
+      client: { name, email, phone, notes },
+      total,
+      priceOnRequest: quoted,
+      depositDue: 0,
+      balanceDue: paidNow ? 0 : total,
+      payment: 'cash',
+      paymentStatus: quoted ? 'to-be-quoted' : paidNow ? 'paid-in-full' : 'due-in-studio',
+      status: 'confirmed',
+      source: 'manual',
+      adminNote,
+      createdAt: new Date().toISOString(),
+      ...(paidNow ? { paidAt: new Date().toISOString() } : {}),
+      ...(check.warnings.length ? { overrides: check.warnings } : {}),
+    };
+
+    write((db) => db.bookings.push(booking));
+    broadcast('bookings-changed', { date });
+    // No notification: she is standing there, she knows.
+    return json(res, 201, { booking: publicBooking(booking), id: booking.id, warnings: check.warnings });
+  }
+
+  /**
+   * Her bookings as a spreadsheet. One-person businesses do their books in
+   * a spreadsheet, and re-typing a year of appointments out of a web page
+   * is how figures get wrong.
+   */
+  if (p === '/api/admin/bookings.csv' && req.method === 'GET') {
+    const cell = (v) => {
+      const str = String(v ?? '');
+      return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const rows = [
+      ['Date', 'Start', 'End', 'Client', 'Phone', 'Email', 'Service', 'Minutes', 'Total', 'Owed', 'Payment', 'Status', 'Source', 'Reference', 'Booked at', 'Your note'],
+      ...[...db.bookings]
+        .sort((a, b) => (a.date === b.date ? a.startMin - b.startMin : a.date < b.date ? -1 : 1))
+        .map((b) => [
+          b.date, b.start, b.end,
+          b.client?.name, b.client?.phone, b.client?.email,
+          b.serviceName,
+          b.duration,
+          b.priceOnRequest ? 'On request' : b.total,
+          b.balanceDue,
+          b.payment,
+          b.status,
+          b.source || 'online',
+          b.ref,
+          b.createdAt,
+          b.adminNote || '',
+        ]),
+    ];
+    const csv = rows.map((r) => r.map(cell).join(',')).join('\r\n');
+    const stamp = nowIn(db.rules.timezone).date;
+    return send(res, 200, `﻿${csv}`, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="hairbychrissy-bookings-${stamp}.csv"`,
+      ...(res._cors || {}),
+    });
+  }
+
   if (p.startsWith('/api/admin/bookings/') && req.method === 'POST') {
     const [, , , , id, action] = p.split('/');
     const booking = db.bookings.find((b) => b.id === id);
     if (!booking) return json(res, 404, { error: 'Booking not found.' });
 
     if (action === 'cancel') {
+      const wasUpcoming = booking.date >= nowIn(db.rules.timezone).date;
       write(() => {
         booking.status = 'cancelled';
         booking.cancelledAt = new Date().toISOString();
       });
       broadcast('bookings-changed', { date: booking.date });
+      // Worth a record in the log either way, but only worth interrupting her
+      // for an appointment that had not happened yet.
+      if (wasUpcoming) {
+        const note = cancellationMessage({ ...booking, dateLong: longDate(booking.date) }, getService(booking.serviceId));
+        notify(note).then(() => broadcast('notification', {})).catch((err) => console.error('[notify]', err.message));
+      }
       return json(res, 200, { booking: publicBooking(booking) });
     }
 
@@ -542,6 +889,102 @@ async function handleAdminApi(req, res, url) {
       });
       broadcast('bookings-changed', { date: booking.date });
       return json(res, 200, { booking: publicBooking(booking) });
+    }
+
+    /**
+     * Moving an appointment rather than cancelling and re-booking it. A
+     * client who rings to change the day should not lose their slot to the
+     * public calendar in the seconds between the two operations, and should
+     * not end up with a second reference number for the same appointment.
+     */
+    if (action === 'reschedule') {
+      let body;
+      try {
+        body = await readJson(req);
+      } catch (err) {
+        return json(res, 400, { error: err.message });
+      }
+      const date = clean(body.date, 10);
+      const start = clean(body.start, 5);
+      if (!isValidDate(date)) return json(res, 400, { error: 'Choose a date to move it to.' });
+
+      const check = validateAdminSlot(date, start, booking.serviceId, {
+        ignoreId: booking.id,
+        duration: booking.duration,
+      });
+      if (!check.ok) return json(res, 409, { error: check.error });
+      if (check.warnings.length && body.override !== true) {
+        return json(res, 409, { error: 'Confirm before this is moved.', warnings: check.warnings, needsOverride: true });
+      }
+
+      const from = { date: booking.date, start: booking.start };
+      write(() => {
+        booking.rescheduledFrom = from;
+        booking.date = date;
+        booking.start = toHHMM(check.startMin);
+        booking.end = toHHMM(check.endMin);
+        booking.startMin = check.startMin;
+        booking.endMin = check.endMin;
+        booking.rescheduledAt = new Date().toISOString();
+      });
+      // Both days changed: the old slot is free again and the new one is not.
+      broadcast('bookings-changed', { dates: [...new Set([from.date, date])] });
+      return json(res, 200, { booking: publicBooking(booking), warnings: check.warnings });
+    }
+
+    /**
+     * Closing an appointment off after the fact. Without this every past
+     * booking reads the same as every other, and there is no record of who
+     * did not turn up — which is exactly the client she wants a deposit from
+     * next time.
+     */
+    if (action === 'complete' || action === 'no-show') {
+      write(() => {
+        booking.status = action === 'complete' ? 'completed' : 'no-show';
+        booking[action === 'complete' ? 'completedAt' : 'noShowAt'] = new Date().toISOString();
+        // Any outstanding balance is left exactly as it was. Marking an
+        // appointment done says it happened, not that it was paid for, and
+        // quietly clearing what she is owed would be the wrong guess.
+      });
+      return json(res, 200, { booking: publicBooking(booking) });
+    }
+
+    /**
+     * Putting a booking back. The clash check matters more here than anywhere:
+     * the moment she cancelled, that slot went back on sale, and the website
+     * may well have sold it since. Reopening without checking would put two
+     * clients in the chair — the one thing nothing in here is allowed to do.
+     */
+    if (action === 'reopen') {
+      const taken = clashesWith(booking.date, booking.startMin, booking.endMin, booking.id)[0];
+      if (taken) {
+        return json(res, 409, {
+          error: `That time has gone — ${taken.client?.name || 'someone else'} is booked in at ${taken.start}. Add it again at another time.`,
+        });
+      }
+      write(() => {
+        booking.status = 'confirmed';
+        delete booking.completedAt;
+        delete booking.noShowAt;
+        delete booking.cancelledAt;
+      });
+      broadcast('bookings-changed', { date: booking.date });
+      return json(res, 200, { booking: publicBooking(booking) });
+    }
+
+    /** Her own note on the appointment — colour formula, hair ordered, who
+     *  referred them. Never sent to the client and never shown on the site. */
+    if (action === 'note') {
+      let body;
+      try {
+        body = await readJson(req);
+      } catch (err) {
+        return json(res, 400, { error: err.message });
+      }
+      write(() => {
+        booking.adminNote = clean(body.note, 600);
+      });
+      return json(res, 200, { booking: publicBooking(booking), adminNote: booking.adminNote });
     }
 
     return json(res, 400, { error: 'Unknown action.' });
@@ -579,6 +1022,48 @@ function releaseAbandonedHolds() {
 setInterval(releaseAbandonedHolds, 60 * 1000).unref();
 releaseAbandonedHolds();
 
+/* ------------------------------------------------ the morning run-down */
+
+/**
+ * One email a morning listing the day ahead.
+ *
+ * Every other notification here fires at the moment a booking is made, which
+ * is exactly when she is least able to read it — mid-fitting, hands full. The
+ * day-ahead is the one that catches an appointment booked three weeks ago and
+ * forgotten since, so it is the one most likely to earn its keep.
+ *
+ * Set DAY_AHEAD_HOUR to the hour she wants it (0–23, her local time), or
+ * leave it unset to turn the whole thing off. The check runs every minute and
+ * a flag in the database makes it idempotent, so a restart at 07:59 does not
+ * send it twice and a restart at 08:30 still sends it once.
+ */
+function sendDayAhead() {
+  const hour = Number(process.env.DAY_AHEAD_HOUR);
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) return;
+
+  const db = read();
+  const now = nowIn(db.rules.timezone);
+  if (now.minutes < hour * 60) return;
+
+  const today = now.date;
+  if (db.dayAheadSentFor === today) return;
+
+  const bookings = db.bookings
+    .filter((b) => b.date === today && b.status !== 'cancelled' && b.status !== 'expired')
+    .sort((a, b) => a.startMin - b.startMin);
+
+  // Written before sending, not after: a failing email service must not turn
+  // into an email every minute for the rest of the day.
+  write((d) => { d.dayAheadSentFor = today; });
+
+  notify(dayAheadMessage(longDate(today), bookings))
+    .then(() => broadcast('notification', {}))
+    .catch((err) => console.error('[day-ahead]', err.message));
+}
+
+setInterval(sendDayAhead, 60 * 1000).unref();
+sendDayAhead();
+
 /* ------------------------------------------------------------- routing */
 
 const server = http.createServer(async (req, res) => {
@@ -586,6 +1071,13 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname;
 
   try {
+    // Stash the CORS headers for this request so every json() reply carries them.
+    res._cors = corsHeaders(req);
+
+    if (req.method === 'OPTIONS' && p.startsWith('/api/')) {
+      return send(res, 204, '', res._cors);
+    }
+
     if (p === '/api/stream') return handleStream(req, res);
     if (p.startsWith('/api/admin/')) return await handleAdminApi(req, res, url);
     if (p.startsWith('/api/')) return await handlePublicApi(req, res, url);
@@ -595,7 +1087,22 @@ const server = http.createServer(async (req, res) => {
     if (p === '/' || p === '/index.html') return servePage(res, 'index.html');
     if (p === '/admin' || p === '/admin/') return servePage(res, 'admin.html');
     if (p === '/confirmed') return servePage(res, 'confirmed.html');
-    if (p === '/pay/demo') return servePage(res, 'pay-demo.html');
+    /*
+     * One path segment, not two.
+     *
+     * This page was served at /pay/demo, which is two directories deep, so
+     * every relative asset on it — the stylesheet included — resolved to
+     * /pay/css/... and 404'd. The demo checkout has been rendering as
+     * unstyled black-on-white HTML for every client who chose to pay by card.
+     * Relative paths are not optional here: the same files are published to
+     * GitHub Pages under a /Hairbychrissy/ subpath, so they cannot be made
+     * root-absolute. The page moves to the same depth as every other page
+     * instead, and the old URL redirects so any link already sent still lands.
+     */
+    if (p === '/pay-demo') return servePage(res, 'pay-demo.html');
+    if (p === '/pay/demo') {
+      return send(res, 301, '', { Location: `/pay-demo${url.search}` });
+    }
     if (p === '/booking') return servePage(res, 'confirmed.html');
 
     return serveStatic(res, p);
@@ -612,6 +1119,13 @@ server.listen(PORT, () => {
   console.log(`  client site  ${publicUrl().replace(/:\d+$/, '')}:${PORT}/`);
   console.log(`  admin        http://localhost:${PORT}/admin`);
   console.log(`  card mode    ${isLiveStripe() ? 'LIVE (Stripe)' : 'DEMO (no real payments)'}`);
+  // Whether she gets told about a booking is not something to leave implicit.
+  const emailOn = Boolean(process.env.RESEND_API_KEY && process.env.NOTIFY_EMAIL_TO);
+  const dayHour = Number(process.env.DAY_AHEAD_HOUR);
+  console.log(`  email        ${emailOn ? `on — ${process.env.NOTIFY_EMAIL_TO}` : 'off (set RESEND_API_KEY and NOTIFY_EMAIL_TO)'}`);
+  console.log(`  run-down     ${Number.isInteger(dayHour) && dayHour >= 0 && dayHour <= 23
+    ? `each morning around ${String(dayHour).padStart(2, '0')}:00`
+    : 'off (set DAY_AHEAD_HOUR)'}`);
   if (usingDefaultPassword()) {
     console.log('  admin password: "chrissy"  — set ADMIN_PASSWORD before going live');
   }

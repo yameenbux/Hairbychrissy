@@ -2,47 +2,72 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Studio dashboard — Hair by Chrissy</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/app.css">
-<link rel="stylesheet" href="/css/admin.css">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#33261c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hair by Chrissy">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="stylesheet" href="./css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%234a382a'/><rect x='6' y='5' width='4' height='22' fill='%23dcc189'/><rect x='12' y='5' width='4' height='22' fill='%23b8944f'/><rect x='18' y='5' width='4' height='22' fill='%238a6d3a'/></svg>">
+<link rel="stylesheet" href="./css/admin.css">
 </head>
 <body>
 <div class="stripe"></div>
 
 <header class="topnav">
   <div class="shell topnav-inner">
-    <a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
+    <a class="wordmark" href="./"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
     <nav class="navlinks" id="adminNav" hidden>
       <a href="#" data-view="today">Today</a>
       <a href="#" data-view="bookings">Bookings</a>
       <a href="#" data-view="hours">My hours</a>
       <a href="#" data-view="time-off">Time off</a>
       <a href="#" data-view="services">Services</a>
+      <a href="#" data-view="alerts">Alerts</a>
       <a href="#" data-view="settings">Settings</a>
       <a href="#" id="logoutBtn">Sign out</a>
     </nav>
+    <button class="icon-btn nav-toggle" id="adminNavToggle" aria-label="Menu" aria-expanded="false" aria-controls="adminNav" hidden><span class="bars" aria-hidden="true"></span></button>
   </div>
 </header>
+
+<div id="alertBanner" class="alert-banner" hidden role="status" aria-live="polite">
+  <span class="stripe" aria-hidden="true"></span>
+  <div class="alert-inner">
+    <div>
+      <span class="label" id="alertTitle">New booking</span>
+      <p class="body-sm" id="alertBody" style="margin:4px 0 0"></p>
+    </div>
+    <div class="row" style="gap:8px;flex-wrap:nowrap">
+      <button class="btn btn-sm btn" type="button" id="alertView">View</button>
+      <button class="icon-btn" type="button" id="alertClose" aria-label="Dismiss">×</button>
+    </div>
+  </div>
+</div>
 
 <!-- ================================================================ LOGIN -->
 <section class="band" id="loginView">
   <div class="shell" style="max-width:440px">
-    <span class="label label-muted" style="display:block;margin-bottom:var(--sm)">Studio dashboard</span>
-    <h1 class="display-md" style="margin-bottom:var(--lg)">Sign in.</h1>
+    <span class="label label-muted" style="display:block;margin-bottom:12px">Studio dashboard</span>
+    <h1 class="display-sm" style="margin-bottom:24px">Sign in.</h1>
     <form id="loginForm">
       <div class="field">
         <label for="pw">Password</label>
         <input class="input" id="pw" type="password" autocomplete="current-password" autofocus>
       </div>
-      <div class="notice notice-error" id="loginError" hidden style="margin-bottom:var(--md)"></div>
-      <button class="btn btn-solid" type="submit" style="width:100%">Sign in</button>
+      <div class="notice notice-error" id="loginError" hidden style="margin-bottom:16px"></div>
+      <button class="btn" type="submit" style="width:100%">Sign in</button>
     </form>
-    <p class="caption" id="loginHint" style="margin-top:var(--lg)"></p>
+    <p class="caption" id="loginHint" style="margin-top:24px"></p>
   </div>
 </section>
 
@@ -54,20 +79,115 @@
     <div class="shell">
       <div class="section-head">
         <span class="label label-muted">Dashboard</span>
-        <h1 class="display-md" id="todayHeading">Today</h1>
+        <h1 class="display-sm" id="todayHeading">Today</h1>
       </div>
-      <div class="spec-grid" style="margin-bottom:var(--xl)">
+      <div class="spec-grid" style="margin-bottom:40px">
         <div class="spec-cell"><div class="value" id="kpiToday">0</div><span class="key">Appointments today</span></div>
         <div class="spec-cell"><div class="value" id="kpiWeek">0</div><span class="key">Next 7 days</span></div>
         <div class="spec-cell"><div class="value" id="kpiRevenue">£0</div><span class="key">Booked, next 30 days</span></div>
         <div class="spec-cell"><div class="value" id="kpiOwed">£0</div><span class="key">To collect on the day</span></div>
       </div>
 
-      <div class="spread" style="margin-bottom:var(--md)">
-        <span class="label">Coming up</span>
+      <div class="spread" style="margin-bottom:16px">
+        <span class="label">Your day</span>
         <span class="live-dot" id="adminLive" data-state="connecting">Live</span>
       </div>
+
+      <!-- The run sheet. One day at a time, in order, with the gaps between
+           appointments shown — because a two-hour hole is the thing she wants
+           to see when someone rings asking for a slot. -->
+      <div class="daybar">
+        <button class="btn btn-sm btn-outline" type="button" id="dayPrev" aria-label="Previous day">‹</button>
+        <input class="input" type="date" id="dayPick" aria-label="Show this day">
+        <button class="btn btn-sm btn-outline" type="button" id="dayNext" aria-label="Next day">›</button>
+        <button class="btn btn-sm btn-outline" type="button" id="dayToday">Today</button>
+        <span class="grow"></span>
+        <button class="btn btn-sm" type="button" id="newBookingBtn">Add a booking</button>
+      </div>
+      <p class="body-sm muted" id="daySummary" style="margin:0 0 16px"></p>
+      <div id="dayList"></div>
+
+      <div class="spread" style="margin:40px 0 16px">
+        <span class="label">Coming up next</span>
+      </div>
       <div id="upcomingList"></div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------- NEW BOOKING -->
+  <!-- Most of her enquiries arrive as Instagram DMs. Without somewhere to
+       record those, the public calendar keeps selling slots she has already
+       promised — so this is a double-booking fix before it is a convenience. -->
+  <section class="band-tight view" data-view="new" hidden>
+    <div class="shell" style="max-width:640px">
+      <div class="section-head">
+        <span class="label label-muted">Taken by phone, DM or in person</span>
+        <h1 class="display-sm">Add a booking</h1>
+      </div>
+
+      <form id="newBookingForm" novalidate>
+        <div class="field">
+          <label for="nbService">Service</label>
+          <select class="select" id="nbService" required></select>
+        </div>
+
+        <div class="row">
+          <div class="field grow">
+            <label for="nbDate">Date</label>
+            <input class="input" type="date" id="nbDate" required>
+          </div>
+          <div class="field grow">
+            <label for="nbStart">Start time</label>
+            <input class="input" type="time" id="nbStart" step="300" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="nbDuration">How long (minutes)</label>
+          <input class="input" type="number" id="nbDuration" min="15" max="600" step="5">
+          <p class="hint" id="nbDurationHint">Leave as it is unless this one is longer or shorter than usual.</p>
+        </div>
+
+        <div class="field">
+          <label for="nbName">Client name</label>
+          <input class="input" id="nbName" autocomplete="name" required>
+        </div>
+
+        <div class="row">
+          <div class="field grow">
+            <label for="nbPhone">Phone</label>
+            <input class="input" type="tel" id="nbPhone" inputmode="tel" autocomplete="tel" required>
+          </div>
+          <div class="field grow">
+            <label for="nbEmail">Email <span class="muted">— optional</span></label>
+            <input class="input" type="email" id="nbEmail" inputmode="email" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="nbNotes">What they have asked for</label>
+          <textarea class="textarea" id="nbNotes" rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="nbAdminNote">Your own note <span class="muted">— they never see this</span></label>
+          <textarea class="textarea" id="nbAdminNote" rows="2" placeholder="Colour formula, hair ordered, who referred them"></textarea>
+        </div>
+
+        <label class="check" for="nbPaid">
+          <input type="checkbox" id="nbPaid">
+          <span class="box" aria-hidden="true"></span>
+          <span class="t">Already paid in full</span>
+        </label>
+
+        <div id="nbWarnings" class="warnbox" hidden></div>
+
+        <div class="row" style="margin-top:24px">
+          <button class="btn" type="submit" id="nbSubmit">Book it in</button>
+          <button class="btn btn-outline" type="button" id="nbCancel">Cancel</button>
+        </div>
+        <p class="msg" id="nbMsg" hidden></p>
+      </form>
     </div>
   </section>
 
@@ -76,18 +196,25 @@
     <div class="shell">
       <div class="section-head">
         <span class="label label-muted">All appointments</span>
-        <h1 class="display-md">Bookings</h1>
+        <h1 class="display-sm">Bookings</h1>
       </div>
-      <div class="row" style="margin-bottom:var(--lg)">
+      <div class="row" style="margin-bottom:16px">
         <select class="select" id="bookingFilter" style="max-width:240px">
           <option value="upcoming">Upcoming</option>
           <option value="today">Today</option>
+          <option value="unpaid">Money owing</option>
           <option value="past">Past</option>
+          <option value="done">Finished</option>
+          <option value="no-show">Did not turn up</option>
           <option value="cancelled">Cancelled &amp; expired</option>
           <option value="all">Everything</option>
         </select>
         <input class="input" id="bookingSearch" placeholder="Search name, reference or phone" style="max-width:320px">
+        <span class="grow"></span>
+        <button class="btn btn-sm" type="button" id="bookingsAdd">Add a booking</button>
+        <a class="btn btn-sm btn-outline" id="bookingsExport" href="./api/admin/bookings.csv" download>Export</a>
       </div>
+      <p class="body-sm muted" id="bookingCount" style="margin:0 0 20px"></p>
       <div id="bookingList"></div>
     </div>
   </section>
@@ -97,15 +224,15 @@
     <div class="shell">
       <div class="section-head">
         <span class="label label-muted">Availability</span>
-        <h1 class="display-md">My working week.</h1>
-        <p class="lede" style="margin-top:var(--md)">Turn a day on and set your start and finish. Anything you save here changes what clients can book straight away — their calendar updates without a refresh.</p>
+        <h1 class="display-sm">My working week.</h1>
+        <p class="lede" style="margin-top:16px">Turn a day on and set your start and finish. Anything you save here changes what clients can book straight away — their calendar updates without a refresh.</p>
       </div>
       <form id="hoursForm">
         <div id="hoursRows"></div>
-        <div class="notice" id="hoursMsg" hidden style="margin-top:var(--lg)"></div>
-        <div class="row" style="margin-top:var(--lg)">
-          <button class="btn btn-solid" type="submit">Save my hours</button>
-          <button class="btn btn-ghost" type="button" id="hoursReset">Undo changes</button>
+        <div class="notice" id="hoursMsg" hidden style="margin-top:24px"></div>
+        <div class="row" style="margin-top:24px">
+          <button class="btn" type="submit">Save my hours</button>
+          <button class="btn btn-outline" type="button" id="hoursReset">Undo changes</button>
         </div>
       </form>
     </div>
@@ -116,22 +243,22 @@
     <div class="shell">
       <div class="section-head">
         <span class="label label-muted">Availability</span>
-        <h1 class="display-md">Time off.</h1>
-        <p class="lede" style="margin-top:var(--md)">Block out holidays, training days or anything else. Blocked dates disappear from the client calendar immediately.</p>
+        <h1 class="display-sm">Time off.</h1>
+        <p class="lede" style="margin-top:16px">Block out holidays, training days or anything else. Blocked dates disappear from the client calendar immediately.</p>
       </div>
       <div class="grid grid-2" style="align-items:start">
-        <form id="blockForm" class="card">
-          <span class="label" style="display:block;margin-bottom:var(--md)">Block dates</span>
-          <div class="grid grid-2" style="gap:var(--md)">
+        <form id="blockForm" class="panel">
+          <span class="label" style="display:block;margin-bottom:16px">Block dates</span>
+          <div class="grid grid-2" style="gap:16px">
             <div class="field"><label for="bFrom">From</label><input class="input" id="bFrom" type="date" required></div>
             <div class="field"><label for="bTo">To (optional)</label><input class="input" id="bTo" type="date"></div>
           </div>
           <div class="field"><label for="bReason">Reason (only you see this)</label><input class="input" id="bReason" placeholder="Holiday"></div>
-          <div class="notice notice-error" id="blockError" hidden style="margin-bottom:var(--md)"></div>
-          <button class="btn btn-solid" type="submit" style="width:100%">Block these dates</button>
+          <div class="notice notice-error" id="blockError" hidden style="margin-bottom:16px"></div>
+          <button class="btn" type="submit" style="width:100%">Block these dates</button>
         </form>
         <div>
-          <span class="label" style="display:block;margin-bottom:var(--md)">Currently blocked</span>
+          <span class="label" style="display:block;margin-bottom:16px">Currently blocked</span>
           <div id="blockedList"></div>
         </div>
       </div>
@@ -143,15 +270,70 @@
     <div class="shell">
       <div class="section-head">
         <span class="label label-muted">Price list</span>
-        <h1 class="display-md">Services &amp; prices.</h1>
-        <p class="lede" style="margin-top:var(--md)">How long a service takes decides how many slots fit in a day, so keep durations honest. The deposit is what card clients pay to hold the slot.</p>
+        <h1 class="display-sm">Services &amp; prices.</h1>
+        <p class="lede" style="margin-top:16px">How long a service takes decides how many slots fit in a day, so keep durations honest. The deposit is what card clients pay to hold the slot.</p>
       </div>
       <div id="serviceRows"></div>
-      <div class="notice" id="servicesMsg" hidden style="margin-top:var(--lg)"></div>
-      <div class="row" style="margin-top:var(--lg)">
-        <button class="btn btn-solid" type="button" id="servicesSave">Save price list</button>
+      <div class="notice" id="servicesMsg" hidden style="margin-top:24px"></div>
+      <div class="row" style="margin-top:24px">
+        <button class="btn" type="button" id="servicesSave">Save price list</button>
         <button class="btn" type="button" id="serviceAdd">Add a service</button>
-        <button class="btn btn-ghost" type="button" id="servicesReset">Undo changes</button>
+        <button class="btn btn-outline" type="button" id="servicesReset">Undo changes</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- ALERTS -->
+  <section class="band-tight view" data-view="alerts" hidden>
+    <div class="shell">
+      <div class="section-head">
+        <span class="label label-muted">Notifications</span>
+        <h1 class="display-sm">Never miss a booking.</h1>
+        <p class="lede" style="margin-top:16px">Turn on alerts for this phone or laptop and you get a notification the moment someone books — even with the site closed.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:40px">
+        <div class="stripe" style="margin:calc(24px * -1) calc(24px * -1) 24px" aria-hidden="true"></div>
+        <div class="spread" style="margin-bottom:16px">
+          <span class="label">Alerts on this device</span>
+          <span class="pill" id="pushState">Checking…</span>
+        </div>
+        <p class="body-sm" id="pushCopy" style="margin-bottom:16px">…</p>
+        <div class="row">
+          <button class="btn" type="button" id="pushEnable" hidden>Turn on alerts here</button>
+          <button class="btn btn-outline" type="button" id="pushDisable" hidden>Turn off on this device</button>
+          <button class="btn btn-outline" type="button" id="testBtn">Send me a test</button>
+        </div>
+        <div class="notice" id="pushMsg" hidden style="margin-top:16px"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:40px">
+        <div class="spread" style="margin-bottom:16px">
+          <span class="label">Your morning run-down</span>
+          <span class="pill" id="dayAheadState">Checking…</span>
+        </div>
+        <p class="body-sm" id="dayAheadCopy" style="margin-bottom:16px">…</p>
+        <div class="row">
+          <button class="btn btn-outline" type="button" id="dayAheadBtn">Send me today's run-down</button>
+        </div>
+        <div class="notice" id="dayAheadMsg" hidden style="margin-top:16px"></div>
+      </div>
+
+      <div class="grid grid-2" style="align-items:start">
+        <div>
+          <span class="label" style="display:block;margin-bottom:16px">Where alerts go</span>
+          <div id="channelList"></div>
+          <p class="caption" style="margin-top:16px">Extra channels are switched on by the person who set the site up. Ask for whichever you want and it takes a few minutes.</p>
+        </div>
+        <div>
+          <span class="label" style="display:block;margin-bottom:16px">Devices signed up</span>
+          <div id="deviceList"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:40px">
+        <span class="label" style="display:block;margin-bottom:16px">Recently sent</span>
+        <div id="notifyLog"></div>
       </div>
     </div>
   </section>
@@ -161,10 +343,10 @@
     <div class="shell">
       <div class="section-head">
         <span class="label label-muted">Booking rules</span>
-        <h1 class="display-md">Settings.</h1>
+        <h1 class="display-sm">Settings.</h1>
       </div>
       <form id="rulesForm" style="max-width:640px">
-        <div class="grid grid-2" style="gap:var(--md)">
+        <div class="grid grid-2" style="gap:16px">
           <div class="field">
             <label for="rSlot">Slot spacing (minutes)</label>
             <input class="input" id="rSlot" type="number" min="5" max="120" step="5">
@@ -189,21 +371,21 @@
             <input class="input" id="rCancel" type="number" min="0" max="336">
           </div>
         </div>
-        <div class="notice" id="rulesMsg" hidden style="margin:var(--md) 0"></div>
-        <button class="btn btn-solid" type="submit">Save settings</button>
+        <div class="notice" id="rulesMsg" hidden style="margin:16px 0"></div>
+        <button class="btn" type="submit">Save settings</button>
       </form>
 
-      <div class="hairline" style="margin:var(--xl) 0"></div>
-      <span class="label" style="display:block;margin-bottom:var(--md)">Payments</span>
+      <div class="hairline" style="margin:40px 0"></div>
+      <span class="label" style="display:block;margin-bottom:16px">Payments</span>
       <div class="notice" id="cardModeNote"></div>
 
-      <div class="hairline" style="margin:var(--xl) 0"></div>
-      <span class="label" style="display:block;margin-bottom:var(--md)">Security</span>
+      <div class="hairline" style="margin:40px 0"></div>
+      <span class="label" style="display:block;margin-bottom:16px">Security</span>
       <div class="notice" id="passwordNote"></div>
     </div>
   </section>
 </main>
 
-<script src="/js/admin.js" type="module"></script>
+<script src="./js/admin.js" type="module"></script>
 </body>
 </html>
