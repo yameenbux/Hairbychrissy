@@ -2,9 +2,11 @@
   "name": "hairbychrissy-booking",
   "version": "0.1.0",
   "private": true,
-  "description": "Live calendar booking platform for H A I R  B Y  C H R I S S Y — London hair extension specialist",
+  "description": "Live calendar booking platform for H A I R  B Y  C H R I S S Y \u2014 London hair extension specialist",
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
@@ -14,7 +16,10 @@
     "build:data": "node tools/build-static-data.js",
     "audit:sticky": "node tools/sticky-audit.js",
     "audit:scrim": "node tools/scrim-audit.js",
-    "audit:header": "node tools/header-audit.js"
+    "audit:header": "node tools/header-audit.js",
+    "shots": "node tools/shot-375.js",
+    "audit:banlist": "node tools/banlist-audit.js",
+    "sheet": "python3 tools/contact-sheet.py"
   },
   "dependencies": {}
 }

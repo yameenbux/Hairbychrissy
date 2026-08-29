@@ -172,7 +172,7 @@ function serveStatic(res, urlPath) {
     return send(res, 403, 'Forbidden');
   }
   fs.stat(target, (err, stat) => {
-    if (err || !stat.isFile()) return send(res, 404, 'Not found');
+    if (err || !stat.isFile()) return serveNotFound(res);
     const type = MIME[path.extname(target).toLowerCase()] || 'application/octet-stream';
     const cacheable = /\.(jpg|jpeg|png|webp|avif|svg|woff2|ico|mp4|webm)$/i.test(target);
     res.writeHead(200, {
@@ -181,6 +181,22 @@ function serveStatic(res, urlPath) {
       'Cache-Control': cacheable ? 'public, max-age=3600' : 'no-store',
     });
     fs.createReadStream(target).pipe(res);
+  });
+}
+
+/**
+ * The 404 page, not the word "Not found".
+ *
+ * public/404.html has existed since the rebuild and GitHub Pages serves it
+ * automatically, so it was only ever missing under Node — which is to say it
+ * was missing everywhere it is actually being used right now. A dead end is
+ * still a page a client is looking at, and it is the one page with nothing to
+ * lose by asking them to book.
+ */
+function serveNotFound(res) {
+  fs.readFile(path.join(PUBLIC, '404.html'), (err, buf) => {
+    if (err) return send(res, 404, 'Not found');
+    send(res, 404, buf, { 'Content-Type': 'text/html; charset=utf-8' });
   });
 }
 
@@ -458,7 +474,7 @@ async function createBooking(req, res) {
   return json(res, 201, {
     booking: publicBooking(booking),
     next: 'checkout',
-    checkoutUrl: `/pay/demo?ref=${booking.ref}`,
+    checkoutUrl: `/pay-demo?ref=${booking.ref}`,
     demo: true,
   });
 }
@@ -1071,7 +1087,22 @@ const server = http.createServer(async (req, res) => {
     if (p === '/' || p === '/index.html') return servePage(res, 'index.html');
     if (p === '/admin' || p === '/admin/') return servePage(res, 'admin.html');
     if (p === '/confirmed') return servePage(res, 'confirmed.html');
-    if (p === '/pay/demo') return servePage(res, 'pay-demo.html');
+    /*
+     * One path segment, not two.
+     *
+     * This page was served at /pay/demo, which is two directories deep, so
+     * every relative asset on it — the stylesheet included — resolved to
+     * /pay/css/... and 404'd. The demo checkout has been rendering as
+     * unstyled black-on-white HTML for every client who chose to pay by card.
+     * Relative paths are not optional here: the same files are published to
+     * GitHub Pages under a /Hairbychrissy/ subpath, so they cannot be made
+     * root-absolute. The page moves to the same depth as every other page
+     * instead, and the old URL redirects so any link already sent still lands.
+     */
+    if (p === '/pay-demo') return servePage(res, 'pay-demo.html');
+    if (p === '/pay/demo') {
+      return send(res, 301, '', { Location: `/pay-demo${url.search}` });
+    }
     if (p === '/booking') return servePage(res, 'confirmed.html');
 
     return serveStatic(res, p);

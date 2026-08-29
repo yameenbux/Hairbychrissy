@@ -6,7 +6,48 @@ it is all content you or I can change in minutes.
 
 ---
 
-## 1. Latest round — your dashboard, and email
+## 1. Latest round — the look, tightened
+
+A design pass. Nothing about how the booking works changed; this is all about
+how it reads.
+
+**On a phone, your price list is now two across instead of one.** It was
+showing one service per screen — seven full-width photographs — so reading six
+prices meant scrolling past about seven thousand pixels of pictures, and you
+could never see two prices at once to compare them. Four services fit on screen
+now and the whole page is a third shorter.
+
+**One thing to book, said the same way everywhere.** Every page now pushes to
+the same button, in the same words: *Book your slot*. It is in the header, the
+hero, after the services, after your work, after the reviews, after the FAQ,
+and on the confirmation and error pages. Before this the hero offered two
+buttons of equal weight — "Book an appointment" and "View services" — which
+splits people rather than pointing them. "See the price list" is a quiet link
+under the button now.
+
+**Headings are in your serif.** The big headings were set in the same plain
+sans as the body, which read like a software product rather than a hair studio.
+They are now in the same elegant serif as your name at the top.
+
+**Two things I fixed that were genuinely broken:**
+
+1. **The card payment page had no styling at all.** It was being served from a
+   web address one folder deeper than every other page, so it could not find
+   the stylesheet — anyone who chose to pay by card got a page of plain black
+   text on white. It has been moved and it looks like the rest of the site now.
+2. **The "page not found" page never appeared.** It existed, but the server was
+   showing the words "Not found" instead. It works now, and it asks them to
+   book rather than leaving them at a dead end.
+
+**One thing I need from you:** two of your service photos are the same picture.
+*Pinned curls* and *Hollywood waves with clip-ins* were the identical file, and
+now that the price list is two across they sit side by side, so it looked like
+a mistake. I have re-cropped one as a stopgap, but **a photo of pinned curls
+would fix it properly**.
+
+---
+
+## 2. Previous round — your dashboard, and email
 
 Two things you asked for.
 
@@ -80,7 +121,7 @@ hours you could sell, but only if you find out before Thursday.
 
 ---
 
-## 2. Your "4 Benefits" graphic
+## 3. Your "4 Benefits" graphic
 
 Your four benefits are now a section on the page, under **Why extensions**,
 sitting just after "Hair that is maintained, not fixed" and before the prices.
@@ -105,7 +146,7 @@ them and they stood out. Easy to put back if you want the warmth.
 
 ---
 
-## 3. Previous round
+## 4. Previous round
 
 Your three photos and two reels are all in:
 
@@ -127,7 +168,7 @@ bottom. I cropped them out rather than letting the page squash around them.
 
 ---
 
-## 4. Earlier round
+## 5. Earlier round
 
 - **Your logo is now in the header**, beside the "Hair by Chrissy" wordmark,
   masked to a circle so it reads as a mark rather than a photo tile.
@@ -139,7 +180,7 @@ bottom. I cropped them out rather than letting the page squash around them.
 
 ---
 
-## 5. Your real prices are now in — thank you
+## 6. Your real prices are now in — thank you
 
 The price list and services graphics you sent replaced the biggest guess in the
 whole project. **Everything below is now yours, not my estimate:**
@@ -178,7 +219,7 @@ instead, say the amount and I will set it.
 
 ---
 
-## 6. Your video is now the top of the page
+## 7. Your video is now the top of the page
 
 The transformation reel you sent is the moving image at the top of the site —
 her before, then the finished hair. It is the strongest thing on the page: it
@@ -205,7 +246,7 @@ three graphics you sent before, and they are all already in.
 
 ---
 
-## 7. Your photos are on the site
+## 8. Your photos are on the site
 
 The two you sent are now doing real work:
 
@@ -222,7 +263,7 @@ afters — and every card has its own.
 
 ---
 
-## 8. Your hours — currently a guess
+## 9. Your hours — currently a guess
 
 Set as Tuesday–Saturday, 9–6 (Thursday to 8pm), Saturday 9–5, with a 1:00–1:45
 lunch. Sunday and Monday closed.
@@ -232,7 +273,7 @@ set your times, save. Clients see it immediately.
 
 ---
 
-## 9. Reviews are placeholder text
+## 10. Reviews are placeholder text
 
 The six testimonials on the site are **written by me, not by real clients**.
 They must be replaced before this goes public.
@@ -242,7 +283,7 @@ and I'll put the genuine ones in with their first name and initial.
 
 ---
 
-## 10. The look, and where the site lives
+## 11. The look, and where the site lives
 
 The site has been rebuilt in a quieter, more editorial style — lots of white
 space, cream and white sections alternating, one gold accent used sparingly, and
@@ -272,7 +313,7 @@ you should know:
 
 ---
 
-## 11. Colours
+## 12. Colours
 
 The site now takes its colours straight from your Instagram profile picture. I
 sampled them from the image rather than guessing: the taupe background, the
@@ -296,7 +337,7 @@ single block of settings and takes minutes to change.
 
 ---
 
-## 12. On phones
+## 13. On phones
 
 You mentioned most clients book from their phone, so that's now the main target
 rather than an afterthought. Checked on iPhone SE, 13 mini, 15 Pro, 15 Pro Max,
@@ -328,7 +369,7 @@ work at all.
 
 ---
 
-## 13. Contact and location
+## 14. Contact and location
 
 Currently showing:
 
@@ -341,7 +382,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 14. Cancellation policy
+## 15. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -349,7 +390,7 @@ want the wording different.
 
 ---
 
-## 15. Card payments
+## 16. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -367,7 +408,7 @@ tell me the amount.
 
 ---
 
-## 16. Getting told about bookings
+## 17. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -411,7 +452,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 17. Not built yet
+## 18. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -429,7 +470,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 18. Your dashboard
+## 19. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.

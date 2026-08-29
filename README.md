@@ -71,7 +71,7 @@ No `npm install` needed — the app has **zero runtime dependencies**, just Node
 | `/` | Client site + booking calendar |
 | `/admin` | Chrissy's dashboard (default password `chrissy`) |
 | `/confirmed?ref=…` | Booking confirmation |
-| `/pay/demo?ref=…` | Simulated card checkout (draft mode only) |
+| `/pay-demo?ref=…` | Simulated card checkout (draft mode only) |
 
 Configuration is via environment variables — copy `.env.example` to `.env`.
 Everything has a working default, so nothing must be set to try it out.
@@ -400,11 +400,103 @@ Rules held from the spec:
   legal bar closing the footer is the single band the spec allows. The hero is
   an imagery band with a scrim, not a dark section.
 - **No gradients as fills, no shadows on UI.** Depth comes from photography.
-- **Three type roles**: a display serif for the wordmark only, a grotesque for
-  uppercase display headings at `clamp(2.5rem, 7vw, 6rem)` / `0.95` line-height
-  / `0.02em` tracking, and body at `1rem–1.125rem` / `1.6` capped to `42ch`.
 - **Oversized thin numerals as layout anchors** on the process section.
-- **Whitespace as the primary device** — bands run `clamp(88px, 18vh, 200px)`.
+- **Whitespace as the primary device** — see the rhythm scale below.
+
+### The ban list
+
+Five things are banned outright, and `tools/banlist-audit.js` enforces them
+rather than leaving them to memory: **purple gradients**, **emoji as icons**,
+**Inter as the display font**, **generic stock-photo placeholders**, and
+**centred-everything layouts**. The audit also guards the two scales below and
+the motion band, because the way a type scale dies is one `font-size: 13px`
+typed into one rule six months from now.
+
+What that changed:
+
+- **The display face is the serif.** `.display`, `.display-sm` and `.numeral`
+  were set in uppercase Inter, which read as a software product rather than as
+  her studio. They are Cormorant Garamond at weight 300 now; Inter sets the
+  body and the interface and nothing else.
+- **The menu control is drawn, not typed.** It was `U+2630`, a glyph from
+  whatever font happened to be installed, rendering at a different weight and
+  baseline on every platform. It is two rules and a pseudo-element now, in the
+  same hairline stroke as everything else, and it crosses into an X when open.
+- **The image placeholder stopped faking a photograph.** Two radial gradients
+  over her logo's taupe were doing an impression of a soft-lit portrait, so
+  every real photograph that replaced one looked like a downgrade for the
+  first half second. It is a flat tint with a hairline — plainly a frame
+  waiting to be filled.
+- Three pages **loaded no serif at all**, so the wordmark fell back to Times on
+  the confirmation, the checkout and the dashboard. All five pages now load one
+  identical font link.
+
+### The type scale
+
+One scale, ratio **1.25** (major third) from a 16px base, and nothing off it.
+Before this there were seventeen sizes on the client site and sixteen more on
+the dashboard, rem and px mixed, with `0.8125` / `0.85` / `0.875` all in play
+and none of them meaning anything different from the others.
+
+| Token | Size | Used for |
+|---|---|---|
+| `--t-xs` | 12.8px | uppercase labels, pills, legal |
+| `--t-sm` | 16px | body, inputs (also the iOS-zoom floor) |
+| `--t-md` | 20px | lede |
+| `--t-lg` | 25px | card and step headings |
+| `--t-xl` | 31px | sub-heads |
+| `--t-2xl` | 39px | section headings |
+| `--t-3xl` | 61px | page headings |
+| `--t-4xl` | 95px | the hero, and nothing else |
+
+The floor is 12.8px rather than a step lower, because below that is unreadable
+on a phone and nine in ten of her clients are on one — everything that used to
+be 10px or 11px came **up**. Fluid sizes clamp between two steps of this same
+scale, so even at an arbitrary viewport the ends land on it.
+
+Line height and tracking are properties of the role, not of each rule:
+`--lh-display: 1.04`, `--lh-snug: 1.24`, `--lh-body: 1.65`; `--ls-display:
+-0.015em`, `--ls-label: 0.14em` for small uppercase, `--ls-caps: 0.08em` for
+uppercase at body size and up.
+
+### The rhythm scale
+
+Same treatment for vertical space, which had fifteen hand-written margins in
+`index.html` alone — 10, 16, 18, 24, 28, 32, 40, 48 and four separate
+hand-rolled clamps. Steps sit on an 8px grid (`--s-1` … `--s-6`), with fluid
+steps for the gaps that must open on a large screen and close to something
+sane on a phone: `--band` between sections, `--stack` from a section head to
+its content, `--stack-lg` between blocks inside one band.
+
+Bands went from `clamp(88px, 18vh, 200px)` to `clamp(112px, 20vh, 208px)`, and
+the stacked-on-mobile grids — process, benefits, services — went from 28–32px
+between cards to 72px. Those were the genuinely cramped ones: cards touching
+with less air between them than inside them.
+
+### Motion
+
+Two jobs only: bring a section in as it is reached, and answer a pointer.
+Everything runs **200–300ms** on a plain ease. Nothing overshoots, nothing
+springs back, nothing loops — an infinite animation on a page about hair is a
+thing that moves in the corner of the eye while somebody is trying to read a
+price list. There was one, a 26-second drifting blob that no page had
+referenced since the rebuild; it is deleted rather than left running. The
+scroll reveal was 600ms, which is long enough to notice as an effect rather
+than register as the page settling; it is 280ms.
+
+Hover states are behind `(hover: hover) and (pointer: fine)`, because on a
+touch screen `:hover` sticks after a tap and leaves an element looking
+permanently pressed.
+
+### One action
+
+Every page pushes toward booking a slot, in the same words — **"Book your
+slot"** — and the same treatment: header, hero, and after each block that
+finishes an argument (services, work, reviews, FAQ), plus the confirmation and
+the 404. The hero used to offer two buttons side by side, which is two calls to
+action; "See the price list" is a quiet link now. The confirmation page offered
+"Back to the site" and "Print / save" as equal buttons and no way to book
+again.
 - **Asymmetric splits that alternate sides** down the page.
 - **Service grid 4 / 2 / 1** with a full-width SELECT bar revealed over the
   image bottom. On touch, where there is no hover, the bar is always visible.
@@ -509,6 +601,9 @@ tools/
   sticky-audit.js      heading clearance, nav parity, focus rings
   header-audit.js      wordmark centring and collisions, 11 widths
   scrim-audit.js       white hero type vs the lightest pixel of the photo
+  banlist-audit.js     the ban list, the type and rhythm scales, the motion band
+  shot-375.js          every page and state captured and measured at 375px
+  contact-sheet.py     those captures laid out side by side on one sheet
   build-static-data.js writes the content snapshot the flat-file build reads
 data/db.json           created on first run; gitignored
 ```
@@ -516,6 +611,46 @@ data/db.json           created on first run; gitignored
 Data lives in a single JSON file. For one stylist that is genuinely enough, and
 it keeps the whole thing deployable anywhere Node runs. If the business grows
 past it, `lib/store.js` is the only file that changes.
+
+---
+
+## Every page at 375px
+
+`npm run shots` walks every page and every state that is only reachable by
+interacting — the four booking steps, the run sheet, the add-booking form, all
+seven dashboard views — captures each one full-page at 375px, and measures what
+breaks at that width: horizontal overflow *named to the element causing it*,
+text under 12px, inputs under 16px, tap targets under 44px, paragraph columns
+collapsed under 24 characters, and headings wrapping past three lines.
+`npm run sheet` then lays the captures side by side on one image, because a
+20,000px screenshot is not something anyone can look at.
+
+It found 51 problems on its first run, including three the existing audits
+could not:
+
+- **Appointment rows ran 14–15px past the right edge.** Grid children default
+  to `min-width: auto`, so a phone number or a row of pills pushed the row out;
+  `body { overflow-x: hidden }` then hid it, which is not the same as fixing
+  it — the text was still out there, clipped, on her phone. The mobile audit
+  measured `documentElement.scrollWidth` and so saw nothing wrong.
+- **The card payment page had no stylesheet.** It was served at `/pay/demo`,
+  two path segments deep, so every relative asset resolved to `/pay/css/…` and
+  404'd. Anyone paying by card got unstyled black-on-white HTML. Relative paths
+  are not optional here — the same files publish to Pages under a subpath — so
+  the page moved to `/pay-demo`, at the same depth as every other page, with a
+  301 from the old URL.
+- **The 404 page was never served.** `public/404.html` has existed since the
+  rebuild and Pages serves it automatically, so it was only missing under Node,
+  which is where the site actually runs. It returned the literal text
+  "Not found".
+
+The largest single finding was length: the home page was **26,020px** tall on a
+phone, because the seven-card price list rendered one card per screen — and the
+same seven cards appear again inside the booking step, so a client scrolled
+past 7,300px of photographs to read six prices. Two columns and a square crop
+took the page to 20,524px and put four services on screen at once.
+
+Everything is at zero now, across all eighteen screens.
 
 ---
 

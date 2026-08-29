@@ -32,14 +32,69 @@
 
   --wordmark: 'Cormorant Garamond', 'Times New Roman', Times, serif;
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* The display face is the serif. Inter sets the interface and the body and
+     nothing else — a premium beauty page cannot lead on the same grotesque
+     every SaaS dashboard leads on. */
+  --display-face: var(--wordmark);
+
+  /* ------------------------------------------------------ type scale
+     One scale, ratio 1.25 (major third) from a 16px base, and nothing off
+     it. Before this there were seventeen sizes on the client site and
+     sixteen more on the dashboard, rem and px mixed, with 0.8125 / 0.85 /
+     0.875 all in play and none of them meaning anything different.
+
+     The floor is 12.8px rather than a step lower: below that is unreadable
+     on a phone, and nine in ten of her clients are on one. Anything that
+     used to be 10px or 11px comes up to it.
+
+     Fluid sizes clamp between two steps of this same scale, so even at an
+     arbitrary viewport the ends land on the scale. */
+  --t-xs:   0.8rem;      /* 12.8px — uppercase labels, pills, legal      */
+  --t-sm:   1rem;        /* 16px   — body, inputs (the iOS-zoom floor)   */
+  --t-md:   1.25rem;     /* 20px   — lede                                */
+  --t-lg:   1.5625rem;   /* 25px   — card and step headings              */
+  --t-xl:   1.953rem;    /* 31px   — sub-heads                           */
+  --t-2xl:  2.441rem;    /* 39px   — section headings                    */
+  --t-3xl:  3.815rem;    /* 61px   — page headings                       */
+  --t-4xl:  5.96rem;     /* 95px   — the hero, and nothing else          */
+
+  /* Line height is a property of the role, not of each rule. */
+  --lh-display: 1.04;
+  --lh-snug:    1.24;
+  --lh-body:    1.65;
+
+  /* Tracking. Large serif needs negative; small uppercase needs a lot. */
+  --ls-display: -0.015em;
+  --ls-heading: -0.005em;
+  --ls-body:    0em;
+  --ls-label:   0.14em;   /* small uppercase                       */
+  --ls-caps:    0.08em;   /* uppercase at body size and above      */
 
   --shell: 1440px;
   --gutter: clamp(20px, 5vw, 72px);
   --header-h: 72px;
 
-  /* Whitespace is the primary device: sections breathe before content. */
-  --band: clamp(88px, 18vh, 200px);
-  --band-tight: clamp(56px, 10vh, 112px);
+  /* ---------------------------------------------------- vertical rhythm
+     Whitespace is the primary device, so it gets a scale of its own rather
+     than a number typed into each style attribute. There were fifteen
+     different hand-written margins in index.html alone — 10, 16, 18, 24, 28,
+     32, 40, 48 and four separate hand-rolled clamps — which is not a rhythm,
+     it is an absence of one.
+
+     Steps are on an 8px grid. Everything vertical uses one of them. */
+  --s-1: 0.5rem;    /*  8px */
+  --s-2: 1rem;      /* 16px */
+  --s-3: 1.5rem;    /* 24px */
+  --s-4: 2rem;      /* 32px */
+  --s-5: 3rem;      /* 48px */
+  --s-6: 4.5rem;    /* 72px */
+
+  /* Fluid steps, for the gaps that must open up on a large screen and close
+     to something sane on a phone. */
+  --band: clamp(112px, 20vh, 208px);          /* between sections          */
+  --band-tight: clamp(72px, 12vh, 128px);     /* inside utility pages      */
+  --stack: clamp(2.5rem, 6vh, 4.5rem);        /* section head to content   */
+  --stack-lg: clamp(4rem, 9vh, 7rem);         /* between blocks in a band  */
 }
 
 :root, :root[data-theme='light'], :root[data-theme='dark'] { color-scheme: light; }
@@ -58,7 +113,7 @@ body {
   color: var(--espresso-70);
   font-family: var(--sans);
   font-weight: 400;
-  font-size: 1rem;
+  font-size: var(--t-sm);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -87,43 +142,54 @@ h1, h2, h3, h4 { margin: 0; color: var(--espresso); font-weight: 500; }
   font-family: var(--wordmark);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ls-caps);
   color: var(--espresso);
   line-height: 1;
 }
 
-/* Role 2 — display headings. */
-.display {
-  font-family: var(--sans);
-  font-weight: 400;
+/* Role 2 — display headings, set in the serif at its lightest weight.
+   Uppercase Inter read as a software product, not as her studio. */
+.display, .display-sm {
+  font-family: var(--display-face);
+  font-weight: 300;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 0.95;
-  font-size: clamp(2.5rem, 7vw, 6rem);
   color: var(--espresso);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  /* Serif caps at this size sit better with the ascenders trimmed. */
+  text-wrap: balance;
 }
-.display-sm {
-  font-family: var(--sans);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  font-size: clamp(1.75rem, 3.6vw, 3rem);
-  color: var(--espresso);
-}
+.display    { font-size: clamp(var(--t-2xl), 11vw, var(--t-4xl)); }
+.display-sm { font-size: clamp(var(--t-xl), 6vw, var(--t-2xl)); letter-spacing: var(--ls-heading); }
 
 /* Role 3 — body. Measure capped so lines stay readable. */
-p { margin: 0 0 1.1em; max-width: 42ch; }
+p {
+  margin: 0 0 1.1em;
+  max-width: 42ch;
+  font-size: var(--t-sm);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+}
 p:last-child { margin-bottom: 0; }
-.lede { font-size: 1.125rem; line-height: 1.6; color: var(--espresso-70); max-width: 42ch; }
+.lede {
+  font-size: var(--t-md);
+  line-height: 1.5;
+  letter-spacing: var(--ls-heading);
+  color: var(--espresso-70);
+  max-width: 38ch;
+}
 
+/* Role 4 — the label. Small, uppercase, heavily tracked; the only thing on
+   the page allowed below body size. */
 .label {
   display: inline-flex;
   align-items: center;
-  gap: 0.6em;
-  font-size: 0.875rem;
+  gap: 0.7em;
+  font-family: var(--sans);
+  font-size: var(--t-xs);
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: var(--ls-label);
+  line-height: 1.3;
   text-transform: uppercase;
   color: var(--espresso);
 }
@@ -132,22 +198,24 @@ p:last-child { margin-bottom: 0; }
   width: 5px; height: 5px;
   border-radius: 50%;
   background: var(--clay);
+  flex: none;
 }
 .label-plain::before { display: none; }
 
 .muted { color: var(--espresso-70); }
-.small { font-size: 0.875rem; }
+.small { font-size: var(--t-xs); line-height: 1.5; }
 
 a { color: inherit; text-decoration: none; }
 
-/* Oversized numerals as layout anchors — thin, clay, never decoration. */
+/* Oversized numerals as layout anchors — thin, clay, never decoration.
+   In the serif now, with the rest of the display role. */
 .numeral {
-  font-family: var(--sans);
-  font-weight: 200;
-  font-size: clamp(3.5rem, 9vw, 7rem);
-  line-height: 0.8;
+  font-family: var(--display-face);
+  font-weight: 300;
+  font-size: clamp(var(--t-3xl), 11vw, var(--t-4xl));
+  line-height: 0.82;
   color: var(--clay);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--ls-display);
 }
 
 /* ------------------------------------------------------------- layout */
@@ -164,19 +232,19 @@ a { color: inherit; text-decoration: none; }
 .split {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
-  gap: clamp(32px, 6vw, 96px);
+  gap: var(--stack-lg) clamp(32px, 6vw, 96px);
   align-items: center;
 }
 .split-flip > .split-visual { order: 2; }
 .split-text { max-width: 46ch; }
-.split-text .label { margin-bottom: 20px; }
-.split-text .display-sm { margin-bottom: 20px; }
+.split-text .label { margin-bottom: var(--s-3); }
+.split-text .display-sm { margin-bottom: var(--s-3); }
 
-.section-head { margin-bottom: clamp(40px, 7vh, 88px); }
-.section-head .label { margin-bottom: 20px; }
-.section-head .display { margin-bottom: 20px; }
+.section-head { margin-bottom: var(--stack); }
+.section-head .label { margin-bottom: var(--s-3); }
+.section-head .display { margin-bottom: var(--s-3); }
 
-.stack-lg > * + * { margin-top: clamp(24px, 4vh, 48px); }
+.stack-lg > * + * { margin-top: var(--s-4); }
 
 /* ------------------------------------------------------------ buttons */
 /* Never clay. Espresso or outline only. */
@@ -192,24 +260,74 @@ a { color: inherit; text-decoration: none; }
   background: var(--espresso);
   color: var(--paper);
   font-family: var(--sans);
-  font-size: 0.8125rem;
+  font-size: var(--t-xs);
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   cursor: pointer;
   transition: background 200ms ease, color 200ms ease;
 }
 .btn-outline { background: transparent; color: var(--espresso); }
 .btn-light { background: var(--paper); color: var(--espresso); border-color: var(--paper); }
-.btn-sm { min-height: 44px; padding: 10px 20px; font-size: 0.75rem; }
+.btn-sm { min-height: 44px; padding: 10px 20px; font-size: var(--t-xs); }
 .btn[disabled], .btn[aria-disabled='true'] { opacity: 0.35; pointer-events: none; }
+
+/* ------------------------------------------------------------ the CTA
+   One action on this site: book a slot. It wears the same words and the same
+   treatment everywhere it appears, so a client who has scrolled past it four
+   times recognises it on the fifth rather than reading it again.
+
+   The clay rule under it is the accent doing what the accent is for —
+   marking the one thing that matters, never decorating a button face. */
+.btn-cta { position: relative; }
+.btn-cta::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; background: var(--clay);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 240ms ease;
+}
+
+.cta-repeat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  margin-top: var(--stack-lg);
+  padding-top: clamp(28px, 4vh, 44px);
+  border-top: 1px solid var(--hairline-soft);
+}
+.cta-note {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-caps);
+  color: var(--espresso-70);
+  max-width: 32ch;
+}
+
+/* In the header it sits at nav weight but keeps the button's shape, so the
+   one action is always on screen without shouting over the wordmark. */
+.nav-cta { padding: 8px 18px; min-height: 40px; }
+
+/* The hero's second link is a link, not a button. Two buttons side by side
+   are two calls to action, and the brief allows one. */
+.hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  transition: color 200ms ease, border-color 200ms ease;
+}
 
 .link-underline {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  font-size: 0.8125rem;
-  letter-spacing: 0.12em;
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--espresso);
   border-bottom: 1px solid var(--hairline);
@@ -252,13 +370,18 @@ a { color: inherit; text-decoration: none; }
 /* The gap belongs on the nav itself, or the links run into one another. */
 .site-header nav { display: flex; align-items: center; gap: clamp(14px, 2vw, 28px); }
 .nav-right { justify-content: flex-end; }
-.site-header nav a,
-.site-header .nav-right a {
+/* Nav links, but not the CTA — it is a button that happens to live in the
+   nav, and this rule out-specifies .btn. Left unexcluded it painted
+   espresso-70 text onto the button's espresso ground: 2.12:1, caught by the
+   contrast audit. The same specificity trap hid the nav links behind the
+   wordmark once already. */
+.site-header nav a:not(.btn),
+.site-header .nav-right a:not(.btn) {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  font-size: 0.8125rem;
-  letter-spacing: 0.1em;
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   color: var(--espresso-70);
 }
@@ -269,7 +392,7 @@ a { color: inherit; text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-size: clamp(0.9rem, 1.6vw, 1.35rem);
+  font-size: clamp(var(--t-sm), 1.6vw, var(--t-md));
   white-space: nowrap;
   /* Never allowed to run into the nav on either side. */
   max-width: calc(100% - 200px);
@@ -282,16 +405,40 @@ a { color: inherit; text-decoration: none; }
   /* A hairline ring keeps the circular mark from floating on the white ground. */
   box-shadow: 0 0 0 1px var(--hairline-soft);
 }
+/* Drawn, not typed. The menu control was the character U+2630, which is a
+   glyph from whatever font happens to be installed — it rendered at a
+   different weight and baseline on every platform and had nothing to do with
+   the hairlines everywhere else on the page. Two rules and a pseudo-element
+   give the same mark in the same stroke as the rest of the design. */
 .nav-toggle {
+  position: relative;
   display: none;
   width: 44px; height: 44px;
   align-items: center; justify-content: center;
-  background: none; border: 0; cursor: pointer;
-  color: var(--espresso); font-size: 1.1rem;
+  background: none; border: 0; cursor: pointer; padding: 0;
+  color: var(--espresso);
 }
+.nav-toggle .bars,
+.nav-toggle .bars::before,
+.nav-toggle .bars::after {
+  display: block;
+  width: 22px; height: 1px;
+  background: currentColor;
+  transition: transform 240ms ease, opacity 240ms ease;
+}
+.nav-toggle .bars::before,
+.nav-toggle .bars::after { content: ''; position: absolute; left: 50%; margin-left: -11px; }
+.nav-toggle .bars::before { transform: translateY(-7px); }
+.nav-toggle .bars::after  { transform: translateY(7px); }
+
+/* Open: the outer strokes cross and the middle one goes. */
+.nav-toggle[aria-expanded='true'] .bars { background: transparent; }
+.nav-toggle[aria-expanded='true'] .bars::before { transform: rotate(45deg); }
+.nav-toggle[aria-expanded='true'] .bars::after  { transform: rotate(-45deg); }
 
 @media (hover: hover) and (pointer: fine) {
-  .site-header nav a:hover, .site-header .nav-right a:hover { color: var(--espresso); }
+  .site-header nav a:not(.btn):hover,
+  .site-header .nav-right a:not(.btn):hover { color: var(--espresso); }
 }
 
 /* --------------------------------------------------------------- hero */
@@ -334,15 +481,19 @@ a { color: inherit; text-decoration: none; }
 .hero .label, .hero .display, .hero .lede { color: var(--paper); }
 .hero .label::before { background: var(--paper); }
 .hero .display { margin: 18px 0 22px; }
-.hero .lede { color: rgba(255, 255, 255, 0.92); margin-bottom: 34px; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.hero .lede { color: rgba(255, 255, 255, 0.92); margin-bottom: var(--s-4); }
+.hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); }
 
-/* Placeholder texture, used until real photography is dropped in. */
+/* The frame before a photograph loads into it.
+   This used to fake one — two radial gradients over her logo's taupe, doing
+   an impression of a soft-lit portrait. A pretend photograph is worse than an
+   honest empty frame: it reads as a stock image, and every real photograph
+   that replaced one looked like a downgrade for the first half second. Now it
+   is a flat tint with a hairline, which is plainly a frame waiting to be
+   filled. */
 .media-placeholder {
-  background-color: var(--taupe);
-  background-image:
-    radial-gradient(ellipse at 68% 22%, rgba(253, 247, 239, 0.30), transparent 58%),
-    radial-gradient(ellipse at 22% 78%, rgba(51, 38, 28, 0.26), transparent 60%);
+  background-color: var(--cream);
+  box-shadow: inset 0 0 0 1px var(--hairline-soft);
 }
 
 /* ------------------------------------------------------- service grid */
@@ -350,7 +501,7 @@ a { color: inherit; text-decoration: none; }
 .grid-services {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(16px, 2vw, 28px);
+  gap: var(--s-5) clamp(16px, 2vw, 28px);
 }
 .card {
   position: relative;
@@ -377,7 +528,9 @@ a { color: inherit; text-decoration: none; }
   background-position: center 32%;
   background-repeat: no-repeat;
 }
-.card-media > * { width: 100%; height: 100%; }
+/* The media fills the frame; the SELECT bar is not media and must not be
+   stretched to the frame's height along with it. */
+.card-media > :not(.card-select) { width: 100%; height: 100%; }
 /* Hover reveals a full-width SELECT bar over the image bottom. */
 .card-select {
   position: absolute;
@@ -385,16 +538,16 @@ a { color: inherit; text-decoration: none; }
   padding: 14px;
   background: var(--espresso);
   color: var(--paper);
-  font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
   text-align: center;
   transform: translateY(100%);
   transition: transform 220ms ease;
 }
-.card-body { padding-top: 16px; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-.card-name { font-size: 0.875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso); }
-.card-price { font-size: 0.875rem; color: var(--espresso-70); white-space: nowrap; }
+.card-body { padding-top: var(--s-2); display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.card-name { font-size: var(--t-xs); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso); }
+.card-price { font-size: var(--t-sm); color: var(--espresso-70); white-space: nowrap; }
 .card[aria-pressed='true'] .card-select { transform: translateY(0); }
 .card[aria-pressed='true'] .card-name { border-bottom: 1px solid var(--clay); }
 
@@ -405,9 +558,9 @@ a { color: inherit; text-decoration: none; }
 
 /* ------------------------------------------------------------ process */
 
-.process { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 64px); }
-.step .numeral { display: block; margin-bottom: 18px; }
-.step h3 { font-size: 0.9375rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+.process { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--stack) clamp(24px, 4vw, 64px); }
+.step .numeral { display: block; margin-bottom: var(--s-3); }
+.step h3 { font-size: var(--t-sm); letter-spacing: var(--ls-label); text-transform: uppercase; margin-bottom: var(--s-2); }
 /* Connector line in clay, as a marker — not decoration. */
 .step { position: relative; padding-top: 26px; border-top: 1px solid var(--hairline-soft); }
 .step::before { content: ''; position: absolute; top: -1px; left: 0; width: 42px; height: 1px; background: var(--clay); }
@@ -417,18 +570,18 @@ a { color: inherit; text-decoration: none; }
    numerals are deliberately absent — they are already doing work twice on
    this page, and a fourth run would make them wallpaper. */
 
-.benefits { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(28px, 4vw, 64px) clamp(32px, 5vw, 96px); }
+.benefits { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--stack) clamp(32px, 5vw, 96px); }
 .benefit { position: relative; padding-top: 26px; border-top: 1px solid var(--hairline-soft); }
 .benefit::before { content: ''; position: absolute; top: -1px; left: 0; width: 42px; height: 1px; background: var(--clay); }
-.benefit h3 { font-size: 0.9375rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+.benefit h3 { font-size: var(--t-sm); letter-spacing: var(--ls-label); text-transform: uppercase; margin-bottom: var(--s-2); }
 .benefit p { color: var(--espresso-70); max-width: 44ch; }
 
 /* ------------------------------------------------------------ reviews */
 
-.reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 56px); }
-.review p { font-size: 1.0625rem; color: var(--espresso); }
-.review footer { margin-top: 18px; font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso-70); }
-.review .mark { color: var(--clay); font-size: 1.5rem; line-height: 1; display: block; margin-bottom: 14px; }
+.reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--stack) clamp(24px, 4vw, 56px); }
+.review p { font-size: var(--t-md); color: var(--espresso); }
+.review footer { margin-top: var(--s-3); font-size: var(--t-xs); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso-70); }
+.review .mark { color: var(--clay); font-size: var(--t-lg); line-height: 1; display: block; margin-bottom: var(--s-2); }
 
 /* ---------------------------------------------------------------- FAQ */
 
@@ -437,17 +590,17 @@ a { color: inherit; text-decoration: none; }
   list-style: none; cursor: pointer;
   min-height: 64px;
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  font-size: 0.9375rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--espresso);
+  font-size: var(--t-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso);
 }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: '+'; color: var(--clay); font-size: 1.25rem; font-weight: 300; }
+.faq summary::after { content: '+'; color: var(--clay); font-size: var(--t-md); font-weight: 300; }
 .faq details[open] summary::after { content: '–'; }
 .faq .answer { padding: 0 0 28px; }
 
 /* ------------------------------------------------------------- forms */
 
-.field { margin-bottom: 18px; }
-.field label { display: block; margin-bottom: 8px; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso); }
+.field { margin-bottom: var(--s-3); }
+.field label { display: block; margin-bottom: var(--s-1); font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--espresso); }
 .input, .textarea, .select {
   width: 100%;
   min-height: 52px;
@@ -457,19 +610,19 @@ a { color: inherit; text-decoration: none; }
   border-radius: 0;
   color: var(--espresso);
   font-family: var(--sans);
-  font-size: 1rem;
+  font-size: var(--t-sm);
 }
 .band-cream .input, .band-cream .textarea, .band-cream .select { background: var(--paper); }
 .textarea { min-height: 104px; resize: vertical; }
 .input:focus, .textarea:focus, .select:focus { outline: none; border-color: var(--espresso); }
-.field .hint { margin-top: 8px; font-size: 0.8125rem; color: var(--espresso-70); }
+.field .hint { margin-top: var(--s-1); font-size: var(--t-xs); color: var(--espresso-70); }
 
 .notice {
   border: 1px solid var(--hairline);
   border-left: 2px solid var(--clay);
   background: var(--paper);
   padding: 18px 20px;
-  font-size: 0.9375rem;
+  font-size: var(--t-sm);
   color: var(--espresso-70);
 }
 .notice p { max-width: none; }
@@ -482,72 +635,119 @@ a { color: inherit; text-decoration: none; }
   border: 1px dashed var(--hairline);
   text-align: center;
   color: var(--espresso-70);
-  font-size: 0.875rem;
-  letter-spacing: 0.06em;
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-caps);
 }
 
 /* -------------------------------------------------------------- motion */
+/*
+ * Two jobs only: bring a section in as it is reached, and answer a pointer.
+ *
+ * Everything runs 200-300ms on a plain ease. Nothing overshoots, nothing
+ * springs back, nothing loops — an infinite animation on a page about hair is
+ * a thing that moves in the corner of the eye while somebody is trying to
+ * read a price list. (There was one: a 26s drifting blob that no page had
+ * referenced since the rebuild. Deleted rather than kept running.)
+ *
+ * The reveal used to take 600ms, which is long enough to notice as an effect
+ * rather than register as the page settling.
+ */
 
-.reveal { opacity: 0; transform: translateY(20px); }
-.reveal.in { opacity: 1; transform: none; transition: opacity 600ms ease-out, transform 600ms ease-out; }
-
-/* Organic drift — slow, never bouncy. */
-.blob {
-  position: absolute;
-  border-radius: 46% 54% 58% 42% / 52% 46% 54% 48%;
-  background: rgba(169, 135, 68, 0.10);
-  filter: blur(2px);
-  animation: drift 26s ease-in-out infinite alternate;
-  pointer-events: none;
+.reveal { opacity: 0; transform: translateY(14px); }
+.reveal.in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 280ms ease-out, transform 280ms ease-out;
 }
-@keyframes drift {
-  from { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
-  to   { transform: translate3d(2.5%, -3%, 0) rotate(8deg) scale(1.06); }
+
+/* ---- hover, on devices that actually have a pointer.
+   Guarded, because on a touch screen :hover sticks after a tap and leaves an
+   element looking permanently pressed. */
+
+@media (hover: hover) and (pointer: fine) {
+  /* The one action. Fills from the accent rule upward. */
+  .btn:hover { background: var(--espresso-70); border-color: var(--espresso-70); }
+  .btn-outline:hover { background: var(--espresso); color: var(--paper); border-color: var(--espresso); }
+  .btn-light:hover { background: var(--cream); border-color: var(--cream); color: var(--espresso); }
+  .btn-cta:hover::after { transform: scaleX(1); }
+
+  .hero-secondary:hover { color: var(--paper); border-bottom-color: var(--paper); }
+
+  /* Links underline from the left rather than blinking a colour. */
+  .link-underline { position: relative; }
+  .link-underline::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: -1px;
+    height: 1px; background: var(--clay);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 220ms ease;
+  }
+  .link-underline:hover::after { transform: scaleX(1); }
+
+  /* A service card lifts its image very slightly and brings the SELECT bar
+     up. One millimetre, not a jump. */
+  .card:hover .card-media { transform: scale(1.02); }
+  .card .card-media { transition: transform 300ms ease; }
+
+  /* Portfolio figures and before/after halves answer the same way. */
+  #folioGrid figure:hover .card-media,
+  .ba-side:hover .card-media { transform: scale(1.02); }
+
+  /* Rows that are clickable say so with the accent, not with a fill. */
+  .faq summary:hover { color: var(--clay-deep); }
+  .slot:not([disabled]):hover { border-color: var(--espresso); }
+
+  .site-footer a:hover { color: var(--espresso); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .blob { animation: none; }
   .reveal { transform: none; }
-  .reveal.in { transition: opacity 300ms linear; transform: none; }
+  .reveal.in { transition: opacity 200ms linear; transform: none; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Utility-page header links are tap targets like any other. They measured
+   17px tall — the height of the text and nothing else. */
+.topnav .wordmark,
+.topnav .navlinks a { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* -------------------------------------------------------------- footer */
 
 .site-footer { background: var(--cream); padding: var(--band-tight) 0 0; }
 .footer-top { display: grid; grid-template-columns: 1fr auto; gap: clamp(32px, 6vw, 80px); align-items: start; }
-.footer-lockup { display: flex; align-items: flex-end; gap: 18px; }
+.footer-lockup { display: flex; align-items: flex-end; gap: var(--s-3); }
 .footer-lockup .rotated {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: var(--wordmark);
   text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-size: 0.875rem;
+  letter-spacing: var(--ls-label);
+  font-size: var(--t-xs);
   color: var(--espresso-70);
 }
 .footer-lockup .giant {
-  font-family: var(--wordmark);
-  font-size: clamp(3rem, 11vw, 9rem);
-  line-height: 0.82;
+  font-family: var(--display-face);
+  font-weight: 300;
+  font-size: clamp(var(--t-3xl), 13vw, var(--t-4xl));
+  line-height: var(--lh-display);
   text-transform: uppercase;
   color: var(--espresso);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--ls-display);
 }
-.footer-aside { display: grid; gap: 20px; justify-items: start; min-width: min(320px, 100%); }
+.footer-aside { display: grid; gap: var(--s-3); justify-items: start; min-width: min(320px, 100%); }
 .newsletter { display: flex; gap: 0; width: 100%; }
 .newsletter .input { border-right: 0; }
 .newsletter .btn { white-space: nowrap; }
 .footer-links {
-  margin-top: clamp(40px, 7vh, 80px);
+  margin-top: var(--stack);
   padding: 24px 0;
   border-top: 1px solid var(--hairline-soft);
   display: flex; flex-wrap: wrap; gap: clamp(16px, 3vw, 40px);
 }
 .footer-links a {
   display: inline-flex; align-items: center; min-height: 44px;
-  font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso-70);
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--espresso-70);
 }
 @media (hover: hover) and (pointer: fine) { .footer-links a:hover { color: var(--espresso); } }
 
@@ -557,7 +757,7 @@ a { color: inherit; text-decoration: none; }
   padding-top: 18px;
   padding-bottom: calc(18px + env(safe-area-inset-bottom));
   display: flex; flex-wrap: wrap; gap: 12px 32px; justify-content: space-between;
-  font-size: 0.75rem; letter-spacing: 0.06em;
+  font-size: var(--t-xs); letter-spacing: var(--ls-caps);
 }
 .legal-bar a { color: var(--paper); }
 
@@ -614,8 +814,8 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 1100px) {
   .grid-services { grid-template-columns: repeat(2, 1fr); }
-  .process { grid-template-columns: 1fr; gap: 32px; }
-  .benefits { grid-template-columns: 1fr; gap: 28px; }
+  .process { grid-template-columns: 1fr; gap: var(--s-6); }
+  .benefits { grid-template-columns: 1fr; gap: var(--s-6); }
   .reviews { grid-template-columns: 1fr; }
   .split { grid-template-columns: 1fr; }
   .split-flip > .split-visual { order: 0; }
@@ -645,6 +845,12 @@ a { color: inherit; text-decoration: none; }
   .nav-right { display: block; min-width: 44px; }
   /* Must match .site-header .nav-right a from the base rules, or that wins on
      specificity and the links stay visible over the wordmark. */
+  /* Everything in the right-hand column goes, the CTA included. It is a
+     130px button and the wordmark is centred against the page, so keeping it
+     would push the wordmark off centre or sit on top of it — the exact
+     failure the header audit exists to catch. Nothing is lost: the hero CTA
+     is directly below the fold line, and "Book your slot" is the first item
+     in the menu the hamburger opens. */
   .site-header .nav-right a { display: none; }
   .site-header .brand { max-width: calc(100% - 110px); }
   .brand-mark { width: 34px; height: 34px; }
@@ -653,16 +859,29 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 380px) {
-  .site-header .brand { gap: 8px; font-size: 0.85rem; }
+  .site-header .brand { gap: 8px; font-size: var(--t-xs); }
   .brand-mark { width: 30px; height: 30px; }
 }
 
 @media (max-width: 640px) {
-  .grid-services { grid-template-columns: 1fr; gap: 28px; }
+  /* Two columns, not one.
+     One card per row put seven 4:5 images at full bleed down a 375px screen —
+     3,654px for the price list, and the same seven cards appear again inside
+     the booking step, so a client scrolled past 7,300px of photographs to read
+     six prices. A price list is something you scan; at one-per-screen you
+     cannot compare two of them without scrolling between. Two up brings the
+     grid to roughly 900px and puts four services in view at once. */
+  .grid-services { grid-template-columns: repeat(2, 1fr); gap: var(--s-4) var(--s-2); }
+  .card-media { aspect-ratio: 1 / 1; }
+  .card-body { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .card-price { white-space: normal; }
   .btn { width: 100%; }
   .hero-actions .btn { width: auto; flex: 1 1 220px; }
   /* Touch: the SELECT bar cannot rely on hover, so it is always visible. */
-  .card-select { transform: translateY(0); position: static; }
+  /* Touch has no hover, so the bar is always shown — but it stays pinned to
+     the bottom of the image. position:static put it back in flow, where it
+     sat on top of the photograph as a block of espresso across the top. */
+  .card-select { transform: translateY(0); padding: 12px 8px; }
   .newsletter { flex-direction: column; }
   .newsletter .input { border-right: 1px solid var(--hairline); }
 }
@@ -685,25 +904,25 @@ a { color: inherit; text-decoration: none; }
   min-height: 48px;
   padding: 12px 0;
   background: none; border: 0; cursor: pointer;
-  font-family: var(--sans); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--sans); font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
   color: var(--espresso-70);
 }
 .step-tab[aria-selected='true'] { color: var(--espresso); }
 .step-tab[aria-selected='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--clay); }
 .step-tab[disabled] { opacity: 0.35; cursor: not-allowed; }
 
-.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
-.cal-month { font-size: 0.9375rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--espresso); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-3); }
+.cal-month { font-size: var(--t-sm); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--espresso); }
 .cal-nav {
   width: 48px; height: 48px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--hairline); background: none; cursor: pointer;
-  color: var(--espresso); font-size: 1rem;
+  color: var(--espresso); font-size: var(--t-sm);
 }
 .cal-nav[disabled] { opacity: 0.3; cursor: not-allowed; }
 
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--hairline-soft); border-left: 1px solid var(--hairline-soft); }
-.cal-dow { padding: 10px 0; text-align: center; font-size: 0.625rem; letter-spacing: 0.12em; color: var(--espresso-70); border-right: 1px solid var(--hairline-soft); border-bottom: 1px solid var(--hairline-soft); }
+.cal-dow { padding: 10px 0; text-align: center; font-size: var(--t-xs); letter-spacing: var(--ls-label); color: var(--espresso-70); border-right: 1px solid var(--hairline-soft); border-bottom: 1px solid var(--hairline-soft); }
 .cal-cell {
   min-height: 76px;
   padding: 10px;
@@ -716,9 +935,9 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer; text-align: left;
 }
 .band-cream .cal-cell, .band-cream .cal-dow { background: var(--cream); }
-.cal-cell .n { font-size: 1rem; color: var(--espresso); }
-.cal-cell .free { font-size: 0.625rem; letter-spacing: 0.06em; color: var(--clay-deep); }
-.cal-cell .none { font-size: 0.625rem; letter-spacing: 0.06em; color: var(--espresso-70); }
+.cal-cell .n { font-size: var(--t-sm); color: var(--espresso); }
+.cal-cell .free { font-size: var(--t-xs); letter-spacing: var(--ls-caps); color: var(--clay-deep); }
+.cal-cell .none { font-size: var(--t-xs); letter-spacing: var(--ls-caps); color: var(--espresso-70); }
 .cal-cell[aria-pressed='true'] { background: var(--espresso); }
 .cal-cell[aria-pressed='true'] .n,
 .cal-cell[aria-pressed='true'] .free { color: var(--paper); }
@@ -733,7 +952,7 @@ a { color: inherit; text-decoration: none; }
   .cal-nav:hover:not([disabled]) { border-color: var(--espresso); }
 }
 
-.cal-legend { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 18px; font-size: 0.75rem; color: var(--espresso-70); }
+.cal-legend { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-3); font-size: var(--t-xs); color: var(--espresso-70); }
 .cal-legend span { display: inline-flex; align-items: center; gap: 8px; }
 .swatch { width: 8px; height: 8px; display: inline-block; }
 .swatch-free { background: var(--clay); }
@@ -746,18 +965,18 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--hairline);
   background: var(--paper);
   color: var(--espresso);
-  font-family: var(--sans); font-size: 0.9375rem;
+  font-family: var(--sans); font-size: var(--t-sm);
   cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
 }
-.slot small { font-size: 0.625rem; color: var(--espresso-70); letter-spacing: 0.06em; }
+.slot small { font-size: var(--t-xs); color: var(--espresso-70); letter-spacing: var(--ls-caps); }
 .slot[aria-pressed='true'] { background: var(--espresso); color: var(--paper); border-color: var(--espresso); }
 .slot[aria-pressed='true'] small { color: rgba(255,255,255,0.8); }
 @media (hover: hover) and (pointer: fine) {
   .slot:not([aria-pressed='true']):hover { border-color: var(--espresso); }
 }
 
-.live-dot { display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso-70); }
+.live-dot { display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--espresso-70); }
 .live-dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
 .live-dot[data-state='offline']::before { background: var(--warn); }
 .live-dot[data-state='static']::before { background: var(--hairline); }
@@ -767,16 +986,16 @@ a { color: inherit; text-decoration: none; }
 .pay-option input { position: absolute; opacity: 0; pointer-events: none; }
 .pay-option:has(input:checked) { border-color: var(--espresso); }
 .pay-option:has(input:focus-visible) { outline: 2px solid var(--clay-deep); outline-offset: 2px; }
-.pay-option .t { display: block; font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso); }
-.pay-option .s { display: block; margin-top: 8px; font-size: 0.875rem; color: var(--espresso-70); }
+.pay-option .t { display: block; font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--espresso); }
+.pay-option .s { display: block; margin-top: var(--s-1); font-size: var(--t-sm); color: var(--espresso-70); }
 
 .summary { border: 1px solid var(--hairline); padding: 28px; position: sticky; top: calc(var(--header-h) + 24px); background: var(--paper); }
-.summary h3 { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 20px; }
+.summary h3 { font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase; margin-bottom: 20px; }
 .summary dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; }
-.summary dt { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso-70); }
-.summary dd { margin: 0; font-size: 0.875rem; color: var(--espresso); text-align: right; }
+.summary dt { font-size: var(--t-xs); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso-70); }
+.summary dd { margin: 0; font-size: var(--t-sm); color: var(--espresso); text-align: right; }
 .summary .total { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--hairline-soft); }
-.summary .total dd { font-size: 1.5rem; }
+.summary .total dd { font-size: var(--t-lg); }
 
 /* Running total pinned on phones. */
 .mobile-summary { display: none; }
@@ -794,10 +1013,10 @@ a { color: inherit; text-decoration: none; }
     transition: transform 200ms ease-out;
   }
   .mobile-summary[data-shown='true'] { transform: translateY(0); }
-  .mobile-summary .what { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mobile-summary .when { font-size: 0.75rem; color: var(--espresso-70); margin-top: 2px; }
-  .mobile-summary .amount { font-size: 1.25rem; color: var(--espresso); white-space: nowrap; }
-  .mobile-summary .amount small { display: block; font-size: 0.625rem; color: var(--espresso-70); letter-spacing: 0.06em; text-align: right; }
+  .mobile-summary .what { font-size: var(--t-xs); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-summary .when { font-size: var(--t-xs); color: var(--espresso-70); margin-top: 2px; }
+  .mobile-summary .amount { font-size: var(--t-md); color: var(--espresso); white-space: nowrap; }
+  .mobile-summary .amount small { display: block; font-size: var(--t-xs); color: var(--espresso-70); letter-spacing: var(--ls-caps); text-align: right; }
   body[data-summary='true'] #book { padding-bottom: 104px; }
 }
 
@@ -825,11 +1044,11 @@ a { color: inherit; text-decoration: none; }
   padding: 6px 12px;
   background: var(--espresso);
   color: var(--paper);
-  font-size: 0.625rem; letter-spacing: 0.14em; text-transform: uppercase;
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
 }
 .ba figcaption {
   margin-top: 16px;
-  font-size: 0.9375rem;
+  font-size: var(--t-sm);
   color: var(--espresso-70);
   max-width: 48ch;
 }
@@ -845,7 +1064,7 @@ a { color: inherit; text-decoration: none; }
 }
 .reel figcaption {
   margin-top: 14px;
-  font-size: 0.875rem;
+  font-size: var(--t-xs);
   color: var(--espresso-70);
 }
 
