@@ -165,6 +165,54 @@ channel that has quietly stopped working is visible rather than silent.
 
 Alerts fire when a booking is **confirmed** — a cash booking immediately, a card
 booking once the deposit clears. Abandoned card checkouts never generate noise.
+A **cancellation** of an appointment that has not happened yet alerts too: a
+client dropping out of Thursday afternoon frees three hours she could sell, but
+only if she finds out before Thursday.
+
+### The morning run-down
+
+Every alert above fires at the moment a booking is made, which is exactly when
+she is least able to read it — mid-fitting, hands full. So there is one more:
+a single message each morning listing everything booked for that day.
+
+Set `DAY_AHEAD_HOUR` to the hour she wants it, in her own timezone (`7` means
+"some time just after 07:00"). Leave it unset and the feature is off.
+
+It is the alert most likely to actually catch a missed appointment, because
+unlike the others it does not depend on her having seen a notification that
+arrived three weeks ago. The check runs every minute and a flag in the database
+makes it idempotent — a restart at 07:59 does not send it twice, and a restart
+at 08:30 still sends it once. The flag is written **before** the send, not
+after, so an email service that is down cannot turn into an email a minute for
+the rest of the day.
+
+She can also send herself the run-down on demand from **Alerts**, which doubles
+as a better test than a line of filler: it exercises every channel with a
+message shaped like the ones she will really get.
+
+### Email
+
+Sent through [Resend](https://resend.com); the free tier is far more than a
+one-person studio needs. Two variables:
+
+    RESEND_API_KEY=re_...
+    NOTIFY_EMAIL_TO=her@address
+
+`NOTIFY_EMAIL_TO` is her **personal** inbox, so it lives in the environment and
+nowhere else. It is deliberately not in this repository, not in `lib/seed.js`
+and not shown anywhere on the public site: a personal address in a public
+repository is a personal address on a scraper's list within the week.
+
+Emails go out as HTML with a plain-text part alongside, laid out for a phone —
+the client's name and time large enough to take in without stopping, the detail
+under them, one button through to the dashboard (set `PUBLIC_URL` for that
+button to appear). Every value is escaped on the way in.
+
+One thing worth doing before going live: **verify her own domain in Resend** and
+set `NOTIFY_EMAIL_FROM` to an address on it. The default sends from Resend's
+shared `onboarding@resend.dev`, which is fine for testing but much likelier to
+land in spam — and an alert in a spam folder is a missed booking with extra
+steps.
 
 ### Dashboard alerts
 
@@ -216,14 +264,61 @@ the verification code is already written.
 
 | Section | What Chrissy does there |
 |---|---|
-| **Today** | Appointments today and this week, money booked, money to collect |
-| **Bookings** | Every appointment, filterable and searchable; cancel or mark paid |
+| **Today** | The day's run sheet, the week and month's numbers, what is coming next |
+| **Bookings** | Every appointment, filterable and searchable; close them off, export them |
 | **My hours** | Toggle each day on/off, set start, finish and break |
 | **Time off** | Block a single day or a date range |
 | **Services** | Edit names, durations, prices and deposits; add or remove services |
+| **Alerts** | Which channels are on, which devices are signed up, what has been sent |
 | **Settings** | Slot spacing, gap between clients, minimum notice, booking horizon |
 
 Saving hours or time off pushes straight to any client with the page open.
+
+### The run sheet
+
+**Today** shows one day at a time, in order, with the **gaps between
+appointments spelled out** and a button to fill each one. The gaps are the
+point: when a client rings asking "have you got anything Thursday", the answer
+lives in the spaces, not the appointments, and reading it off a list of start
+times is how people end up promising a slot that turns out to be twenty minutes
+long.
+
+Her **break is counted as occupied**, not free. Measuring gaps against
+appointments alone would report an empty Tuesday as "9h free" and offer her
+lunch to a client — the one number on that screen she would act on without
+checking. Cancelled appointments are the reverse: they show the time as free
+again, and drop to a list underneath the day.
+
+### Bookings she takes herself
+
+Most of her enquiries arrive as Instagram DMs, not through the website, and
+until now there was nowhere to put them. That is not a convenience gap: an
+appointment she has agreed to but never recorded is a slot the public calendar
+is still selling. **Add a booking** records it and takes the time off the site.
+
+She can override her own rules doing it — work outside her posted hours, inside
+her notice period, on a day she had blocked off. Those are business decisions,
+and each one is named on screen before she confirms it. She **cannot** override
+a clash. Two clients arriving for the same chair is not a decision, it is a
+mistake, and the server refuses it regardless of what the form asks for.
+
+An email is optional here: a booking taken over the phone may have nothing but
+a number, and that is not a data problem.
+
+### Moving, closing off and remembering
+
+- **Move** reschedules in place, rather than cancel-and-rebook. The client keeps
+  their reference, and the slot cannot be taken by the website in the seconds
+  between the two operations. The row then shows where it moved from.
+- **Done** and **No show** close an appointment off after the fact. Without
+  them every past booking reads identically, and there is no record of who did
+  not turn up — which is exactly the client to ask for a deposit next time.
+- **Note** is her own private line on the appointment: colour formula, hair
+  ordered, who referred them. Marked in clay so it is never confused with what
+  the client themselves wrote, and never sent to them or shown on the site.
+- **Export** hands the lot over as a spreadsheet. One-person businesses do their
+  books in a spreadsheet, and re-typing a year of appointments out of a web page
+  is how figures get wrong.
 
 ---
 

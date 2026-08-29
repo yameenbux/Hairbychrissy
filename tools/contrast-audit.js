@@ -102,6 +102,56 @@ const AUDIT = `(() => {
     await audit('dashboard — ' + v);
   }
 
+  /*
+   * The screens reached by a button rather than a nav link. Every one of them
+   * introduces a colour pairing the others do not have — the dashed gap rows,
+   * the break row on cream, the amber override box — so leaving them out
+   * would mean the audit passing on colours it had never looked at.
+   */
+  await p.goto(`${BASE}/admin`, { waitUntil: 'domcontentloaded' });
+  await p.waitForTimeout(900);
+
+  const day = await p.evaluate(() => {
+    const row = document.querySelector('#upcomingList .appt[data-date], #dayList .appt[data-date]');
+    return row ? row.dataset.date : null;
+  });
+  if (day) {
+    await p.fill('#dayPick', day);
+    await p.dispatchEvent('#dayPick', 'change');
+    await p.waitForTimeout(500);
+    await audit('dashboard — run sheet');
+
+    for (const action of ['move', 'note']) {
+      const btn = p.locator(`#dayList .appt [data-action="${action}"]`).first();
+      if (await btn.count() && await btn.isVisible()) {
+        await btn.click();
+        await p.waitForTimeout(300);
+        await audit(`dashboard — ${action} panel`);
+        const close = p.locator("#dayList .appt .appt-panel [data-do='close']").first();
+        if (await close.count()) { await close.click(); await p.waitForTimeout(200); }
+      }
+    }
+  }
+
+  // The add form, and then the same form showing the overrides she is about
+  // to make — amber on cream is the pairing most likely to fall short.
+  await p.locator('#newBookingBtn').click();
+  await p.waitForTimeout(500);
+  await audit('dashboard — add booking');
+
+  await p.selectOption('#nbService', 'hair-ups');
+  await p.fill('#nbDate', day || '2026-09-03');
+  await p.fill('#nbStart', '13:10');
+  await p.fill('#nbName', 'Contrast Probe');
+  await p.fill('#nbPhone', '07700900000');
+  await p.locator('#nbSubmit').click();
+  await p.waitForTimeout(800);
+  if (await p.locator('#nbWarnings').isVisible()) {
+    await audit('dashboard — override warning');
+  } else {
+    console.log('\n!! could not raise an override warning — that path went unmeasured');
+  }
+
   console.log(`\n=== TOTAL CONTRAST FAILURES: ${total} ===`);
   await b.close();
   process.exit(total === 0 ? 0 : 1);

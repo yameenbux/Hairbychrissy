@@ -33,7 +33,7 @@ const PROBE = `(() => {
   const vw = document.documentElement.clientWidth;
 
   // 1. Tap targets.
-  const interactive = 'a[href], button, input, select, textarea, summary, [role="tab"], label.pay-option, label.toggle';
+  const interactive = 'a[href], button, input, select, textarea, summary, [role="tab"], label.pay-option, label.toggle, label.check';
   document.querySelectorAll(interactive).forEach(el => {
     if (!el.offsetParent && el.tagName !== 'BODY') return;
     const cs = getComputedStyle(el);
@@ -168,6 +168,51 @@ async function scan(page, label, results) {
       await link.click();
       await page.waitForTimeout(600);
       await scan(page, 'admin ' + v, results);
+    }
+
+    /*
+     * The screens with no nav link of their own. Skipping these is how a
+     * whole view gets shipped unmeasured — the header audit passed for a
+     * week while the nav ran through the wordmark, for exactly this reason.
+     */
+    await page.goto(`${BASE}/admin`, { waitUntil: 'domcontentloaded' });
+    // Wait for the dashboard to actually be up rather than guessing a delay.
+    // A blind timeout that is fractionally too short turns every step after
+    // it into a thirty-second locator timeout, six times over — which is what
+    // took this audit from two minutes to twenty.
+    await page.waitForSelector('#dayList', { state: 'visible', timeout: 15000 }).catch(() => {});
+
+    // The run sheet, on a day that has something in it.
+    const upcoming = await page.evaluate(() => {
+      const row = document.querySelector('#upcomingList .appt[data-date], #dayList .appt[data-date]');
+      return row ? row.dataset.date : null;
+    });
+    if (upcoming) {
+      await page.fill('#dayPick', upcoming, { timeout: 5000 });
+      await page.dispatchEvent('#dayPick', 'change');
+      await page.waitForTimeout(400);
+      await scan(page, 'admin run sheet', results);
+
+      // The move and note panels open inside a row, so they are only ever
+      // measured if something opens them.
+      for (const action of ['move', 'note']) {
+        const btn = page.locator(`#dayList .appt [data-action="${action}"]`).first();
+        if (await btn.count() && await btn.isVisible()) {
+          await btn.click({ timeout: 5000 });
+          await page.waitForTimeout(300);
+          await scan(page, `admin ${action} panel`, results);
+          const close = page.locator("#dayList .appt .appt-panel [data-do='close']").first();
+          if (await close.count()) { await close.click({ timeout: 5000 }); await page.waitForTimeout(200); }
+        }
+      }
+    }
+
+    // The add-a-booking form.
+    const addBtn = page.locator('#newBookingBtn');
+    if (await addBtn.count() && await addBtn.isVisible()) {
+      await addBtn.click({ timeout: 5000 });
+      await page.waitForSelector('#newBookingForm', { state: 'visible', timeout: 5000 }).catch(() => {});
+      await scan(page, 'admin add booking', results);
     }
 
     const count = results.reduce((n,r) => n + r.found.length, 0);

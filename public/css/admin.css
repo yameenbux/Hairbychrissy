@@ -23,6 +23,11 @@
 .appt.is-cancelled { opacity: 0.5; border-left-color: var(--danger); }
 .appt.is-pending { border-left-color: var(--warn); }
 .appt.is-confirmed { border-left-color: var(--ok); }
+/* Closed-off appointments stay legible — she still reads back through them —
+   but sit quieter than the ones that have not happened yet. */
+.appt.is-done { border-left-color: var(--hairline); background: var(--paper); }
+.appt.is-noshow { border-left-color: var(--danger); background: var(--paper); }
+.appt.is-noshow .who { text-decoration: line-through; text-decoration-thickness: 1px; }
 .appt .when .time { font-size: 20px; font-weight: 700; color: var(--espresso); letter-spacing: -0.5px; }
 .appt .when .day { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--espresso-70); }
 .appt .who { font-size: 16px; font-weight: 700; color: var(--espresso); text-transform: uppercase; letter-spacing: -0.2px; }
@@ -36,6 +41,69 @@
   font-size: 13px;
   color: var(--espresso-70);
 }
+.appt .notes strong { color: var(--espresso); }
+/* Her private note is marked in clay so she can tell at a glance which line is
+   the client's words and which is her own. */
+.appt .note-private { border-left: 2px solid var(--clay); padding-left: 12px; border-top-color: var(--hairline-soft); }
+
+.appt-panel { grid-column: 1 / -1; border-top: 1px solid var(--hairline-soft); padding-top: 16px; margin-top: 4px; }
+.panel-form .field { margin-bottom: 12px; }
+.panel-form .field label { font-size: 10px; letter-spacing: 1px; }
+.panel-form .input, .panel-form .textarea { background: var(--paper); }
+
+/* ---- the run sheet ---- */
+
+.daybar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.daybar .input[type='date'] { max-width: 190px; min-height: 44px; margin: 0; }
+.grow { flex: 1 1 auto; }
+
+/* A gap is a thing she can act on, so it is drawn as a row rather than as
+   empty space — dashed, to read as absence next to the solid appointments. */
+.gap {
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 16px; margin-bottom: 8px;
+  border: 1px dashed var(--hairline);
+  border-left: 4px solid transparent;
+  background: transparent;
+}
+.gap .g-time { font-size: 14px; font-weight: 700; color: var(--espresso-70); letter-spacing: 0.5px; min-width: 108px; }
+.gap .g-len { font-size: 13px; color: var(--espresso-70); flex: 1 1 auto; }
+/* Her break is not free time, so it is not drawn as a gap she can fill. */
+.gap.is-break { border-style: solid; border-color: var(--hairline-soft); background: var(--cream); opacity: 0.75; }
+.gap.is-break .g-len { font-style: italic; }
+
+/* ---- overrides she is about to make ---- */
+
+.warnbox {
+  border: 1px solid var(--warn);
+  border-left: 4px solid var(--warn);
+  background: var(--cream);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.warnbox p { font-size: 13px; color: var(--espresso); margin: 0 0 6px; max-width: none; }
+.warnbox p:last-child { margin-bottom: 0; }
+.warnbox .warn-head { font-weight: 700; letter-spacing: 0.5px; }
+
+/* The label is the tap target, not the box — same approach as .toggle above.
+   A native checkbox cannot be made 44px without looking like a button, and
+   sizing it 20px would leave a target too small to hit reliably on a phone. */
+.check { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 0; cursor: pointer; }
+.check input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.check .box {
+  width: 24px; height: 24px; flex: none;
+  border: 1px solid var(--hairline); background: var(--paper);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.check .box::after {
+  content: ''; width: 12px; height: 12px; background: var(--espresso);
+  transform: scale(0); transition: transform 120ms ease;
+}
+.check input:checked + .box::after { transform: scale(1); }
+.check input:focus-visible + .box { outline: 2px solid var(--clay); outline-offset: 2px; }
+.check .t { font-size: 15px; color: var(--espresso); }
+
+.msg { font-size: 13px; margin-top: 12px; }
 
 .pill {
   font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
@@ -192,9 +260,17 @@
 }
 
 @media (max-width: 768px) {
-  /* Actions stack under the appointment rather than squeezing beside it. */
-  .appt .actions { width: 100%; }
-  .appt .actions .btn-sm { flex: 1 1 0; }
+  /* Actions drop to their own row rather than squeezing the client's details
+     into a sliver. With up to four buttons on a row there is no width left
+     for a name and a phone number otherwise. */
+  .appt { grid-template-columns: 76px 1fr; gap: 12px 16px; }
+  .appt .actions { grid-column: 1 / -1; width: 100%; justify-content: flex-start; }
+  .appt .actions .btn-sm { flex: 1 1 40%; }
+  .gap { flex-wrap: wrap; }
+  .gap .g-time { min-width: 0; }
+  .gap .btn-sm { width: 100%; min-height: 44px; }
+  .daybar .input[type='date'] { max-width: none; flex: 1 1 140px; }
+  .daybar .btn-sm { min-height: 44px; }
   .alert-banner { padding-bottom: 8px; }
   .alert-banner .alert-inner { padding: 12px 16px; }
   .view { padding-bottom: max(40px, env(safe-area-inset-bottom)); }

@@ -89,10 +89,105 @@
       </div>
 
       <div class="spread" style="margin-bottom:16px">
-        <span class="label">Coming up</span>
+        <span class="label">Your day</span>
         <span class="live-dot" id="adminLive" data-state="connecting">Live</span>
       </div>
+
+      <!-- The run sheet. One day at a time, in order, with the gaps between
+           appointments shown — because a two-hour hole is the thing she wants
+           to see when someone rings asking for a slot. -->
+      <div class="daybar">
+        <button class="btn btn-sm btn-outline" type="button" id="dayPrev" aria-label="Previous day">‹</button>
+        <input class="input" type="date" id="dayPick" aria-label="Show this day">
+        <button class="btn btn-sm btn-outline" type="button" id="dayNext" aria-label="Next day">›</button>
+        <button class="btn btn-sm btn-outline" type="button" id="dayToday">Today</button>
+        <span class="grow"></span>
+        <button class="btn btn-sm" type="button" id="newBookingBtn">Add a booking</button>
+      </div>
+      <p class="body-sm muted" id="daySummary" style="margin:0 0 16px"></p>
+      <div id="dayList"></div>
+
+      <div class="spread" style="margin:40px 0 16px">
+        <span class="label">Coming up next</span>
+      </div>
       <div id="upcomingList"></div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------- NEW BOOKING -->
+  <!-- Most of her enquiries arrive as Instagram DMs. Without somewhere to
+       record those, the public calendar keeps selling slots she has already
+       promised — so this is a double-booking fix before it is a convenience. -->
+  <section class="band-tight view" data-view="new" hidden>
+    <div class="shell" style="max-width:640px">
+      <div class="section-head">
+        <span class="label label-muted">Taken by phone, DM or in person</span>
+        <h1 class="display-sm">Add a booking</h1>
+      </div>
+
+      <form id="newBookingForm" novalidate>
+        <div class="field">
+          <label for="nbService">Service</label>
+          <select class="select" id="nbService" required></select>
+        </div>
+
+        <div class="row">
+          <div class="field grow">
+            <label for="nbDate">Date</label>
+            <input class="input" type="date" id="nbDate" required>
+          </div>
+          <div class="field grow">
+            <label for="nbStart">Start time</label>
+            <input class="input" type="time" id="nbStart" step="300" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="nbDuration">How long (minutes)</label>
+          <input class="input" type="number" id="nbDuration" min="15" max="600" step="5">
+          <p class="hint" id="nbDurationHint">Leave as it is unless this one is longer or shorter than usual.</p>
+        </div>
+
+        <div class="field">
+          <label for="nbName">Client name</label>
+          <input class="input" id="nbName" autocomplete="name" required>
+        </div>
+
+        <div class="row">
+          <div class="field grow">
+            <label for="nbPhone">Phone</label>
+            <input class="input" type="tel" id="nbPhone" inputmode="tel" autocomplete="tel" required>
+          </div>
+          <div class="field grow">
+            <label for="nbEmail">Email <span class="muted">— optional</span></label>
+            <input class="input" type="email" id="nbEmail" inputmode="email" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="nbNotes">What they have asked for</label>
+          <textarea class="textarea" id="nbNotes" rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="nbAdminNote">Your own note <span class="muted">— they never see this</span></label>
+          <textarea class="textarea" id="nbAdminNote" rows="2" placeholder="Colour formula, hair ordered, who referred them"></textarea>
+        </div>
+
+        <label class="check" for="nbPaid">
+          <input type="checkbox" id="nbPaid">
+          <span class="box" aria-hidden="true"></span>
+          <span class="t">Already paid in full</span>
+        </label>
+
+        <div id="nbWarnings" class="warnbox" hidden></div>
+
+        <div class="row" style="margin-top:24px">
+          <button class="btn" type="submit" id="nbSubmit">Book it in</button>
+          <button class="btn btn-outline" type="button" id="nbCancel">Cancel</button>
+        </div>
+        <p class="msg" id="nbMsg" hidden></p>
+      </form>
     </div>
   </section>
 
@@ -103,16 +198,23 @@
         <span class="label label-muted">All appointments</span>
         <h1 class="display-sm">Bookings</h1>
       </div>
-      <div class="row" style="margin-bottom:24px">
+      <div class="row" style="margin-bottom:16px">
         <select class="select" id="bookingFilter" style="max-width:240px">
           <option value="upcoming">Upcoming</option>
           <option value="today">Today</option>
+          <option value="unpaid">Money owing</option>
           <option value="past">Past</option>
+          <option value="done">Finished</option>
+          <option value="no-show">Did not turn up</option>
           <option value="cancelled">Cancelled &amp; expired</option>
           <option value="all">Everything</option>
         </select>
         <input class="input" id="bookingSearch" placeholder="Search name, reference or phone" style="max-width:320px">
+        <span class="grow"></span>
+        <button class="btn btn-sm" type="button" id="bookingsAdd">Add a booking</button>
+        <a class="btn btn-sm btn-outline" id="bookingsExport" href="./api/admin/bookings.csv" download>Export</a>
       </div>
+      <p class="body-sm muted" id="bookingCount" style="margin:0 0 20px"></p>
       <div id="bookingList"></div>
     </div>
   </section>
@@ -203,6 +305,18 @@
           <button class="btn btn-outline" type="button" id="testBtn">Send me a test</button>
         </div>
         <div class="notice" id="pushMsg" hidden style="margin-top:16px"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:40px">
+        <div class="spread" style="margin-bottom:16px">
+          <span class="label">Your morning run-down</span>
+          <span class="pill" id="dayAheadState">Checking…</span>
+        </div>
+        <p class="body-sm" id="dayAheadCopy" style="margin-bottom:16px">…</p>
+        <div class="row">
+          <button class="btn btn-outline" type="button" id="dayAheadBtn">Send me today's run-down</button>
+        </div>
+        <div class="notice" id="dayAheadMsg" hidden style="margin-top:16px"></div>
       </div>
 
       <div class="grid grid-2" style="align-items:start">
