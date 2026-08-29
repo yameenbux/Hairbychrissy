@@ -1,11 +1,31 @@
 # H A I R • B Y • C H R I S S Y — booking platform
 
+[![View the live site](https://img.shields.io/badge/View_the_live_site-33261c?style=for-the-badge)](https://yameenbux.github.io/Hairbychrissy/)
+&nbsp;
+[![Book a slot](https://img.shields.io/badge/Book_a_slot-a98744?style=for-the-badge)](https://yameenbux.github.io/Hairbychrissy/book.html)
+
+[![The Hair by Chrissy home page](docs/preview-home.jpg)](https://yameenbux.github.io/Hairbychrissy/)
+
+**Live at [yameenbux.github.io/Hairbychrissy](https://yameenbux.github.io/Hairbychrissy/)** — no install, no sign-in.
+
 A live-calendar booking site for [@hairbychrissy_x](https://www.instagram.com/hairbychrissy_x),
 hair extension specialist, London.
 
 Clients pick a service, see genuine live availability, choose a slot and pay by
 **cash or card**. Chrissy sets her own working days, hours, breaks and time off
 from a private dashboard — and the client calendar updates the moment she saves.
+
+| | |
+|---|---|
+| ![The booking page](docs/preview-booking.png) | ![The dashboard](docs/preview-dashboard.png) |
+| **The booking page** — pick a service, a day, a time | **Her dashboard** — the day as a run sheet, gaps included |
+
+> **The published link above runs in enquiry mode.** GitHub Pages serves static
+> files, so it cannot run the booking engine — the live calendar, the event
+> stream and the dashboard all need a Node host. Rather than show a calendar
+> that looks live and is not, the published page falls back to the real price
+> list and routes bookings to an enquiry. [Running it](#running-it) below gets
+> the whole thing working locally in one command.
 
 > **Draft.** Prices, services, copy and photography are now hers — taken from
 > her price list, services and maintenance graphics. Still outstanding: service
@@ -20,7 +40,7 @@ There are two deployments, and they are not interchangeable:
 
 | | What it serves | Where |
 |---|---|---|
-| **GitHub Pages** | the site as flat files | `https://<user>.github.io/Hairbychrissy/` |
+| **GitHub Pages** | the site as flat files | [yameenbux.github.io/Hairbychrissy](https://yameenbux.github.io/Hairbychrissy/) |
 | **Node** | the same site **plus the booking API** | any host that runs Node |
 
 **GitHub Pages cannot run the booking engine.** Live availability, the event
@@ -737,6 +757,108 @@ past 7,300px of photographs to read six prices. Two columns and a square crop
 took the page to 20,524px and put four services on screen at once.
 
 Everything is at zero now, across all eighteen screens.
+
+---
+
+## Tech and skills
+
+Built with **zero runtime dependencies** — `package.json` has an empty
+`dependencies` block, and `npm install` is never needed to run it. Everything
+below is either the Node standard library or hand-written. That was a
+deliberate constraint: a one-person business should not inherit a supply chain
+it cannot audit, and a site that still runs in five years is worth more here
+than one built on this year's framework.
+
+### Stack
+
+| Area | What was used |
+|---|---|
+| **Runtime** | Node 18+, ES modules, `node:http`, `node:crypto`, `node:fs` |
+| **Server** | Hand-rolled HTTP router, JSON body parsing, static file serving with correct MIME and cache headers |
+| **Storage** | JSON file store with atomic writes (write-temp-then-rename) and a debounced persist |
+| **Real time** | Server-Sent Events — every open browser repaints when anyone books or Chrissy changes her hours |
+| **Notifications** | Self-hosted Web Push (VAPID, ES256, JWT signing) + transactional email with an HTML and plain-text part |
+| **Auth** | HMAC-signed session cookie, `SameSite=Lax`, constant-time password comparison |
+| **Payments** | Stripe Checkout, with a simulated checkout for draft mode |
+| **Uploads** | Base64-in-JSON, magic-byte file type sniffing, one-time upload tokens |
+| **Front end** | Vanilla JavaScript, no build step; CSS custom properties, Grid, Flexbox, `IntersectionObserver` |
+| **CI/CD** | GitHub Actions publishing to GitHub Pages, regenerating the content snapshot on every deploy |
+| **Testing** | Playwright driving eight custom audit tools; Pillow for the contact sheets |
+| **Media** | ffmpeg — her reels trimmed, `cropdetect`-cropped, audio stripped, encoded to mp4 + webm (3.6MB down to 435KB); Pillow for image resizing and progressive JPEG |
+
+### Exposure gained
+
+Most of the interesting work was not in the features. It was in the places
+where a thing that looked finished was not:
+
+- **Concurrency and trust boundaries.** The client's slot list is always
+  seconds out of date, so it is never trusted — the server re-validates at the
+  moment of booking. Chrissy may override her own business rules (hours,
+  notice, blocked days) but the server refuses a double booking no matter what
+  the form sends, because two clients in one chair is a mistake, not a
+  decision.
+- **Designing for failure, not just success.** Photos upload *after* the
+  booking exists so a failed photo can never cost someone their slot. The
+  day-ahead email writes its sent-flag *before* the send, so an email service
+  that is down cannot become an email a minute for the rest of the day.
+- **Web security in the small.** Magic-byte type sniffing rather than trusting
+  an extension; path traversal blocked in both directions; one-time tokens
+  because booking references are sequential and guessable; CORS as an explicit
+  allowlist, never `*`, because the admin routes share that origin and carry a
+  session cookie; a personal email address kept out of a public repository
+  entirely.
+- **Accessibility as a measurement, not an intention.** WCAG contrast is
+  computed against real rendered pixels — including sampling six frames of the
+  hero *video*, because a video hero shows a different frame every moment and
+  measuring one frame measures luck.
+- **Mobile reality.** 90% of her clients book on a phone. Sub-44px tap targets
+  and sub-16px inputs (which make iOS zoom the page) are treated as bugs and
+  fail the build. A photo picker that replaced the first batch instead of
+  adding to it was only found by testing the way people actually attach photos
+  on iOS: one at a time.
+- **Progressive enhancement under a real constraint.** The same `public/`
+  directory serves both a full Node app and a static host that cannot run any
+  of it — so the site detects which it is on and degrades honestly to an
+  enquiry rather than faking a calendar it cannot honour.
+- **Writing tools that can fail.** Eight audits gate every commit, and several
+  caught bugs *in themselves* — a hero audit that passed while measuring the
+  wrong element, a contrast probe silently disarmed by a change to the seed
+  data. A check that cannot fail is not a check.
+
+### The audits
+
+```
+npm run audit:contrast   WCAG AA on real rendered pixels, 18 states
+npm run audit:mobile     6 handsets — tap targets, iOS zoom, overflow
+npm run audit:header     wordmark centring and overlap, 11 widths
+npm run audit:hero       the CTA must be above the fold, 9 viewports
+npm run audit:scrim      hero contrast across 6 video frames
+npm run audit:sticky     anchors clear the sticky header; nav parity
+npm run audit:banlist    the design ban list, as a rule rather than a memo
+npm run shots            every page and state at 375px, overflow measured
+```
+
+---
+
+## Credits
+
+**Design and build — YSB Designs.**
+Identity, art direction, front end, booking engine and dashboard.
+
+Credited in the site footer too, driven from `lib/seed.js` rather than
+hard-coded into markup — so a web address can be added in one line and appears
+everywhere:
+
+```js
+credit: { name: 'YSB Designs', url: '' },   // add a URL and the footer links it
+```
+
+Photography, video, prices, services and copy are **Chrissy's own**, taken from
+her Instagram and her price list, and used with her permission. Her Instagram
+is [@hairbychrissy_x](https://www.instagram.com/hairbychrissy_x).
+
+Typefaces are Cormorant Garamond (display) and Inter (body and interface), both
+via Google Fonts.
 
 ---
 

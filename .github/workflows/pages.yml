@@ -55,7 +55,10 @@ jobs:
           import os, pathlib
           api = os.environ['HBC_API'].rstrip('/')
           tag = f'<meta name="hbc-api" content="{api}">'
-          for name in ('index.html', 'confirmed.html'):
+          # book.html matters most of the three: it carries the calendar.
+          # Leaving it out would point the home page at the live API while the
+          # booking page itself stayed in enquiry mode.
+          for name in ('index.html', 'book.html', 'confirmed.html'):
               p = pathlib.Path('public') / name
               if not p.exists():
                   continue
