@@ -1,6 +1,10 @@
 {
   "photos": [
     "after.jpg",
+    "ba2-after.jpg",
+    "ba2-before.jpg",
+    "ba3-after.jpg",
+    "ba3-before.jpg",
     "before.jpg",
     "hero-poster.jpg",
     "hero.jpg",
@@ -9,13 +13,21 @@
     "mark.png",
     "mark@2x.png",
     "price-list.jpg",
+    "reel-1-poster.jpg",
+    "reel-2-poster.jpg",
+    "service-dry-style.jpg",
     "service-extensions.jpg",
+    "service-hair-ups.jpg",
     "service-hollywood-waves-clipins.jpg",
     "service-hollywood-waves.jpg",
+    "service-pinned-curls.jpg",
     "service-removals.jpg",
     "services-i-offer.jpg",
     "work-01.jpg",
-    "work-02.jpg"
+    "work-02.jpg",
+    "work-blonde.jpg",
+    "work-braid.jpg",
+    "work-brunette.jpg"
   ],
   "brand": {
     "name": "HAIR BY CHRISSY",
@@ -65,6 +77,37 @@
       "text": "From everyday glam to special occasions — styled to make you feel your best."
     }
   ],
+  "transformations": [
+    {
+      "before": "before.jpg",
+      "after": "after.jpg",
+      "caption": "One fitting, colour matched and cut in"
+    },
+    {
+      "before": "ba2-before.jpg",
+      "after": "ba2-after.jpg",
+      "caption": "Probably needed a hug. Got hair extensions instead."
+    },
+    {
+      "before": "ba3-before.jpg",
+      "after": "ba3-after.jpg",
+      "caption": "Platinum, rebuilt through the ends"
+    }
+  ],
+  "reels": [
+    {
+      "mp4": "reel-1.mp4",
+      "webm": "reel-1.webm",
+      "poster": "reel-1-poster.jpg",
+      "caption": "Probably needed a hug. Got hair extensions instead."
+    },
+    {
+      "mp4": "reel-2.mp4",
+      "webm": "reel-2.webm",
+      "poster": "reel-2-poster.jpg",
+      "caption": "Platinum, start to finish"
+    }
+  ],
   "reviews": [
     {
       "name": "Sophie R.",
@@ -105,34 +148,19 @@
   ],
   "gallery": [
     {
-      "file": "work-01.jpg",
-      "label": "NANO RINGS",
-      "caption": "Full head, blended balayage, cut in"
+      "file": "work-blonde.jpg",
+      "label": "Hollywood waves",
+      "caption": "Platinum, waist length, waved and brushed out"
     },
     {
-      "file": "work-02.jpg",
-      "label": "INVISI",
-      "caption": "Flat weft, root shadow, undetectable up"
+      "file": "work-braid.jpg",
+      "label": "Hair up",
+      "caption": "Pulled-through braid, softened at the front"
     },
     {
-      "file": "work-03.jpg",
-      "label": "WEAVE",
-      "caption": "Double weft for density"
-    },
-    {
-      "file": "work-04.jpg",
-      "label": "TAPES",
-      "caption": "Fine hair, discreet placement"
-    },
-    {
-      "file": "work-05.jpg",
-      "label": "OMBRÉ",
-      "caption": "Colour melt through the lengths"
-    },
-    {
-      "file": "work-06.jpg",
-      "label": "MAINTENANCE",
-      "caption": "Bonds moved up and re-blended"
+      "file": "work-brunette.jpg",
+      "label": "Hollywood waves",
+      "caption": "Deep brunette, glass-finish wave"
     }
   ],
   "faqs": [
@@ -294,6 +322,6 @@
   },
   "today": "2026-08-29",
   "cardMode": "static",
-  "generatedAt": "2026-08-29T17:43:52.131Z",
+  "generatedAt": "2026-08-29T18:05:29.479Z",
   "static": true
 }

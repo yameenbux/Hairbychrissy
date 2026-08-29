@@ -36,9 +36,9 @@
       <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false" aria-controls="primaryNav">☰</button>
       <nav id="primaryNav" aria-label="Primary">
         <a href="#services">Services</a>
+        <a href="#work">Work</a>
         <a href="#process">Process</a>
         <a href="#book">Book</a>
-        <a href="#reviews">Reviews</a>
         <a href="#faq">FAQ</a>
       </nav>
     </div>
@@ -169,16 +169,27 @@
       <h2 class="display">Before<br>and after</h2>
       <p class="lede">One fitting. Colour matched to her own hair, cut in and blended so the join does not show.</p>
     </div>
-    <div class="grid-services" style="grid-template-columns:repeat(2,1fr);max-width:840px">
-      <figure class="reveal" style="margin:0">
-        <div class="card-media media-placeholder" data-img="./images/before.jpg"></div>
-        <figcaption class="card-body"><span class="card-name">Before</span></figcaption>
-      </figure>
-      <figure class="reveal" style="margin:0">
-        <div class="card-media media-placeholder" data-img="./images/after.jpg"></div>
-        <figcaption class="card-body"><span class="card-name">After</span></figcaption>
-      </figure>
+    <div class="ba-set" id="baSet"></div>
+
+    <div class="section-head reveal" style="margin:clamp(56px,9vh,112px) 0 clamp(28px,5vh,48px)">
+      <span class="label">In motion</span>
+      <p class="lede">Two of hers, start to finish.</p>
     </div>
+    <div class="reel-grid" id="reelGrid"></div>
+  </div>
+</section>
+
+<!-- ========================================================== PORTFOLIO -->
+<section class="band band-cream" id="work">
+  <div class="shell">
+    <div class="section-head reveal">
+      <span class="label">Recent work</span>
+      <h2 class="display">The<br>portfolio</h2>
+    </div>
+    <div class="grid-services" style="grid-template-columns:repeat(3,1fr)" id="folioGrid"></div>
+    <p class="small muted" style="margin-top:32px">
+      More on Instagram — <a class="link-underline" id="folioIg" href="https://www.instagram.com/hairbychrissy_x" target="_blank" rel="noopener">@hairbychrissy_x</a>
+    </p>
   </div>
 </section>
 
@@ -367,9 +378,9 @@
 
     <nav class="footer-links" aria-label="Footer">
       <a href="#services">Services</a>
+      <a href="#work">Work</a>
       <a href="#process">Process</a>
       <a href="#book">Book</a>
-      <a href="#reviews">Reviews</a>
       <a href="#faq">FAQ</a>
     </nav>
   </div>

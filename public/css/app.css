@@ -369,9 +369,13 @@ a { color: inherit; text-decoration: none; }
   display: block;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  /* No background here: .media-placeholder is declared earlier in the file and
-     a background on this rule would win and blank the texture out. The
-     placeholder or the real photograph fills it. */
+  /* Sizing only — no background-color. .media-placeholder is declared earlier
+     in the file, so a colour here would win and blank its texture out. These
+     two properties are what make an inline background-image actually fill the
+     box; without them it renders at natural size from the top-left corner. */
+  background-size: cover;
+  background-position: center 32%;
+  background-repeat: no-repeat;
 }
 .card-media > * { width: 100%; height: 100%; }
 /* Hover reveals a full-width SELECT bar over the image bottom. */
@@ -790,4 +794,54 @@ a { color: inherit; text-decoration: none; }
   .cal-cell { min-height: 62px; padding: 8px; }
   .pay-options { grid-template-columns: 1fr; }
   .slots { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+}
+
+/* ------------------------------------------------- before / after + reels */
+
+.ba-set { display: grid; gap: clamp(40px, 6vh, 72px); }
+.ba { margin: 0; }
+.ba-pair { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 1.6vw, 20px); }
+.ba-side { position: relative; }
+.ba .card-media {
+  aspect-ratio: 4 / 5;
+  background-size: cover;
+  background-position: center 32%;
+  background-color: var(--cream);
+}
+.ba-tag {
+  position: absolute; left: 12px; bottom: 12px;
+  padding: 6px 12px;
+  background: var(--espresso);
+  color: var(--paper);
+  font-size: 0.625rem; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.ba figcaption {
+  margin-top: 16px;
+  font-size: 0.9375rem;
+  color: var(--espresso-70);
+  max-width: 48ch;
+}
+
+.reel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(20px, 3vw, 40px); max-width: 720px; }
+.reel { margin: 0; }
+.reel video {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  background: var(--cream);
+  display: block;
+}
+.reel figcaption {
+  margin-top: 14px;
+  font-size: 0.875rem;
+  color: var(--espresso-70);
+}
+
+@media (max-width: 860px) {
+  #folioGrid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 640px) {
+  #folioGrid { grid-template-columns: 1fr !important; }
+  .reel-grid { grid-template-columns: 1fr; max-width: 420px; }
 }

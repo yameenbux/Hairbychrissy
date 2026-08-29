@@ -116,6 +116,10 @@ function renderStatic() {
 
   if (brand.signoff) $('#signoff').textContent = brand.signoff;
 
+  renderTransformations();
+  renderReels();
+  renderPortfolio();
+
   renderServiceCards('#serviceGrid', false);
 
   $('#reviewGrid').innerHTML = reviews
@@ -151,6 +155,101 @@ function renderStatic() {
   }
 
   loadImagery();
+  observeReveals();
+}
+
+/* ------------------------------------------------------------- her work */
+
+const havePhoto = (file) => (state.site.photos || []).includes(file);
+
+function renderTransformations() {
+  const wrap = $('#baSet');
+  if (!wrap) return;
+  const sets = (state.site.transformations || []).filter((t) => havePhoto(t.before) && havePhoto(t.after));
+  wrap.innerHTML = sets
+    .map(
+      (t) => `
+      <figure class="ba reveal">
+        <div class="ba-pair">
+          <div class="ba-side">
+            <div class="card-media" style="background-image:url('./images/${esc(t.before)}')"></div>
+            <span class="ba-tag">Before</span>
+          </div>
+          <div class="ba-side">
+            <div class="card-media" style="background-image:url('./images/${esc(t.after)}')"></div>
+            <span class="ba-tag">After</span>
+          </div>
+        </div>
+        ${t.caption ? `<figcaption>${esc(t.caption)}</figcaption>` : ''}
+      </figure>`,
+    )
+    .join('');
+  observeReveals();
+}
+
+/**
+ * Her reels. Nothing is fetched until the section is actually scrolled to, and
+ * not at all under reduced motion or Save Data — autoplaying video a client
+ * never reaches is pure waste of their allowance. The poster stands in either
+ * way.
+ */
+function renderReels() {
+  const grid = $('#reelGrid');
+  if (!grid) return;
+  const list = (state.site.reels || []).filter((r) => havePhoto(r.poster));
+  if (!list.length) { grid.remove(); return; }
+
+  grid.innerHTML = list
+    .map(
+      (r) => `
+      <figure class="reel reveal">
+        <video poster="./images/${esc(r.poster)}" muted loop playsinline preload="none"
+               disablepictureinpicture data-webm="./video/${esc(r.webm)}" data-mp4="./video/${esc(r.mp4)}"></video>
+        ${r.caption ? `<figcaption>${esc(r.caption)}</figcaption>` : ''}
+      </figure>`,
+    )
+    .join('');
+  observeReveals();
+
+  if (!motionOK() || navigator.connection?.saveData) return;
+  if (!('IntersectionObserver' in window)) return;
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const v = entry.target;
+        if (!entry.isIntersecting) { v.pause(); return; }
+        if (v.dataset.started !== 'true') {
+          v.dataset.started = 'true';
+          if (v.dataset.webm) v.insertAdjacentHTML('beforeend', `<source src="${v.dataset.webm}" type="video/webm">`);
+          if (v.dataset.mp4) v.insertAdjacentHTML('beforeend', `<source src="${v.dataset.mp4}" type="video/mp4">`);
+          v.preload = 'auto';
+          v.load();
+        }
+        v.play().catch(() => {});
+      });
+    },
+    { threshold: 0.35 },
+  );
+  $$('#reelGrid video').forEach((v) => io.observe(v));
+}
+
+function renderPortfolio() {
+  const grid = $('#folioGrid');
+  if (!grid) return;
+  const items = (state.site.gallery || []).filter((g) => havePhoto(g.file));
+  if (!items.length) { grid.closest('section')?.remove(); return; }
+  grid.innerHTML = items
+    .map(
+      (g) => `
+      <figure class="reveal" style="margin:0">
+        <div class="card-media" style="background-image:url('./images/${esc(g.file)}')"></div>
+        <figcaption class="card-body"><span class="card-name">${esc(g.label)}</span></figcaption>
+        <p class="small muted" style="margin-top:6px">${esc(g.caption)}</p>
+      </figure>`,
+    )
+    .join('');
+  if (state.site.brand?.instagram) $('#folioIg').href = state.site.brand.instagram;
   observeReveals();
 }
 

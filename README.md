@@ -349,6 +349,12 @@ spec does not require but a phone-first audience does:
   else's music on a website is a licensing problem.
 - Playback pauses when the hero scrolls out of view.
 
+Her two portfolio reels get the same treatment plus one more: they are not
+fetched at all until the section is scrolled into view, so a client who never
+reaches them never pays for them. One arrived with black bars baked into the
+frame, detected with `cropdetect` and cropped before scaling rather than left
+for `object-fit` to fight with.
+
 ### The non-negotiables, checked not assumed
 
 `tools/sticky-audit.js` (`npm run audit:sticky`) navigates to every in-page
@@ -398,7 +404,7 @@ public/
   sw.js                service worker (push notifications)
   manifest.webmanifest home-screen install (and the iOS push precondition)
   data/site.json       generated content snapshot for the flat-file build
-  video/               hero reel, trimmed and re-encoded, audio stripped
+  video/               hero reel plus her two portfolio reels, audio stripped
   images/logo.jpg      the profile mark the palette is sampled from
 .github/workflows/
   pages.yml            GitHub Pages deployment
