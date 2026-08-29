@@ -21,6 +21,7 @@ import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
 import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
 import { verifyPhoto, savePhotos, readPhoto, MAX_PHOTOS } from './lib/photos.js';
+import { DATA_DIR, DATA_DIR_IS_DEFAULT } from './lib/paths.js';
 import {
   notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
   saveSubscription, removeSubscription, listSubscriptions, channelStatus,
@@ -1234,6 +1235,14 @@ server.listen(PORT, () => {
   console.log(`  run-down     ${Number.isInteger(dayHour) && dayHour >= 0 && dayHour <= 23
     ? `each morning around ${String(dayHour).padStart(2, '0')}:00`
     : 'off (set DAY_AHEAD_HOUR)'}`);
+  /*
+   * Where the bookings are written. Printed because the way this goes wrong
+   * in production is silent: the app runs, takes bookings, answers every
+   * request correctly, and loses the lot on the next deploy because DATA_DIR
+   * was never pointed at a mounted disk. A line at startup is the difference
+   * between noticing on day one and noticing when a client turns up.
+   */
+  console.log(`  data         ${DATA_DIR}${DATA_DIR_IS_DEFAULT ? '  (default — set DATA_DIR to a persistent disk in production)' : ''}`);
   if (usingDefaultPassword()) {
     console.log('  admin password: "chrissy"  — set ADMIN_PASSWORD before going live');
   }

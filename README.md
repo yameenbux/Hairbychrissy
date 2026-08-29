@@ -99,6 +99,142 @@ Everything has a working default, so nothing must be set to try it out.
 
 ---
 
+## The database — hooking up real bookings
+
+There is no database server to install. Bookings live in a single JSON file
+that the app reads into memory on boot and writes back atomically (write to a
+temp file, then rename, so a crash mid-write cannot leave a half-written file).
+For one stylist that is not a compromise — the whole dataset is a few hundred
+KB, every query is an array operation, and there is nothing to administer,
+patch or pay for.
+
+```
+$DATA_DIR/
+  db.json              services, hours, rules, blocked dates, bookings, counter
+  uploads/<booking>/   the photos that client attached
+```
+
+**It already works locally.** `npm start` and book something — it is saved.
+What follows is about making that survive being on the internet.
+
+### Step 1 — Understand the one way this goes wrong
+
+`DATA_DIR` defaults to `./data`, inside the checkout. On most hosts the
+container filesystem is **rebuilt on every deploy**, so that default means the
+site runs perfectly, takes real bookings, and loses all of them the next time
+you push. Nothing errors. You find out when a client turns up.
+
+So the whole job is: put `DATA_DIR` on a disk that persists, and back it up.
+
+The server prints where it is writing on every boot, and flags the default:
+
+```
+data         /home/user/Hairbychrissy/data  (default — set DATA_DIR to a persistent disk in production)
+```
+
+If that line still says "default" in production, stop and fix it.
+
+### Step 2 — Pick a host and attach a disk
+
+Any host that runs Node and offers a persistent volume. The app is a single
+process with no build step, so the smallest instance is plenty.
+
+| Host | Create the disk | Then set |
+|---|---|---|
+| **Fly.io** | `fly volumes create hbc_data --size 1` and add a `[mounts]` block for `/data` | `DATA_DIR=/data` |
+| **Render** | Add a **Disk**, mount path `/var/data` | `DATA_DIR=/var/data` |
+| **Railway** | Add a **Volume**, mount path `/data` | `DATA_DIR=/data` |
+| **A VPS** | Any directory you include in backups | `DATA_DIR=/srv/hbc-data` |
+
+> **One process only.** The store keeps the database in memory, so two
+> instances would each hold their own copy and overwrite each other. Set the
+> instance/replica count to **1**. This is the ceiling on the JSON store, and
+> it is a real one — see [When to outgrow this](#when-to-outgrow-this).
+
+### Step 3 — Set the environment
+
+```bash
+DATA_DIR=/data                       # the mount path from step 2
+ADMIN_PASSWORD=<something long>      # the dashboard warns while "chrissy" is in use
+SESSION_SECRET=<32+ random chars>    # openssl rand -base64 32
+PUBLIC_URL=https://api.yourhost.com  # this app's own public URL
+ALLOWED_ORIGINS=https://yameenbux.github.io
+```
+
+`ALLOWED_ORIGINS` is an explicit allowlist and must **never** be `*`: the admin
+routes share this origin and carry a session cookie.
+
+### Step 4 — Point the published site at it
+
+The GitHub Pages site is static and cannot run the booking engine, so it
+defaults to enquiry mode. To switch it to the real calendar:
+
+> **Settings → Secrets and variables → Actions → Variables → New variable**
+> `HBC_API` = `https://api.yourhost.com`
+
+Push anything, and the deploy injects that into `index.html`, `book.html` and
+`confirmed.html`. Verify with:
+
+```bash
+curl -s https://yameenbux.github.io/Hairbychrissy/book.html | grep hbc-api
+```
+
+The booking page should now show a live calendar instead of the enquiry notice.
+
+### Step 5 — Back it up
+
+```bash
+npm run backup                 # -> backups/hbc-2026-08-29T2130.tar.gz
+npm run backup /mnt/elsewhere  # or write it somewhere else
+```
+
+Reads `DATA_DIR`, so it archives whatever the server is actually using —
+database and photos together, since a booking without its photos is half a
+record. Restoring is a plain `tar`, deliberately not a format of ours:
+
+```bash
+tar -xzf hbc-2026-08-29T2130.tar.gz -C "$DATA_DIR"
+```
+
+Put it on a schedule — nightly is ample for a diary:
+
+```cron
+0 3 * * *  cd /srv/hbc && DATA_DIR=/data npm run backup /srv/backups
+```
+
+**Archives are gitignored** (`backups/`, `*.tar.gz`). One of them is the entire
+client list, their phone numbers and their photos in a single portable file.
+
+### Step 6 — Check it survived
+
+The only test that matters is a restart, because that is what a deploy is:
+
+```bash
+curl -s $PUBLIC_URL/api/bookings/HBC-1001   # book something first
+# restart / redeploy the app
+curl -s $PUBLIC_URL/api/bookings/HBC-1001   # must still be there
+```
+
+If the reference comes back and the next booking continues the numbering
+rather than resetting to `HBC-1001`, the disk is wired up correctly.
+
+### When to outgrow this
+
+The JSON store is the right answer here, and it is worth being honest about
+where it stops:
+
+| Signal | Why it breaks | Move to |
+|---|---|---|
+| A second stylist, or you need 2+ app instances | Each process holds its own in-memory copy and they overwrite each other | SQLite via `node:sqlite` (Node 22+), still one file, still zero dependencies |
+| Tens of thousands of bookings | The whole file is parsed on boot and rewritten on change | SQLite, then Postgres |
+| You need history — who changed what, when | There is one current state and no log | Postgres |
+
+Both `read()` and `write()` in `lib/store.js` are the only ways anything
+touches the data, so swapping the engine is a change to one 80-line file rather
+than a change everywhere.
+
+---
+
 ## The booking page
 
 Every "Book your slot" on the site lands on `/book`, which walks four steps:
