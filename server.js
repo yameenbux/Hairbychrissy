@@ -18,7 +18,11 @@ import { brand, reviews, gallery, faqs } from './lib/seed.js';
 import { slotsFor, monthSummary, validateSlot, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
-import { isLiveStripe, createCheckoutSession, publicUrl } from './lib/payments.js';
+import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
+import {
+  notify, bookingMessage, getVapid, saveSubscription, removeSubscription,
+  listSubscriptions, channelStatus, recentNotifications, latestNotification,
+} from './lib/notify.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -177,6 +181,19 @@ function publicBooking(b) {
   };
 }
 
+/**
+ * Tell Chrissy about a booking. Deliberately fire-and-forget: a slow webhook
+ * or an unreachable push service must never delay or fail a client's
+ * confirmation, so nothing here is awaited.
+ */
+function notifyNewBooking(booking) {
+  const service = getService(booking.serviceId);
+  const message = bookingMessage({ ...booking, dateLong: longDate(booking.date) }, service);
+  notify(message)
+    .then(() => broadcast('notification', {}))
+    .catch((err) => console.error('[notify]', err.message));
+}
+
 function siteConfig() {
   const db = read();
   return {
@@ -248,6 +265,35 @@ async function handlePublicApi(req, res, url) {
       booking.paidAt = new Date().toISOString();
     });
     broadcast('bookings-changed', { date: booking.date });
+    notifyNewBooking(booking);
+    return json(res, 200, publicBooking(booking));
+  }
+
+  if (p === '/api/pay/stripe/verify' && req.method === 'POST') {
+    const { ref } = await readJson(req).catch(() => ({}));
+    const booking = read().bookings.find((b) => b.ref === clean(ref, 24).toUpperCase());
+    if (!booking) return json(res, 404, { error: 'No booking found with that reference.' });
+    if (!isLiveStripe() || !booking.stripeSessionId) {
+      return json(res, 200, publicBooking(booking));
+    }
+    if (booking.paymentStatus === 'deposit-paid' || booking.paymentStatus === 'paid-in-full') {
+      return json(res, 200, publicBooking(booking));
+    }
+
+    try {
+      const session = await retrieveCheckoutSession(booking.stripeSessionId);
+      if (session.payment_status === 'paid') {
+        write(() => {
+          booking.paymentStatus = 'deposit-paid';
+          booking.status = 'confirmed';
+          booking.paidAt = new Date().toISOString();
+        });
+        broadcast('bookings-changed', { date: booking.date });
+        notifyNewBooking(booking);
+      }
+    } catch (err) {
+      console.error('[stripe:verify]', err.message);
+    }
     return json(res, 200, publicBooking(booking));
   }
 
@@ -313,6 +359,7 @@ async function createBooking(req, res) {
   broadcast('bookings-changed', { date });
 
   if (payment === 'cash') {
+    notifyNewBooking(booking);
     return json(res, 201, { booking: publicBooking(booking), next: 'confirmed' });
   }
 
@@ -336,6 +383,7 @@ async function createBooking(req, res) {
         booking.paymentNote = 'Card checkout unavailable at time of booking.';
       });
       broadcast('bookings-changed', { date });
+      notifyNewBooking(booking);
       return json(res, 201, {
         booking: publicBooking(booking),
         next: 'confirmed',
@@ -510,6 +558,62 @@ async function handleAdminApi(req, res, url) {
     });
     broadcast('availability-changed', {});
     return json(res, 200, { services: next });
+  }
+
+  /* ---------------------------------------------------- notifications */
+
+  if (p === '/api/admin/notifications' && req.method === 'GET') {
+    return json(res, 200, {
+      channels: channelStatus(),
+      log: recentNotifications(20),
+      vapidPublicKey: getVapid().publicKey,
+      devices: listSubscriptions().map((sub) => ({
+        id: sub.id,
+        label: sub.label,
+        createdAt: sub.createdAt,
+        lastOk: sub.lastOk,
+        failures: sub.failures,
+        host: (() => { try { return new URL(sub.endpoint).host; } catch { return 'unknown'; } })(),
+      })),
+    });
+  }
+
+  /**
+   * Called by the service worker when a push wakes it. The push itself carries
+   * no payload, so no client's name or number ever passes through Google's or
+   * Apple's push service — the worker comes back here, authenticated, for the
+   * detail.
+   */
+  if (p === '/api/admin/notifications/latest' && req.method === 'GET') {
+    const latest = latestNotification();
+    if (!latest) return json(res, 200, { title: 'New booking', body: 'Open your dashboard to see it.' });
+    return json(res, 200, { title: latest.title, body: latest.body, ref: latest.ref, at: latest.at });
+  }
+
+  if (p === '/api/admin/notifications/test' && req.method === 'POST') {
+    const entry = await notify({
+      kind: 'test',
+      title: 'Test notification',
+      body: 'If you can read this, alerts are reaching you. A real booking looks like this, with the client, service, time and how they are paying.',
+    });
+    broadcast('notification', {});
+    return json(res, 200, { notification: entry });
+  }
+
+  if (p === '/api/admin/push/subscribe' && req.method === 'POST') {
+    const body = await readJson(req);
+    try {
+      const record = saveSubscription(body.subscription, clean(body.label, 60));
+      return json(res, 200, { device: { id: record.id, label: record.label } });
+    } catch (err) {
+      return json(res, 400, { error: err.message });
+    }
+  }
+
+  if (p === '/api/admin/push/unsubscribe' && req.method === 'POST') {
+    const body = await readJson(req).catch(() => ({}));
+    removeSubscription({ endpoint: clean(body.endpoint, 500), id: clean(body.id, 60) });
+    return json(res, 200, { devices: listSubscriptions().length });
   }
 
   if (p.startsWith('/api/admin/bookings/') && req.method === 'POST') {

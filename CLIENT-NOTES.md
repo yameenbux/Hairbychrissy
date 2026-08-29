@@ -117,12 +117,58 @@ everyone, or from nobody, say so — it's a small change.
 
 ---
 
-## 9. Not built yet
+## 9. Getting told about bookings
+
+You will not miss one. Alerts are already built in:
+
+**On your phone (the important one).** Open **/admin** on your phone, go to
+**Alerts**, and tap **turn on alerts here**. From then on your phone notifies
+you the moment someone books — with the site closed, phone in your bag. Do it
+once per device; there's a **send me a test** button so you can prove it works
+before you rely on it.
+
+Two things to know:
+
+- **On an iPhone** you have to add the site to your Home Screen first
+  (Share → Add to Home Screen) and open it from there. Apple only allows
+  notifications that way. The page tells you this if it applies.
+- The site must be on **https://** for this to work. It will be when it goes
+  live — just worth knowing it won't work from a plain test link.
+
+**On your laptop.** With the dashboard open you get a banner across the top, a
+chime, and the tab title changes — so a booking that lands while you're on
+another tab is still obvious.
+
+**Anywhere else you want.** I can also send alerts to any of these — tell me
+which you'd like and it takes a few minutes each:
+
+| | Good for |
+|---|---|
+| **Email** | a written record of every booking |
+| **Telegram** | free, instant, very reliable on a phone |
+| **Text message** | reaches you with no internet at all (a few pence each) |
+| **WhatsApp / Slack / Discord** | if you already live in one of those |
+
+My suggestion: **phone alerts plus email**. Phone so you know immediately,
+email so there's a paper trail you can search later.
+
+You get alerted when a booking is **confirmed** — cash bookings straight away,
+card bookings once the deposit goes through. Someone who starts a card payment
+and abandons it never bothers you.
+
+Every alert that goes out is listed in the dashboard under **Alerts**, including
+any that failed, so you can always see it's working.
+
+---
+
+## 10. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
-- **Confirmation emails and reminders.** Bookings appear in your dashboard, but
-  the client doesn't get an email yet. This is the most important next step.
+- **Confirmation emails to the client.** You get alerted, and everything's in
+  your dashboard, but the client doesn't get an email yet. Most important next
+  step.
+- **Reminders** to the client the day before.
 - **Client self-service cancellation** — right now they message you and you
   cancel it in the dashboard.
 - **Deposit refunds** through the site.
@@ -131,13 +177,16 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 10. Your dashboard
+## 11. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.
 
 From there you can: see your day, set your hours, block holidays, edit prices,
-cancel appointments and mark people as paid.
+cancel appointments, mark people as paid, and turn on booking alerts.
+
+Worth doing on your phone as well as your laptop — that's how you get the
+notifications.
 
 ---
 
@@ -149,3 +198,4 @@ cancel appointments and mark people as paid.
 4. Photographs
 5. Real email address and how much location detail to show
 6. A yes/no on setting up Stripe
+7. Which alert channels you want beyond phone notifications (email? text?)

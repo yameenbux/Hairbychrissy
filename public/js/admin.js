@@ -12,7 +12,13 @@ const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const state = { data: null, view: 'today', draftHours: null, draftServices: null };
+const state = {
+  data: null, view: 'today', draftHours: null, draftServices: null,
+  alerts: null,            // notification channels, devices and log
+  knownRefs: null,         // bookings already seen — null until the first load
+  unseen: 0,               // count shown in the tab title
+  baseTitle: document.title,
+};
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `£${Number(n || 0).toLocaleString('en-GB')}`;
@@ -44,7 +50,9 @@ function flash(el, message, kind = 'ok') {
   el.textContent = message;
   el.hidden = false;
   clearTimeout(el._t);
-  el._t = setTimeout(() => { el.hidden = true; }, 4000);
+  // Confirmations can fade; problems stay put until she does something about
+  // them. An error that disappears after four seconds is an error she misses.
+  if (kind === 'ok') el._t = setTimeout(() => { el.hidden = true; }, 5000);
 }
 
 /* ------------------------------------------------------------------ auth */
@@ -60,6 +68,7 @@ async function showApp() {
   $('#app').hidden = false;
   $('#adminNav').hidden = false;
   await refresh();
+  await loadAlerts().catch(() => {});
   setView(state.view);
   connectLive();
 }
@@ -88,6 +97,7 @@ $('#logoutBtn').addEventListener('click', async (e) => {
 
 function setView(view) {
   state.view = view;
+  if (view === 'alerts') loadAlerts().catch(() => {});
   $$('.view').forEach((v) => { v.hidden = v.dataset.view !== view; });
   $$('#adminNav a[data-view]').forEach((a) => a.classList.toggle('active', a.dataset.view === view));
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -112,6 +122,98 @@ async function refresh() {
   renderBlocked();
   renderServices();
   renderSettings();
+  detectNewBookings();
+}
+
+/* -------------------------------------------------- new-booking alerting */
+
+/**
+ * Work out what arrived since the last refresh by diffing booking references.
+ * Done here rather than pushed down the event stream on purpose: /api/stream is
+ * public, so it must never carry a client's name, number or appointment.
+ */
+function detectNewBookings() {
+  const refs = new Set(state.data.bookings.map((b) => b.ref));
+
+  // First load after signing in: learn what already exists without alerting.
+  if (state.knownRefs === null) {
+    state.knownRefs = refs;
+    return;
+  }
+
+  const fresh = state.data.bookings.filter((b) => !state.knownRefs.has(b.ref));
+  state.knownRefs = refs;
+  if (!fresh.length) return;
+
+  for (const booking of fresh) raiseAlert(booking);
+}
+
+function raiseAlert(booking) {
+  const title = `New booking — ${booking.clientName}`;
+  const body = [
+    booking.serviceName,
+    `${shortDate(booking.date)} at ${booking.start}`,
+    booking.payment === 'cash' ? `Cash · ${money(booking.total)} on the day` : `Card · ${money(booking.balanceDue)} on the day`,
+    booking.client.phone,
+  ].join('\n');
+
+  showBanner(title, body);
+  chime();
+  bumpTitle();
+
+  // A desktop notification as well, for when the dashboard is behind something.
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, { body, icon: '/icon-192.png', tag: `hbc-${booking.ref}` });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch {
+      /* some browsers only allow this via the service worker — the banner covers it */
+    }
+  }
+}
+
+function showBanner(title, body) {
+  const banner = $('#alertBanner');
+  $('#alertTitle').textContent = title;
+  $('#alertBody').textContent = body;
+  banner.hidden = false;
+}
+
+function bumpTitle() {
+  state.unseen += 1;
+  document.title = `(${state.unseen}) ${state.baseTitle}`;
+}
+
+function clearTitle() {
+  state.unseen = 0;
+  document.title = state.baseTitle;
+}
+
+/** A short two-tone chime, synthesised so there is no audio file to ship. */
+function chime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    state.audio = state.audio || new Ctx();
+    const ctx = state.audio;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    [880, 1320].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.16;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.34);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.36);
+    });
+  } catch {
+    /* audio blocked until the page is interacted with — the banner still shows */
+  }
 }
 
 /* --------------------------------------------------------------- today */
@@ -403,6 +505,269 @@ $('#servicesSave').addEventListener('click', async () => {
   }
 });
 
+/* -------------------------------------------------------------- alerts */
+
+function urlBase64ToUint8Array(base64) {
+  const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+const pushSupported = () =>
+  'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+
+async function loadAlerts() {
+  state.alerts = await api('/api/admin/notifications');
+  renderAlerts();
+  await refreshPushState();
+}
+
+function renderAlerts() {
+  const a = state.alerts;
+  if (!a) return;
+
+  $('#channelList').innerHTML = a.channels
+    .map(
+      (c) => `
+      <div class="channel-row">
+        <div>
+          <div class="n">${esc(c.label)}</div>
+          <div class="d">${esc(c.detail)}</div>
+        </div>
+        <span class="pill ${c.configured ? 'pill-ok' : ''}">${c.configured ? 'On' : 'Off'}</span>
+      </div>`,
+    )
+    .join('');
+
+  $('#deviceList').innerHTML = a.devices.length
+    ? a.devices
+        .map(
+          (d) => `
+        <div class="device-row">
+          <div>
+            <div class="n">${esc(d.label)}</div>
+            <div class="d">${esc(d.host)} · added ${esc(shortDate(d.createdAt.slice(0, 10)))}${d.lastOk ? ` · last alert ${esc(shortDate(d.lastOk.slice(0, 10)))}` : ''}</div>
+          </div>
+          <button class="btn btn-sm btn-ghost" data-forget="${esc(d.id)}">Remove</button>
+        </div>`,
+        )
+        .join('')
+    : '<div class="empty">No devices yet. Turn on alerts above.</div>';
+
+  $$('#deviceList [data-forget]').forEach((btn) =>
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      await api('/api/admin/push/unsubscribe', { method: 'POST', body: JSON.stringify({ id: btn.dataset.forget }) });
+      await loadAlerts();
+    }),
+  );
+
+  $('#notifyLog').innerHTML = a.log.length
+    ? a.log
+        .map((n) => {
+          const sent = n.channels.filter((c) => c.status === 'sent');
+          const failed = n.channels.filter((c) => c.status === 'failed');
+          const cls = sent.length ? 'ok' : 'none';
+          const pills = [
+            ...sent.map((c) => `<span class="pill pill-ok">${esc(c.name)}</span>`),
+            ...failed.map((c) => `<span class="pill pill-off" title="${esc(c.detail)}">${esc(c.name)} failed</span>`),
+          ].join('');
+          const when = new Date(n.at);
+          return `
+            <div class="log-row ${cls}">
+              <div class="t">${esc(n.title)}</div>
+              <div class="b">${esc(n.body)}</div>
+              <div class="c">${pills || '<span class="pill">nowhere to send</span>'}</div>
+              <div class="d caption" style="margin-top:4px">${esc(when.toLocaleString('en-GB'))}</div>
+            </div>`;
+        })
+        .join('')
+    : '<div class="empty">Nothing sent yet. Try the test button above.</div>';
+}
+
+async function currentSubscription() {
+  if (!pushSupported()) return null;
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) return null;
+  return reg.pushManager.getSubscription();
+}
+
+async function refreshPushState() {
+  const pill = $('#pushState');
+  const copy = $('#pushCopy');
+  const enable = $('#pushEnable');
+  const disable = $('#pushDisable');
+  enable.hidden = true;
+  disable.hidden = true;
+
+  // Push is only available in a secure context. Over plain http on a real
+  // domain the API is simply absent, which looks like an unsupported browser
+  // rather than the deployment problem it actually is.
+  if (!window.isSecureContext) {
+    pill.textContent = 'Needs HTTPS';
+    pill.className = 'pill pill-off';
+    copy.textContent =
+      'Background alerts need the site to be served over HTTPS. Ask whoever set the site up to put a certificate on it — everything else here works as normal in the meantime.';
+    return;
+  }
+
+  if (!pushSupported()) {
+    pill.textContent = 'Not available';
+    pill.className = 'pill';
+    copy.textContent =
+      'This browser cannot do background alerts. On an iPhone, add this site to your Home Screen first (Share → Add to Home Screen), then open it from there and this will work. Dashboard alerts still work whenever the page is open.';
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    pill.textContent = 'Blocked';
+    pill.className = 'pill pill-off';
+    copy.textContent =
+      'Notifications are blocked for this site in your browser settings. Allow them for this site, then reload this page.';
+    return;
+  }
+
+  const sub = await currentSubscription();
+  if (sub && Notification.permission === 'granted') {
+    pill.textContent = 'On';
+    pill.className = 'pill pill-ok';
+    copy.textContent =
+      'This device will alert you when a booking comes in, even with the site closed. Keep it on for your phone.';
+    disable.hidden = false;
+    return;
+  }
+
+  pill.textContent = 'Off';
+  pill.className = 'pill pill-warn';
+  copy.textContent =
+    'Turn this on and your phone buzzes the moment a client books. You only need to do it once per device.';
+  enable.hidden = false;
+}
+
+async function enablePush() {
+  const msg = $('#pushMsg');
+  const btn = $('#pushEnable');
+  btn.disabled = true;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      flash(msg, 'You said no to notifications. Allow them for this site and try again.', 'warn');
+      await refreshPushState();
+      return;
+    }
+
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(state.alerts.vapidPublicKey),
+      });
+    }
+
+    await api('/api/admin/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ subscription: sub.toJSON(), label: deviceLabel() }),
+    });
+
+    await loadAlerts();
+    flash(msg, 'Alerts are on for this device. Send yourself a test to be sure.', 'ok');
+  } catch (err) {
+    flash(msg, explainPushError(err), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/** Browser push errors are terse and technical. Say what to actually do. */
+function explainPushError(err) {
+  const text = `${err.name || ''} ${err.message || ''}`;
+
+  if (/permission|NotAllowed/i.test(text) && Notification.permission === 'denied') {
+    return 'Your browser is blocking notifications for this site. Allow them in your browser settings, then reload and try again.';
+  }
+  if (/Registration failed|AbortError|push service/i.test(text)) {
+    return 'Your browser could not reach its notification service — usually a network or firewall block. Try again on another network (mobile data is a good test). Dashboard alerts still work in the meantime.';
+  }
+  if (/applicationServerKey|InvalidAccessError/i.test(text)) {
+    return 'This device was set up against different notification keys. Remove it from the device list below and turn alerts on again.';
+  }
+  return `Could not turn alerts on: ${err.message}`;
+}
+
+async function disablePush() {
+  const msg = $('#pushMsg');
+  try {
+    const sub = await currentSubscription();
+    if (sub) {
+      await api('/api/admin/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint: sub.endpoint }) });
+      await sub.unsubscribe();
+    }
+    await loadAlerts();
+    flash(msg, 'Alerts are off on this device.', 'ok');
+  } catch (err) {
+    flash(msg, err.message, 'error');
+  }
+}
+
+/** A human label so she can tell her phone from her laptop in the device list. */
+function deviceLabel() {
+  const ua = navigator.userAgent;
+  const kind = /iPhone|iPad|iPod/.test(ua) ? 'iPhone or iPad'
+    : /Android/.test(ua) ? 'Android phone'
+    : /Macintosh/.test(ua) ? 'Mac'
+    : /Windows/.test(ua) ? 'Windows PC'
+    : 'This device';
+  const browser = /Edg\//.test(ua) ? 'Edge'
+    : /Chrome\//.test(ua) ? 'Chrome'
+    : /Firefox\//.test(ua) ? 'Firefox'
+    : /Safari\//.test(ua) ? 'Safari'
+    : 'browser';
+  return `${kind} (${browser})`;
+}
+
+$('#pushEnable').addEventListener('click', enablePush);
+$('#pushDisable').addEventListener('click', disablePush);
+
+$('#testBtn').addEventListener('click', async () => {
+  const btn = $('#testBtn');
+  const msg = $('#pushMsg');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try {
+    const { notification } = await api('/api/admin/notifications/test', { method: 'POST' });
+    const sent = notification.channels.filter((c) => c.status === 'sent').map((c) => c.name);
+    await loadAlerts();
+    flash(
+      msg,
+      sent.length
+        ? `Test sent via ${sent.join(', ')}. It should reach you within a few seconds.`
+        : 'Nothing is switched on to send to yet. Turn on alerts for this device above.',
+      sent.length ? 'ok' : 'warn',
+    );
+  } catch (err) {
+    flash(msg, err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send me a test';
+  }
+});
+
+$('#alertClose').addEventListener('click', () => {
+  $('#alertBanner').hidden = true;
+  clearTitle();
+});
+
+$('#alertView').addEventListener('click', () => {
+  $('#alertBanner').hidden = true;
+  clearTitle();
+  setView('today');
+});
+
+window.addEventListener('focus', clearTitle);
+
 /* ------------------------------------------------------------ settings */
 
 function renderSettings() {
@@ -465,6 +830,9 @@ function connectLive() {
     dot.textContent = 'Live';
   });
   source.addEventListener('bookings-changed', () => refresh().catch(() => {}));
+  source.addEventListener('notification', () => {
+    if (state.view === 'alerts') loadAlerts().catch(() => {});
+  });
   source.onerror = () => {
     dot.dataset.state = 'offline';
     dot.textContent = 'Reconnecting…';

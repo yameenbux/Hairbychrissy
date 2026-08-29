@@ -84,6 +84,75 @@ block a four-hour appointment forever.
 
 ---
 
+## Notifications — not missing a booking
+
+A booking Chrissy doesn't see is a booking she can't honour, so alerts run over
+several independent channels. Only the first two need any setup at all, and the
+first needs none.
+
+| Channel | Reaches her when | Setup |
+|---|---|---|
+| **Dashboard alerts** | the dashboard is open | none — always on |
+| **Phone / desktop push** | **the site is closed** | she taps "turn on alerts" once per device |
+| Email | anywhere | `RESEND_API_KEY` + `NOTIFY_EMAIL_TO` |
+| Webhook (Slack, Discord, Zapier, IFTTT) | anywhere | `NOTIFY_WEBHOOK_URL` |
+| Telegram | phone, instantly, free | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` |
+| Text message | phone, no data needed | Twilio credentials + `NOTIFY_SMS_TO` |
+
+Channels fire in parallel and are **fire-and-forget**: a slow webhook or an
+unreachable push service can never delay or fail a client's booking. Every
+attempt is recorded in the dashboard under **Alerts**, including failures, so a
+channel that has quietly stopped working is visible rather than silent.
+
+Alerts fire when a booking is **confirmed** — a cash booking immediately, a card
+booking once the deposit clears. Abandoned card checkouts never generate noise.
+
+### Dashboard alerts
+
+With the dashboard open, a new booking raises a banner with the client, service,
+time, payment method and phone number, plays a short chime, badges the tab title
+and (with permission) raises a desktop notification.
+
+New bookings are detected by **diffing booking references after a refresh**, not
+by pushing details down the event stream — `/api/stream` is public, so no
+client's name, number or appointment ever travels over it.
+
+### Web push
+
+Self-hosted, free, no third party in the middle. VAPID keys are generated on
+first run and stored in the database; rotating them invalidates every device, so
+they are written once and left alone.
+
+Pushes are sent **with no payload**. That sidesteps `aes128gcm` payload
+encryption entirely, and more importantly means **no client's details ever pass
+through Google's or Apple's push infrastructure**. The push is a bare wake-up;
+the service worker then calls back to this server, authenticated with Chrissy's
+own session cookie, and fetches the text itself. If her sign-in has lapsed it
+still shows a generic "new booking" — a reason to open the dashboard, never
+silence.
+
+Practical caveats, both surfaced in the UI rather than left to fail quietly:
+
+- **Push requires HTTPS.** On plain `http` the browser API is simply absent. The
+  dashboard detects this and says so instead of looking broken.
+- **On iPhone**, the site must be added to the Home Screen (Share → Add to Home
+  Screen) and opened from there before iOS will allow push. The dashboard
+  explains this on any device where push isn't available.
+- Subscriptions the push service has dropped are pruned automatically, and
+  reported as a **failure**, not a delivery — telling her an alert arrived at a
+  device that stopped listening would defeat the point.
+
+### A note on card bookings in live Stripe mode
+
+When the client returns from Stripe, the confirmation page asks the server to
+verify the payment against Stripe's own API before confirming and alerting — the
+browser is never trusted for this. That covers the normal path. For full
+coverage (a client who pays then closes the tab before redirecting), add a
+Stripe webhook to `/api/pay/stripe/verify`'s logic; it is a small addition and
+the verification code is already written.
+
+---
+
 ## The dashboard
 
 | Section | What Chrissy does there |
@@ -166,8 +235,11 @@ past it, `lib/store.js` is the only file that changes.
 2. Set `SESSION_SECRET` to a long random string.
 3. Add `STRIPE_SECRET_KEY` and `PUBLIC_URL` to switch card payments on.
 4. Confirm everything in [CLIENT-NOTES.md](CLIENT-NOTES.md).
-5. Serve over HTTPS and back up `data/db.json`.
+5. Serve over HTTPS — **push notifications will not work without it**.
+6. Have Chrissy open `/admin` on her phone and turn on alerts.
+7. Back up `data/db.json` (it holds bookings, hours and the push keys).
 
-Confirmation **emails are not wired up** in this draft — bookings are recorded
-and visible in the dashboard, but nothing is sent to the client yet. That is the
-first thing to add once the content is signed off.
+Confirmation **emails to the client are not wired up** in this draft — bookings
+are recorded, Chrissy is alerted, and everything is visible in the dashboard, but
+the client themselves gets no email yet. That is the first thing to add once the
+content is signed off; the email plumbing already exists in `lib/notify.js`.

@@ -117,3 +117,50 @@
   .appt { grid-template-columns: 1fr; }
   .appt .actions { justify-content: flex-start; }
 }
+
+/* ---- live alert banner ---- */
+.alert-banner {
+  position: sticky;
+  top: 64px;
+  z-index: 55;
+  background: var(--surface-elevated);
+  border-bottom: 1px solid var(--hairline);
+}
+.alert-banner .stripe { display: block; }
+.alert-banner .alert-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: var(--md) var(--lg);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--md);
+}
+.alert-banner .body-sm { color: var(--body-strong); white-space: pre-line; }
+.alert-banner .icon-btn { width: 40px; height: 40px; font-size: 20px; }
+
+/* ---- channels + devices ---- */
+.channel-row, .device-row {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--md);
+  padding: var(--sm) var(--md);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline-strong);
+  margin-bottom: var(--xs);
+}
+.channel-row .n, .device-row .n { font-size: 14px; font-weight: 700; letter-spacing: 0.5px; color: var(--ink); }
+.channel-row .d, .device-row .d { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ---- notification log ---- */
+.log-row {
+  padding: var(--sm) var(--md);
+  background: var(--surface-card);
+  border: 1px solid var(--hairline-strong);
+  border-left: 4px solid var(--hairline);
+  margin-bottom: var(--xs);
+}
+.log-row.ok { border-left-color: var(--success); }
+.log-row.none { border-left-color: var(--warning); }
+.log-row .t { font-size: 14px; font-weight: 700; color: var(--ink); letter-spacing: 0.3px; }
+.log-row .b { font-size: 12px; color: var(--body); white-space: pre-line; margin-top: 4px; }
+.log-row .c { display: flex; gap: var(--xs); flex-wrap: wrap; margin-top: var(--xs); }
+
+@media (max-width: 768px) {
+  .alert-banner .alert-inner { flex-direction: column; align-items: flex-start; }
+}
