@@ -38,7 +38,7 @@
         <a href="#services">Services</a>
         <a href="#work">Work</a>
         <a href="#process">Process</a>
-        <a href="#book">Book</a>
+        <a href="./book.html">Book</a>
         <a href="#faq">FAQ</a>
       </nav>
     </div>
@@ -49,7 +49,7 @@
     </a>
     <div class="nav-right">
       <a id="navInstagram" href="https://www.instagram.com/hairbychrissy_x" target="_blank" rel="noopener">Instagram</a>
-      <a class="btn btn-sm btn-cta nav-cta" href="#book">Book your slot</a>
+      <a class="btn btn-sm btn-cta nav-cta" href="./book.html">Book your slot</a>
     </div>
   </div>
 </header>
@@ -73,7 +73,7 @@
     <h1 class="display" id="heroHeading">Hair extension<br>specialist<br>+ stylist</h1>
     <p class="lede" id="heroIntro">Nano rings, tapes, micro, weave and invisi, fitted by hand in a private London studio.</p>
     <div class="hero-actions">
-      <a class="btn btn-light btn-cta" href="#book">Book your slot</a>
+      <a class="btn btn-light btn-cta" href="./book.html">Book your slot</a>
       <a class="hero-secondary" href="#services">See the price list</a>
     </div>
   </div>
@@ -120,7 +120,7 @@
     <p class="small muted" style="margin-top:var(--s-4)">Extensions and fittings are priced on request — book a consultation and I will colour match you and quote.</p>
 
     <div class="cta-repeat reveal">
-      <a class="btn btn-cta" href="#book">Book your slot</a>
+      <a class="btn btn-cta" href="./book.html">Book your slot</a>
       <span class="cta-note">Extensions are quoted at a free consultation.</span>
     </div>
   </div>
@@ -165,7 +165,7 @@
         <h2 class="display-sm">Recover<br>and protect</h2>
         <p>Left too long, extensions begin pulling on the hair they are attached to. Moving them up on schedule takes that tension off, guards against breakage and lets your own hair keep growing underneath.</p>
         <p>Staying on top of appointments is also less work in the chair, and the results last longer.</p>
-        <a class="link-underline" href="#book">Book your slot</a>
+        <a class="link-underline" href="./book.html">Book your slot</a>
       </div>
     </div>
   </div>
@@ -202,143 +202,35 @@
     </p>
 
     <div class="cta-repeat reveal">
-      <a class="btn btn-cta" href="#book">Book your slot</a>
+      <a class="btn btn-cta" href="./book.html">Book your slot</a>
       <span class="cta-note">Live availability — pick a day and a time.</span>
     </div>
   </div>
 </section>
 
 <!-- ============================================================ BOOKING -->
+<!-- The flow itself is on book.html. Keeping a full four-step wizard halfway
+     down a marketing page meant the calendar was something you scrolled past;
+     now the page asks, and the booking page answers. -->
 <section class="band" id="book">
   <div class="shell">
-    <div class="section-head reveal">
-      <span class="label">Booking</span>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
-        <h2 class="display">Reserve<br>your slot</h2>
-        <span class="live-dot" id="liveDot" data-state="static">Checking availability</span>
-      </div>
-      <p class="lede" id="bookIntro">Pick a service, choose a day, take a time.</p>
-    </div>
-
-    <div id="bookingStatic" class="notice notice-warn" hidden style="margin-bottom:var(--s-4)"></div>
-
-    <div id="bookingLive" hidden>
-      <div class="steps" role="tablist" aria-label="Booking steps">
-        <button class="step-tab" role="tab" data-step="1" aria-selected="true">1 — Service</button>
-        <button class="step-tab" role="tab" data-step="2" aria-selected="false" disabled>2 — Date &amp; time</button>
-        <button class="step-tab" role="tab" data-step="3" aria-selected="false" disabled>3 — Details</button>
-        <button class="step-tab" role="tab" data-step="4" aria-selected="false" disabled>4 — Payment</button>
-      </div>
-
-      <div class="booking-grid">
-        <div>
-          <div class="step-panel" data-panel="1">
-            <div class="grid-services" id="bookServiceGrid"></div>
-          </div>
-
-          <div class="step-panel" data-panel="2" hidden>
-            <div class="cal-head">
-              <button class="cal-nav" id="prevMonth" aria-label="Previous month">‹</button>
-              <span class="cal-month" id="calMonth">—</span>
-              <button class="cal-nav" id="nextMonth" aria-label="Next month">›</button>
-            </div>
-            <div class="cal-grid" id="calGrid" role="grid" aria-label="Available dates"></div>
-            <div class="cal-legend">
-              <span><i class="swatch swatch-free" aria-hidden="true"></i> Slots free</span>
-              <span><i class="swatch swatch-none" aria-hidden="true"></i> Closed or full</span>
-              <span><i class="swatch swatch-sel" aria-hidden="true"></i> Selected</span>
-            </div>
-            <div style="margin-top:var(--s-5)">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:var(--s-2)">
-                <span class="label label-plain" id="slotHeading">Choose a date</span>
-                <span class="small muted" id="slotCount"></span>
-              </div>
-              <div class="slots" id="slotGrid"></div>
-              <div id="slotEmpty" class="empty" hidden>Select a date above.</div>
-            </div>
-          </div>
-
-          <div class="step-panel" data-panel="3" hidden>
-            <form id="detailsForm" novalidate>
-              <div class="field">
-                <label for="fName">Full name</label>
-                <input class="input" id="fName" name="name" autocomplete="name" autocapitalize="words" required>
-              </div>
-              <div class="field">
-                <label for="fPhone">Mobile number</label>
-                <input class="input" id="fPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" autocapitalize="off" placeholder="07…" required>
-              </div>
-              <div class="field">
-                <label for="fEmail">Email</label>
-                <input class="input" id="fEmail" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" required>
-                <div class="hint">Your confirmation and the studio address are sent here.</div>
-              </div>
-              <div class="field">
-                <label for="fNotes">Anything I should know? (optional)</label>
-                <textarea class="textarea" id="fNotes" name="notes" placeholder="Current length and colour, previous extensions, what you are going for…"></textarea>
-              </div>
-              <div id="detailsError" class="notice notice-error" hidden style="margin-bottom:var(--s-2)"></div>
-              <div style="display:flex;gap:12px;flex-wrap:wrap">
-                <button type="button" class="btn btn-outline" data-goto="2">Back</button>
-                <button type="submit" class="btn">Continue</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="step-panel" data-panel="4" hidden>
-            <span class="label label-plain" style="display:block;margin-bottom:var(--s-2)">How would you like to pay?</span>
-            <div class="pay-options">
-              <label class="pay-option">
-                <input type="radio" name="payment" value="cash" checked>
-                <span class="t">Cash — in studio</span>
-                <span class="s" id="cashCopy">Nothing taken now.</span>
-              </label>
-              <label class="pay-option">
-                <input type="radio" name="payment" value="card">
-                <span class="t">Card — deposit now</span>
-                <span class="s" id="cardCopy">A deposit secures the slot.</span>
-              </label>
-            </div>
-            <div class="notice" id="payNote" style="margin-top:var(--s-3)"></div>
-            <div id="bookError" class="notice notice-error" hidden style="margin-top:var(--s-2)"></div>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:var(--s-3)">
-              <button type="button" class="btn btn-outline" data-goto="3">Back</button>
-              <button type="button" class="btn" id="confirmBtn">Confirm booking</button>
-            </div>
-            <p class="small muted" style="margin-top:var(--s-2)" id="cancelPolicy"></p>
-          </div>
+    <div class="split reveal">
+      <div class="split-text">
+        <span class="label">Booking</span>
+        <h2 class="display-sm">Live<br>availability</h2>
+        <p>Pick what you are having done, choose a day and take a time. The calendar shows exactly what is free — nothing is held back, and nothing is double booked.</p>
+        <p>Cash or card, whichever suits you. You can add a photo of the look you are after while you book.</p>
+        <div class="cta-repeat" style="margin-top:var(--stack);border-top:0;padding-top:0">
+          <a class="btn btn-cta" href="./book.html">Book your slot</a>
+          <span class="cta-note" id="bookHoursNote"></span>
         </div>
-
-        <aside class="summary">
-          <h3>Your appointment</h3>
-          <dl>
-            <dt>Service</dt><dd id="sumService">—</dd>
-            <dt>Date</dt><dd id="sumDate">—</dd>
-            <dt>Time</dt><dd id="sumTime">—</dd>
-            <dt>Duration</dt><dd id="sumDuration">—</dd>
-          </dl>
-          <div class="total">
-            <dl>
-              <dt>Total</dt><dd id="sumTotal">—</dd>
-            </dl>
-            <dl style="margin-top:var(--s-1)">
-              <dt>Due now</dt><dd id="sumDueNow">—</dd>
-              <dt>On the day</dt><dd id="sumDueLater">—</dd>
-            </dl>
-          </div>
-        </aside>
+      </div>
+      <div class="split-visual">
+        <div class="media-placeholder" data-img="./images/work-02.jpg" style="aspect-ratio:4/5"></div>
       </div>
     </div>
   </div>
 </section>
-
-<div class="mobile-summary" id="mobileSummary" data-shown="false" aria-live="polite">
-  <div style="min-width:0">
-    <div class="what" id="msService">—</div>
-    <div class="when" id="msWhen">Choose a date and time</div>
-  </div>
-  <div class="amount" id="msTotal">—<small id="msDue"></small></div>
-</div>
 
 <!-- ============================================================ REVIEWS -->
 <section class="band band-cream" id="reviews">
@@ -350,7 +242,7 @@
     <div class="reviews" id="reviewGrid"></div>
 
     <div class="cta-repeat reveal">
-      <a class="btn btn-cta" href="#book">Book your slot</a>
+      <a class="btn btn-cta" href="./book.html">Book your slot</a>
       <span class="cta-note">Cash or card, your choice.</span>
     </div>
   </div>
@@ -366,7 +258,7 @@
     <div class="faq" id="faqList"></div>
 
     <div class="cta-repeat reveal">
-      <a class="btn btn-cta" href="#book">Book your slot</a>
+      <a class="btn btn-cta" href="./book.html">Book your slot</a>
       <span class="cta-note">Still not sure? Book the free consultation.</span>
     </div>
   </div>
@@ -405,7 +297,7 @@
       <a href="#services">Services</a>
       <a href="#work">Work</a>
       <a href="#process">Process</a>
-      <a href="#book">Book</a>
+      <a href="./book.html">Book</a>
       <a href="#faq">FAQ</a>
     </nav>
   </div>

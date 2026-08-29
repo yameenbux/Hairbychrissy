@@ -507,6 +507,16 @@ function apptRow(b) {
         ${!active ? '<button class="btn btn-sm btn-outline" data-action="reopen">Reopen</button>' : ''}
       </div>
       ${b.client.notes ? `<div class="notes"><strong>They asked for:</strong> ${esc(b.client.notes)}</div>` : ''}
+      ${(b.photos || []).length ? `
+      <div class="notes appt-photos">
+        <strong>The look they want:</strong>
+        <div class="shots">
+          ${b.photos.map((f) => `
+            <a class="shot" href="${BASE}/api/admin/bookings/${esc(b.id)}/photos/${esc(f)}" target="_blank" rel="noopener">
+              <img src="${BASE}/api/admin/bookings/${esc(b.id)}/photos/${esc(f)}" alt="Photo the client sent" loading="lazy">
+            </a>`).join('')}
+        </div>
+      </div>` : ''}
       ${b.adminNote ? `<div class="notes note-private"><strong>Your note:</strong> ${esc(b.adminNote)}</div>` : ''}
       <div class="appt-panel" hidden></div>
     </div>`;

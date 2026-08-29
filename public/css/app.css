@@ -688,6 +688,78 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: var(--ls-caps);
 }
 
+/* --------------------------------------------------- booking page bits */
+
+/* What you just picked, confirmed back to you before you commit to a day. */
+.svc-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--hairline-soft);
+}
+.svc-preview-name {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--espresso);
+}
+.svc-preview-meta { font-size: var(--t-xs); color: var(--espresso-70); }
+
+/* The photo picker. The native control is hidden and the label is the target,
+   because a file input cannot be styled and its default reads as a form from
+   1998 sitting in the middle of an otherwise considered page. */
+.filedrop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  border: 1px dashed var(--hairline);
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.filedrop input[type='file'] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.filedrop-mark { width: 22px; height: 1px; background: var(--clay); }
+.filedrop-text {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--espresso);
+}
+.filedrop-hint { font-size: var(--t-xs); color: var(--espresso-70); }
+.filedrop:focus-within { outline: 2px solid var(--clay-deep); outline-offset: 3px; }
+
+.thumbs { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
+.thumbs:empty { margin-top: 0; }
+.thumb { position: relative; margin: 0; width: 84px; height: 84px; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+/*
+ * The button is 44x44 and invisible; the small chip inside it is what you see.
+ * Removing a photo you picked by mistake is a one-handed, thumb-on-glass tap,
+ * so the target has to be a thumb's width even though a 44px mark would sit
+ * heavily on an 84px thumbnail.
+ */
+.thumb-x {
+  position: absolute; top: -16px; right: -16px;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: 0; padding: 0; background: none;
+  color: var(--espresso);
+  cursor: pointer;
+}
+.thumb-x span {
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-size: var(--t-sm);
+  line-height: 1;
+  transition: background var(--ease-dur) var(--ease), border-color var(--ease-dur) var(--ease);
+}
+
 /* -------------------------------------------------------------- motion */
 /*
  * Two jobs only: bring a section in as it is reached, and answer a pointer.
@@ -747,6 +819,8 @@ a { color: inherit; text-decoration: none; }
   .slot:not([disabled]):hover { border-color: var(--espresso); }
 
   .site-footer a:hover { color: var(--espresso); }
+  .filedrop:hover { border-color: var(--clay); background: var(--cream); }
+  .thumb-x:hover span { border-color: var(--danger); color: var(--danger); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -921,6 +995,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 640px) {
+  .filedrop { width: 100%; }
+  .thumb { width: 72px; height: 72px; }
+
   /* Below this the wordmark is wide enough, and the button close enough to
      it, that the two collide — measured, not guessed. Above it there is a
      clear 150px between them and the one action stays on screen. */

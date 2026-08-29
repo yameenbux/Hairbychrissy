@@ -90,13 +90,21 @@ async function api(path, options) {
 
 /* -------------------------------------------------------------- content */
 
+/**
+ * Fills in the shared content. Runs on both pages, and the booking page has
+ * no hero, reviews or FAQ — so every write here is guarded. A missing element
+ * on one page must not throw and take the whole script, and the booking
+ * calendar with it, down with it.
+ */
+const put = (sel, prop, value) => { const el = $(sel); if (el) el[prop] = value; };
+
 function renderStatic() {
   const { brand, services, reviews, faqs } = state.site;
 
-  $('#heroLocation').textContent = brand.location.toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
-  $('#heroIntro').textContent = brand.intro;
-  $('#navInstagram').href = brand.instagram;
-  if (brand.strapline) $('#strapline').textContent = brand.strapline;
+  put('#heroLocation', 'textContent', brand.location.toLowerCase().replace(/^\w/, (c) => c.toUpperCase()));
+  put('#heroIntro', 'textContent', brand.intro);
+  put('#navInstagram', 'href', brand.instagram);
+  if (brand.strapline) put('#strapline', 'textContent', brand.strapline);
 
   // Her three headline services, in her own words, above the price list.
   const offerList = $('#offerList');
@@ -129,7 +137,7 @@ function renderStatic() {
       .join('');
   }
 
-  if (brand.signoff) $('#signoff').textContent = brand.signoff;
+  if (brand.signoff) put('#signoff', 'textContent', brand.signoff);
 
   renderTransformations();
   renderReels();
@@ -137,7 +145,7 @@ function renderStatic() {
 
   renderServiceCards('#serviceGrid', false);
 
-  $('#reviewGrid').innerHTML = reviews
+  put('#reviewGrid', 'innerHTML', reviews
     .map(
       (r) => `
       <blockquote class="review reveal">
@@ -146,27 +154,27 @@ function renderStatic() {
         <footer>${esc(r.name)} — ${esc(r.service)}</footer>
       </blockquote>`,
     )
-    .join('');
+    .join(''));
 
-  $('#faqList').innerHTML = faqs
+  put('#faqList', 'innerHTML', faqs
     .map((f) => `<details><summary>${esc(f.q)}</summary><div class="answer"><p>${esc(f.a)}</p></div></details>`)
-    .join('');
+    .join(''));
 
-  $('#footStudio').innerHTML = [
+  put('#footStudio', 'innerHTML', [
     ...brand.addressLines.map((l) => `<li>${esc(l)}</li>`),
     brand.email ? `<li><a href="mailto:${esc(brand.email)}">${esc(brand.email)}</a></li>` : '',
     `<li><a href="${esc(brand.instagram)}" target="_blank" rel="noopener">${esc(brand.handle)}</a></li>`,
     brand.website ? `<li><a href="${esc(brand.website)}" target="_blank" rel="noopener">${esc(brand.websiteLabel || brand.website)}</a></li>` : '',
-  ].join('');
+  ].join(''));
 
-  $('#legalCopy').textContent = `© ${new Date().getFullYear()} ${brand.name}. London.`;
-  $('#legalNotice').textContent = brand.notice;
+  put('#legalCopy', 'textContent', `© ${new Date().getFullYear()} ${brand.name}. London.`);
+  put('#legalNotice', 'textContent', brand.notice);
 
   if (brand.credit?.name) {
     const c = brand.credit;
-    $('#legalCredit').innerHTML = c.url
+    put('#legalCredit', 'innerHTML', c.url
       ? `Site by <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a>`
-      : `Site by ${esc(c.name)}`;
+      : `Site by ${esc(c.name)}`);
   }
 
   loadImagery();
@@ -286,7 +294,14 @@ function loadImagery() {
     el.classList.remove('media-placeholder');
   });
 
+  // Only the home page carries a hero. Every other page — book.html, and
+  // anything added later — shares this script, so a missing hero is a normal
+  // state, not a fault. Dereferencing it unconditionally threw here once and
+  // took the whole of init() down with it, leaving the booking page's service
+  // dropdown empty and the flow hidden.
   const heroEl = $('#heroMedia');
+  if (!heroEl) return;
+
   const video = $('#heroVideo');
 
   if (video) {
@@ -437,19 +452,66 @@ function unlockTabs() {
   $$('.step-tab').forEach((t) => { t.disabled = !reach[t.dataset.step]; });
 }
 
-function selectService(id) {
+function selectService(id, options = {}) {
   const service = state.site.services.find((s) => s.id === id);
   if (!service) return;
   const changed = state.service?.id !== id;
   state.service = service;
   if (changed) { state.date = null; state.slot = null; state.details = null; }
   renderServiceCards('#bookServiceGrid', true);
+  const select = $('#serviceSelect');
+  if (select && select.value !== id) select.value = id;
+  renderServicePreview();
   updateSummary();
   renderPayCopy();
   state.month = state.month || state.site.today.slice(0, 7);
   loadMonth({ autoAdvance: 3 });
   renderSlots([]);
-  goto(2);
+  if (options.advance !== false) goto(2);
+}
+
+/**
+ * The service dropdown.
+ *
+ * A photo grid sells a service; a dropdown picks one. The grid still does the
+ * selling on the home page — here the client has already decided to book, and
+ * seven full-bleed cards between them and the calendar is furniture.
+ */
+function buildServiceSelect() {
+  const select = $('#serviceSelect');
+  if (!select || !state.site?.services) return;
+
+  select.innerHTML = '<option value="">Choose a service…</option>' + state.site.services
+    .map((s) => `<option value="${esc(s.id)}">${esc(s.name)} — ${s.priceOnRequest ? 'price on request' : money(s.price)}</option>`)
+    .join('');
+
+  select.addEventListener('change', () => {
+    const next = $('#serviceNext');
+    if (!select.value) {
+      state.service = null;
+      renderServicePreview();
+      if (next) next.disabled = true;
+      return;
+    }
+    // Choosing does not jump the page; the button does. Being thrown to a
+    // calendar the instant a select changes is disorienting, and on a phone
+    // it happens while the picker is still closing.
+    selectService(select.value, { advance: false });
+    if (next) next.disabled = false;
+  });
+
+  $('#serviceNext')?.addEventListener('click', () => { if (state.service) goto(2); });
+}
+
+function renderServicePreview() {
+  const box = $('#servicePreview');
+  if (!box) return;
+  const s = state.service;
+  if (!s) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `
+    <span class="svc-preview-name">${esc(s.name)}</span>
+    <span class="svc-preview-meta">${s.priceOnRequest ? 'Quoted at your consultation' : money(s.price)} · about ${duration(s.duration)}</span>`;
 }
 
 /* ------------------------------------------------------------ calendar */
@@ -670,6 +732,112 @@ function bindPayment() {
   $('#confirmBtn').addEventListener('click', submitBooking);
 }
 
+/* -------------------------------------------------- inspiration photos */
+/*
+ * Clients already send Chrissy a screenshot of the look they want, over
+ * Instagram, separately from the booking — so she has to match the picture to
+ * the appointment from memory. Attaching it here puts them in the same place.
+ *
+ * Uploaded AFTER the booking exists, on purpose. A photo that fails to send
+ * must never cost someone their slot, so the appointment is made first and the
+ * pictures follow. If they fail, the booking still stands and she is told.
+ */
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
+
+/** Same file, same pick — used to skip a duplicate without reading the bytes. */
+const photoKey = (f) => `${f.name}|${f.size}|${f.lastModified}`;
+
+function bindPhotos() {
+  const input = $('#fPhotos');
+  if (!input) return;
+
+  input.addEventListener('change', () => {
+    const err = $('#photoError');
+    err.hidden = true;
+
+    // Each pick ADDS to what is already chosen. The iOS picker hands back one
+    // trip at a time, so someone adding a second photo comes back through here
+    // a second time; replacing the list would silently drop their first one.
+    const existing = state.photos || [];
+    const seen = new Set(existing.map(photoKey));
+    const picked = [...input.files];
+
+    const tooBig = picked.find((f) => f.size > MAX_PHOTO_BYTES);
+    if (tooBig) {
+      flashMsg(err, `"${tooBig.name}" is over 4MB. Try a screenshot of it instead.`);
+    }
+
+    const fresh = picked
+      .filter((f) => f.size <= MAX_PHOTO_BYTES)
+      .filter((f) => !seen.has(photoKey(f)));
+
+    const room = MAX_PHOTOS - existing.length;
+    if (fresh.length > room) {
+      flashMsg(err, `${MAX_PHOTOS} photos is the limit — the rest were not added.`);
+    }
+
+    state.photos = existing.concat(fresh.slice(0, Math.max(room, 0)));
+
+    // Clear the native input so picking the SAME file again still fires
+    // change — otherwise a photo removed by mistake could not be put back.
+    input.value = '';
+    renderThumbs();
+  });
+}
+
+function flashMsg(el, text) {
+  el.textContent = text;
+  el.hidden = false;
+}
+
+function renderThumbs() {
+  const box = $('#photoThumbs');
+  if (!box) return;
+  // Revoke the previous batch before losing the references, or every re-pick
+  // leaks the last one's blobs for the life of the page.
+  (state.thumbUrls || []).forEach((u) => URL.revokeObjectURL(u));
+  state.thumbUrls = [];
+
+  box.innerHTML = (state.photos || [])
+    .map((file, i) => {
+      const url = URL.createObjectURL(file);
+      state.thumbUrls.push(url);
+      return `
+        <figure class="thumb">
+          <img src="${url}" alt="" loading="lazy">
+          <button type="button" class="thumb-x" data-drop="${i}" aria-label="Remove this photo"><span aria-hidden="true">×</span></button>
+        </figure>`;
+    })
+    .join('');
+
+  $$('#photoThumbs [data-drop]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.photos.splice(Number(btn.dataset.drop), 1);
+      renderThumbs();
+    });
+  });
+}
+
+const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
+    // readAsDataURL gives "data:image/jpeg;base64,…" — the server wants only
+    // the payload, and decides the type by reading the bytes regardless.
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.readAsDataURL(file);
+  });
+
+async function uploadPhotos(ref, token) {
+  if (!state.photos?.length || !token) return;
+  const photos = await Promise.all(state.photos.map(fileToBase64));
+  await api(`/api/bookings/${encodeURIComponent(ref)}/photos`, {
+    method: 'POST',
+    body: JSON.stringify({ token, photos }),
+  });
+}
+
 async function submitBooking() {
   if (state.submitting) return;
   if (!state.service || !state.date || !state.slot || !state.details) { goto(1); return; }
@@ -689,10 +857,26 @@ async function submitBooking() {
         date: state.date,
         start: state.slot.start,
         payment: state.payment,
+        // Tells her notification that pictures are on their way; they upload
+        // a moment later, once the slot is safely hers.
+        photoCount: (state.photos || []).length,
         ...state.details,
       }),
     });
     sessionStorage.setItem('hbc_last_ref', result.booking.ref);
+
+    // The slot is hers now. Photos are a bonus on top of a booking that has
+    // already succeeded, so a failure here is reported and then stepped over
+    // rather than being allowed to look like a failed booking.
+    if (state.photos?.length) {
+      btn.textContent = 'Sending photos…';
+      try {
+        await uploadPhotos(result.booking.ref, result.uploadToken);
+      } catch (err) {
+        sessionStorage.setItem('hbc_photo_warning', err.message || 'Your photos did not send.');
+      }
+    }
+
     if (result.next === 'checkout' && result.checkoutUrl) {
       window.location.href = result.checkoutUrl;
       return;
@@ -780,8 +964,16 @@ function connectLive() {
 /* ---------------------------------------------------------------- chrome */
 
 function bindChrome() {
+  bindNav();
+  bindCalendarChrome();
+  bindNewsletter();
+}
+
+/** The header menu. Absent only if the header markup changes underneath us. */
+function bindNav() {
   const nav = $('#primaryNav');
   const toggle = $('#navToggle');
+  if (!nav || !toggle) return;
   toggle.addEventListener('click', () => {
     const open = nav.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(open));
@@ -793,14 +985,23 @@ function bindChrome() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { nav.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
   });
+}
 
+/**
+ * Month arrows and step tabs. Split out from the nav so a change to the header
+ * can never silently take the calendar's controls with it — they used to sit
+ * behind the same early return.
+ */
+function bindCalendarChrome() {
   $('#prevMonth')?.addEventListener('click', () => shiftMonth(-1));
   $('#nextMonth')?.addEventListener('click', () => shiftMonth(1));
   $$('.step-tab').forEach((t) => t.addEventListener('click', () => goto(Number(t.dataset.step))));
   $$('[data-goto]').forEach((b) => b.addEventListener('click', () => goto(Number(b.dataset.goto))));
+}
 
+function bindNewsletter() {
   // No backend on a static host, so say so honestly rather than pretending.
-  $('#newsletterForm').addEventListener('submit', (e) => {
+  $('#newsletterForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = $('#nlEmail').value.trim();
     const note = $('#newsletterNote');
@@ -813,6 +1014,43 @@ function bindChrome() {
       : 'Sign-up is not connected yet. Follow on Instagram for new availability.';
     if (state.live) $('#nlEmail').value = '';
   });
+}
+
+/**
+ * Her opening hours, in a sentence, from the same source the calendar uses.
+ * Written out because "when is she open" is the question the calendar answers
+ * one month at a time, and someone deciding whether to bother wants it now.
+ */
+function renderOpeningHours() {
+  const el = $('#bookHoursNote');
+  const hours = state.site?.workingHours;
+  if (!el || !hours) return;
+
+  const NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const open = [1, 2, 3, 4, 5, 6, 0].filter((d) => hours[d]?.open);
+  if (!open.length) { el.textContent = ''; return; }
+
+  // Collapse consecutive days that share the same hours: "Monday to Friday
+  // 10:00-19:00" rather than five identical lines.
+  const runs = [];
+  for (const d of open) {
+    const h = hours[d];
+    const last = runs[runs.length - 1];
+    if (last && last.start === h.start && last.end === h.end && last.days[last.days.length - 1] === (d + 6) % 7) {
+      last.days.push(d);
+    } else {
+      runs.push({ days: [d], start: h.start, end: h.end });
+    }
+  }
+
+  el.textContent = runs
+    .map((r) => {
+      const span = r.days.length > 1
+        ? `${NAMES[r.days[0]]} to ${NAMES[r.days[r.days.length - 1]]}`
+        : NAMES[r.days[0]];
+      return `${span} ${r.start}–${r.end}`;
+    })
+    .join(' · ');
 }
 
 /* ------------------------------------------------------------------ init */
@@ -839,14 +1077,22 @@ async function init() {
   renderStatic();
   bindChrome();
 
+  // The booking flow lives on its own page now, so the home page has none of
+  // this. Everything below is skipped rather than crashed through.
+  const onBookingPage = Boolean($('#bookingLive'));
+  renderOpeningHours();
+  if (!onBookingPage) return;
+
   if (state.live) {
     $('#bookingLive').hidden = false;
     $('#bookingStatic').hidden = true;
-    $('#cancelPolicy').textContent =
-      `Free to move or cancel up to ${state.site.rules.cancellationHours} hours before. Inside that window the deposit is retained.`;
+    put('#cancelPolicy', 'textContent',
+      `Free to move or cancel up to ${state.site.rules.cancellationHours} hours before. Inside that window the deposit is retained.`);
+    buildServiceSelect();
     renderServiceCards('#bookServiceGrid', true);
     bindDetails();
     bindPayment();
+    bindPhotos();
     updateSummary();
     unlockTabs();
     connectLive();

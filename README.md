@@ -68,13 +68,65 @@ No `npm install` needed — the app has **zero runtime dependencies**, just Node
 
 | URL | What it is |
 |---|---|
-| `/` | Client site + booking calendar |
+| `/` | Client site — her work, prices, and the invitation to book |
+| `/book` | The booking page: service, calendar, time, details |
 | `/admin` | Chrissy's dashboard (default password `chrissy`) |
 | `/confirmed?ref=…` | Booking confirmation |
 | `/pay-demo?ref=…` | Simulated card checkout (draft mode only) |
 
 Configuration is via environment variables — copy `.env.example` to `.env`.
 Everything has a working default, so nothing must be set to try it out.
+
+---
+
+## The booking page
+
+Every "Book your slot" on the site lands on `/book`, which walks four steps:
+
+1. **What you're having done** — a dropdown of her real service list, with the
+   price and rough duration shown the moment you choose. Availability is
+   computed per service, so this has to come first: a 4-hour install and a
+   1-hour blow dry fit her day differently.
+2. **A day** — a month calendar, with days she cannot take you greyed out.
+3. **A time** — the slots that actually fit that service on that day.
+4. **You** — name, phone, email, a free-text note, and optional photos.
+
+### Her week
+
+| Day | Hours |
+|---|---|
+| Monday – Friday | 10:00 – 19:00 |
+| Saturday | 09:00 – 12:00 |
+| Sunday | 11:00 – 15:00 |
+
+These are the seed defaults. Chrissy changes them in the dashboard at any time
+without touching code, and the calendar follows immediately.
+
+### Inspiration photos
+
+Clients already send her a screenshot of the look they want — over Instagram,
+separately from the booking — leaving her to match a picture to an appointment
+from memory. The details step takes up to **five photos**, and they arrive
+attached to the booking in her dashboard.
+
+Three decisions worth knowing:
+
+- **Photos upload after the booking exists.** A photo that fails to send must
+  never cost someone their slot, so the appointment is made first and the
+  pictures follow. If they fail, the booking still stands and both parties are
+  told.
+- **The upload is behind a one-time token.** Booking references are sequential
+  and therefore guessable; the token is 24 random bytes, handed back once to
+  the person who just booked and deleted the moment it is used.
+- **The files never touch the public tree.** They are written to
+  `data/uploads/`, outside `public/`, and served only through an
+  authenticated admin route with `nosniff` and a `default-src 'none'` CSP.
+  Type is decided by reading the file's magic bytes, never by trusting its
+  extension or declared MIME — so an SVG, a script, or an HTML file dressed up
+  as a `.jpg` is rejected.
+
+Since the photos land a moment after the booking, her "new booking" email
+carries the count the client declared, so she knows to go and look.
 
 ---
 

@@ -78,7 +78,15 @@ const AUDIT = `(() => {
   await p.waitForTimeout(1200);
   await audit('client site — landing');
 
-  await p.locator('#bookServiceGrid .card[data-id="hollywood-waves"]').click();
+  await p.locator('.cta-repeat a.btn-cta').first().click();
+  await p.waitForLoadState('domcontentloaded');
+  await p.waitForTimeout(1500);
+  await audit('client site — booking page');
+
+  await p.selectOption('#serviceSelect', 'hollywood-waves');
+  await p.waitForTimeout(400);
+  await audit('client site — service chosen');
+  await p.locator('#serviceNext').click();
   await p.waitForTimeout(1800);
   await p.locator('.cal-cell[data-date]:not([disabled])').first().click();
   await p.waitForTimeout(900);
@@ -87,6 +95,8 @@ const AUDIT = `(() => {
   await p.locator('.slot').first().click();
   await p.waitForTimeout(500);
   await p.fill('#fName','Test Client'); await p.fill('#fPhone','07700900123'); await p.fill('#fEmail','t@e.com');
+  await p.fill('#fNotes','Long honey waves.');
+  await audit('client site — details, notes and photos');
   await p.locator('#detailsForm button[type=submit]').click();
   await p.waitForTimeout(600);
   await audit('client site — payment step');
@@ -141,7 +151,14 @@ const AUDIT = `(() => {
 
   await p.selectOption('#nbService', 'hair-ups');
   await p.fill('#nbDate', day || '2026-09-03');
-  await p.fill('#nbStart', '13:10');
+  /*
+   * 07:00 is before her earliest opening time on any day (09:00, Saturday),
+   * so this raises the "outside your hours" override whatever date lands in
+   * `day`. It used to be 13:10, which only worked because of an invented lunch
+   * break; removing that break silently disarmed this check, and the audit
+   * said so rather than reporting a pass it had not earned.
+   */
+  await p.fill('#nbStart', '07:00');
   await p.fill('#nbName', 'Contrast Probe');
   await p.fill('#nbPhone', '07700900000');
   await p.locator('#nbSubmit').click();

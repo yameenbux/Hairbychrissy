@@ -115,10 +115,34 @@ for (const f of CSS) {
   });
 }
 
-/* 8 — one CTA. Every client-facing page must offer it, with the same words. */
+/*
+ * 8 — one CTA. Every client-facing page must offer it, with the same words.
+ * book.html is deliberately not in the list: it IS the destination, so a page
+ * pointing at itself proves nothing. Rules 1-7 still cover it, via HTML above.
+ */
 const CTA = 'Book your slot';
 for (const f of ['public/index.html', 'public/confirmed.html', 'public/404.html']) {
   if (!read(f).includes(CTA)) fail('missing-cta', f, 0, `no "${CTA}" on this page`);
+}
+
+/*
+ * 9 — no dead anchors. The header and footer are copied between pages on
+ * purpose, so they cannot drift apart — but a same-page anchor copied onto a
+ * page that has no such section is a nav link that silently does nothing.
+ * That is exactly what happened to book.html: it inherited the home page's
+ * #services / #work / #process / #faq and none of those sections are on it.
+ * A cross-page link is written "./#services" and is not checked here.
+ */
+for (const f of HTML) {
+  const html = read(f);
+  const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+  const seen = new Set();
+  for (const m of html.matchAll(/href="#([^"]+)"/g)) {
+    const target = m[1];
+    if (seen.has(target)) continue;
+    seen.add(target);
+    if (!ids.has(target)) fail('dead-anchor', f, 0, `href="#${target}" — no element with that id on this page`);
+  }
 }
 
 /* ------------------------------------------------------------- report */
@@ -128,7 +152,7 @@ for (const f of failures) (byRule[f.rule] ||= []).push(f);
 const RULES = [
   'purple', 'emoji-as-icon', 'display-face', 'fake-placeholder', 'centred-layout',
   'off-scale-type', 'off-scale-tracking', 'motion-out-of-band', 'bounce',
-  'looping-animation', 'missing-cta',
+  'looping-animation', 'missing-cta', 'dead-anchor',
 ];
 for (const rule of RULES) {
   const hits = byRule[rule] || [];

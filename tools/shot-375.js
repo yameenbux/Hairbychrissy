@@ -24,11 +24,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
+
+/**
+ * Two throwaway 1x1 PNGs, written next to the shots. Real files, because the
+ * details step is measured with thumbnails on screen — that is the state a
+ * client sending inspiration photos actually sees, and it is taller than the
+ * empty form the audit used to look at.
+ */
+const PIXEL_BYTES = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 const EXE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const OUT = process.env.SHOT_DIR || '.shots';
 const WIDTH = 375;
 
 fs.mkdirSync(OUT, { recursive: true });
+
+const PIXEL = path.join(OUT, '.fixture-1.png');
+const PIXEL2 = path.join(OUT, '.fixture-2.png');
+fs.writeFileSync(PIXEL, PIXEL_BYTES);
+fs.writeFileSync(PIXEL2, PIXEL_BYTES);
 
 const PROBE = `(() => {
   const out = [];
@@ -157,7 +173,16 @@ async function shoot(page, name, results) {
   await shoot(page, 'home nav open', results);
   await page.locator('#navToggle').click().catch(() => {});
 
-  await page.locator('#bookServiceGrid .card[data-id="hollywood-waves"]').click();
+  // ---- the booking page, reached the way a client reaches it
+  await page.locator('.cta-repeat a.btn-cta').first().click();
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1600);
+  await shoot(page, 'book service', results);
+
+  await page.selectOption('#serviceSelect', 'hollywood-waves');
+  await page.waitForTimeout(400);
+  await shoot(page, 'book service chosen', results);
+  await page.locator('#serviceNext').click();
   await page.waitForTimeout(1600);
   await shoot(page, 'book calendar', results);
 
@@ -175,6 +200,12 @@ async function shoot(page, name, results) {
       await page.fill('#fName', 'Amara Okafor');
       await page.fill('#fPhone', '07700 900123');
       await page.fill('#fEmail', 'amara@example.com');
+      await page.fill('#fNotes', 'Saw this on your Instagram — the long honey waves.');
+      // A picked photo grows the details step by a row of thumbnails; measure
+      // the step in the state a real client will actually be looking at.
+      await page.setInputFiles('#fPhotos', [PIXEL, PIXEL2]).catch(() => {});
+      await page.waitForTimeout(500);
+      await shoot(page, 'book details with photos', results);
       await page.locator('#detailsForm button[type=submit]').click();
       await page.waitForTimeout(700);
       await shoot(page, 'book payment', results);
@@ -184,7 +215,7 @@ async function shoot(page, name, results) {
   // ---- the standalone pages
   for (const [name, url] of [
     ['confirmed', `${BASE}/confirmed?ref=HBC-1001`],
-    ['pay demo', `${BASE}/pay/demo?ref=HBC-1001`],
+    ['pay demo', `${BASE}/pay-demo?ref=HBC-1001`],
     ['404', `${BASE}/does-not-exist`],
   ]) {
     await page.goto(url, { waitUntil: 'domcontentloaded' });

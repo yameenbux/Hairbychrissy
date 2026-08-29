@@ -14,8 +14,22 @@
  * Run against a live server:  node tools/mobile-audit.js
  */
 import { chromium } from 'playwright-core';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
+
+// Two throwaway 1x1 PNGs so the details step can be measured with thumbnails
+// showing — the state a client attaching inspiration photos actually sees.
+const PIXEL = path.join(os.tmpdir(), 'hbc-audit-1.png');
+const PIXEL2 = path.join(os.tmpdir(), 'hbc-audit-2.png');
+for (const f of [PIXEL, PIXEL2]) {
+  fs.writeFileSync(f, Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  ));
+}
 const EXE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
 // Real handsets, smallest first. The SE is the one that finds the bugs.
@@ -115,9 +129,16 @@ async function scan(page, label, results) {
     await page.waitForTimeout(1100);
     await scan(page, 'landing', results);
 
-    // Walk the booking flow — the screens that actually matter.
-    await page.locator('#book').scrollIntoViewIfNeeded();
-    await page.locator('#bookServiceGrid .card[data-id="hollywood-waves"]').click();
+    // Walk the booking flow — the screens that actually matter — entering it
+    // the way a client does, through the CTA rather than by direct URL.
+    await page.locator('.cta-repeat a.btn-cta').first().click();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1500);
+    await scan(page, 'booking page', results);
+
+    await page.selectOption('#serviceSelect', 'hollywood-waves');
+    await page.waitForTimeout(400);
+    await page.locator('#serviceNext').click();
     await page.waitForTimeout(1700);
     await scan(page, 'calendar', results);
 
@@ -134,6 +155,12 @@ async function scan(page, label, results) {
         await page.fill('#fName','Test Client');
         await page.fill('#fPhone','07700900123');
         await page.fill('#fEmail','t@e.com');
+        await page.fill('#fNotes','Long honey waves, like the third photo on your grid.');
+        // With thumbnails on screen: the remove button is a real tap target
+        // and has to be measured as one.
+        await page.setInputFiles('#fPhotos', [PIXEL, PIXEL2]).catch(() => {});
+        await page.waitForTimeout(500);
+        await scan(page, 'details form with photos', results);
         await page.locator('#detailsForm button[type=submit]').click();
         await page.waitForTimeout(500);
         await scan(page, 'payment', results);

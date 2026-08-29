@@ -9,6 +9,7 @@
  *   /api/stream  server-sent events — pushes slot changes to every open browser
  */
 import http from 'node:http';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +20,7 @@ import { slotsFor, monthSummary, validateSlot, validateAdminSlot, clashesWith, g
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
 import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
+import { verifyPhoto, savePhotos, readPhoto, MAX_PHOTOS } from './lib/photos.js';
 import {
   notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
   saveSubscription, removeSubscription, listSubscriptions, channelStatus,
@@ -361,6 +363,59 @@ async function handlePublicApi(req, res, url) {
     return json(res, 200, publicBooking(booking));
   }
 
+  /**
+   * Inspiration photos, attached to a booking that was just made.
+   *
+   * Guarded by a one-time token handed back by the booking itself, NOT by the
+   * reference number. References are sequential — HBC-1001, 1002 — so anyone
+   * could guess a live one and attach pictures to a stranger's appointment.
+   * The token is random, used once, and cleared the moment it is spent.
+   */
+  if (/^\/api\/bookings\/[^/]+\/photos$/.test(p) && req.method === 'POST') {
+    let body;
+    try {
+      // Photos arrive base64 in JSON, so the limit here is much larger than
+      // the 64KB the rest of the API allows. It is still a hard cap.
+      body = JSON.parse(await readBody(req, (MAX_PHOTOS + 1) * 6 * 1024 * 1024) || '{}');
+    } catch (err) {
+      return json(res, 400, { error: 'Those photos could not be read.' });
+    }
+
+    const ref = clean(decodeURIComponent(p.split('/')[3]), 24).toUpperCase();
+    const booking = read().bookings.find((b) => b.ref === ref);
+    if (!booking) return json(res, 404, { error: 'No booking found with that reference.' });
+
+    const token = clean(body.token, 64);
+    if (!booking.uploadToken || !token || token !== booking.uploadToken) {
+      return json(res, 403, { error: 'That upload link is no longer valid.' });
+    }
+
+    const list = Array.isArray(body.photos) ? body.photos.slice(0, MAX_PHOTOS) : [];
+    if (!list.length) return json(res, 400, { error: 'No photos were sent.' });
+
+    const verified = [];
+    for (const item of list) {
+      const check = verifyPhoto(typeof item === 'string' ? item : item?.data);
+      if (!check.ok) return json(res, 400, { error: check.error });
+      verified.push(check);
+    }
+
+    let saved;
+    try {
+      saved = savePhotos(booking.id, verified);
+    } catch (err) {
+      console.error('[photos]', err.message);
+      return json(res, 500, { error: 'Those photos could not be saved.' });
+    }
+
+    write(() => {
+      booking.photos = saved;
+      // Spent. One booking, one upload.
+      delete booking.uploadToken;
+    });
+    return json(res, 200, { count: saved.length });
+  }
+
   return json(res, 404, { error: 'Unknown endpoint.' });
 }
 
@@ -381,6 +436,15 @@ async function createBooking(req, res) {
   const email = clean(payload.email, 120).toLowerCase();
   const phone = clean(payload.phone, 20);
   const notes = clean(payload.notes, 600);
+  /**
+   * How many inspiration photos are about to follow. Only a hint: the photos
+   * upload after the booking exists, which is deliberate — a failed photo must
+   * never cost someone their slot — but that timing would otherwise send the
+   * "new booking" email with no sign that pictures are on their way.
+   * Unverified by design; the worst a wrong number does is have her glance at
+   * a booking and find nothing attached.
+   */
+  const photosToFollow = Math.min(Math.max(Number(payload.photoCount) || 0, 0), MAX_PHOTOS);
 
   if (name.length < 2) return json(res, 400, { error: 'Please enter your full name.' });
   if (!isEmail(email)) return json(res, 400, { error: 'Please enter a valid email address.' });
@@ -423,6 +487,7 @@ async function createBooking(req, res) {
     endMin,
     duration: service.duration,
     client: { name, email, phone, notes },
+    photosToFollow,
     total,
     priceOnRequest: quoted,
     depositDue,
@@ -432,6 +497,13 @@ async function createBooking(req, res) {
     paymentStatus: effectivePayment === 'cash' ? (quoted ? 'to-be-quoted' : 'due-in-studio') : 'awaiting-deposit',
     status: effectivePayment === 'cash' ? 'confirmed' : 'pending-payment',
     createdAt: new Date().toISOString(),
+    /**
+     * One-time permission to attach inspiration photos to THIS booking.
+     * Handed back once, in the response to the person who just booked, and
+     * deleted the moment it is used. Booking references are sequential and
+     * therefore guessable; this is not.
+     */
+    uploadToken: crypto.randomBytes(24).toString('base64url'),
   };
 
   write((db) => db.bookings.push(booking));
@@ -439,7 +511,7 @@ async function createBooking(req, res) {
 
   if (effectivePayment === 'cash') {
     notifyNewBooking(booking);
-    return json(res, 201, { booking: publicBooking(booking), next: 'confirmed' });
+    return json(res, 201, { booking: publicBooking(booking), next: 'confirmed', uploadToken: booking.uploadToken });
   }
 
   // Card: hand back a checkout URL — real Stripe if configured, demo page if not.
@@ -449,7 +521,7 @@ async function createBooking(req, res) {
       write(() => {
         booking.stripeSessionId = session.sessionId;
       });
-      return json(res, 201, { booking: publicBooking(booking), next: 'checkout', checkoutUrl: session.url });
+      return json(res, 201, { booking: publicBooking(booking), next: 'checkout', checkoutUrl: session.url, uploadToken: booking.uploadToken });
     } catch (err) {
       console.error('[stripe]', err.message);
       // Don't strand the client — hold the slot and let them pay in studio.
@@ -476,6 +548,7 @@ async function createBooking(req, res) {
     next: 'checkout',
     checkoutUrl: `/pay-demo?ref=${booking.ref}`,
     demo: true,
+    uploadToken: booking.uploadToken,
   });
 }
 
@@ -525,6 +598,9 @@ async function handleAdminApi(req, res, url) {
         completedAt: b.completedAt || null,
         noShowAt: b.noShowAt || null,
         rescheduledFrom: b.rescheduledFrom || null,
+        // Names only. The bytes come back through the authenticated route
+        // below, never through this payload and never from public/.
+        photos: (b.photos || []).map((ph) => ph.file),
       })),
       today,
       cardMode: isLiveStripe() ? 'live' : 'demo',
@@ -852,6 +928,37 @@ async function handleAdminApi(req, res, url) {
     });
   }
 
+  /**
+   * One inspiration photo, for the dashboard.
+   *
+   * This is the only way the bytes ever leave the server. They live in
+   * data/uploads, outside public/, so nothing serves them by accident, and
+   * this route sits behind the same session check as the rest of the
+   * dashboard — the client sent them to Chrissy, not to the internet.
+   */
+  if (/^\/api\/admin\/bookings\/[^/]+\/photos\/[^/]+$/.test(p) && req.method === 'GET') {
+    const [, , , , id, , file] = p.split('/');
+    const booking = db.bookings.find((b) => b.id === id);
+    if (!booking) return json(res, 404, { error: 'Booking not found.' });
+
+    const record = (booking.photos || []).find((ph) => ph.file === file);
+    if (!record) return json(res, 404, { error: 'No such photo.' });
+
+    const buf = readPhoto(booking.id, record.file);
+    if (!buf) return json(res, 404, { error: 'That photo is missing from disk.' });
+
+    return send(res, 200, buf, {
+      'Content-Type': record.mime,
+      'Content-Length': buf.length,
+      // Belt and braces: even though the type was verified by reading the
+      // file, the browser is told not to second-guess it.
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; img-src 'self'",
+      'Cache-Control': 'private, max-age=300',
+      ...(res._cors || {}),
+    });
+  }
+
   if (p.startsWith('/api/admin/bookings/') && req.method === 'POST') {
     const [, , , , id, action] = p.split('/');
     const booking = db.bookings.find((b) => b.id === id);
@@ -1099,6 +1206,7 @@ const server = http.createServer(async (req, res) => {
      * root-absolute. The page moves to the same depth as every other page
      * instead, and the old URL redirects so any link already sent still lands.
      */
+    if (p === '/book' || p === '/book.html') return servePage(res, 'book.html');
     if (p === '/pay-demo') return servePage(res, 'pay-demo.html');
     if (p === '/pay/demo') {
       return send(res, 301, '', { Location: `/pay-demo${url.search}` });
