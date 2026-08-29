@@ -143,6 +143,13 @@ function renderStatic() {
   $('#legalCopy').textContent = `© ${new Date().getFullYear()} ${brand.name}. London.`;
   $('#legalNotice').textContent = brand.notice;
 
+  if (brand.credit?.name) {
+    const c = brand.credit;
+    $('#legalCredit').innerHTML = c.url
+      ? `Site by <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a>`
+      : `Site by ${esc(c.name)}`;
+  }
+
   loadImagery();
   observeReveals();
 }
@@ -450,7 +457,7 @@ function renderSlots(slots) {
 
   // On a phone the times sit below the fold, so the tap looks like it did
   // nothing. Bring them up.
-  if (window.matchMedia('(max-width: 860px)').matches) {
+  if (window.matchMedia('(max-width: 1100px)').matches) {
     requestAnimationFrame(() => $('#slotHeading')?.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' }));
   }
 

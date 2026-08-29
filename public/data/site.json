@@ -6,6 +6,8 @@
     "hero.jpg",
     "logo.jpg",
     "maintenance-essentials.jpg",
+    "mark.png",
+    "mark@2x.png",
     "price-list.jpg",
     "service-extensions.jpg",
     "service-hollywood-waves-clipins.jpg",
@@ -24,6 +26,10 @@
     "tagline": "HAIR EXTENSION SPECIALIST + STYLIST",
     "strapline": "BEAUTY. CONFIDENCE. EVERY DAY.",
     "signoff": "Let's create your next hair chapter.",
+    "credit": {
+      "name": "YSB Designs",
+      "url": ""
+    },
     "location": "LONDON BASED",
     "addressLines": [
       "Private studio",
@@ -288,6 +294,6 @@
   },
   "today": "2026-08-29",
   "cardMode": "static",
-  "generatedAt": "2026-08-29T16:12:30.134Z",
+  "generatedAt": "2026-08-29T17:43:52.131Z",
   "static": true
 }

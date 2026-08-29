@@ -232,11 +232,20 @@ a { color: inherit; text-decoration: none; }
   background: var(--paper);
   border-bottom: 1px solid var(--hairline-soft);
 }
+/**
+ * The wordmark is centred against the PAGE, not against a grid column.
+ *
+ * A three-column grid only centres the middle column while the outer two stay
+ * equal — and they do not: at 1024px the five nav links outgrew their share and
+ * shoved the wordmark 41px right. Absolute centring is immune to whatever the
+ * nav happens to weigh.
+ */
 .site-header .shell {
   height: var(--header-h);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  position: relative;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 .nav-left, .nav-right { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 32px); }
@@ -253,7 +262,26 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
   color: var(--espresso-70);
 }
-.site-header .brand { font-size: clamp(1rem, 2vw, 1.35rem); white-space: nowrap; }
+.site-header .brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(0.9rem, 1.6vw, 1.35rem);
+  white-space: nowrap;
+  /* Never allowed to run into the nav on either side. */
+  max-width: calc(100% - 200px);
+  overflow: hidden;
+}
+.brand-mark {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  flex: none;
+  /* A hairline ring keeps the circular mark from floating on the white ground. */
+  box-shadow: 0 0 0 1px var(--hairline-soft);
+}
 .nav-toggle {
   display: none;
   width: 44px; height: 44px;
@@ -577,9 +605,11 @@ a { color: inherit; text-decoration: none; }
   .split-flip > .split-visual { order: 0; }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1100px) {
   .site-header { position: sticky; }
-  .site-header .shell { grid-template-columns: auto 1fr auto; position: relative; }
+  /* The outer columns must stay equal or the middle column is not the page
+     centre — hiding .nav-right entirely collapsed the right column and pushed
+     the wordmark off centre on every phone. */
   .site-header nav { display: none; }
   .site-header nav.open {
     display: flex;
@@ -594,10 +624,21 @@ a { color: inherit; text-decoration: none; }
   }
   .site-header nav.open a { min-height: 52px; border-bottom: 1px solid var(--hairline-soft); }
   .nav-toggle { display: inline-flex; }
-  .nav-right { display: none; }
-  .site-header .brand { justify-self: center; }
+  /* Keep the box, drop the links: the column still balances the hamburger. */
+  /* Kept as an empty 44px box so the flex row stays symmetrical. */
+  .nav-right { display: block; min-width: 44px; }
+  /* Must match .site-header .nav-right a from the base rules, or that wins on
+     specificity and the links stay visible over the wordmark. */
+  .site-header .nav-right a { display: none; }
+  .site-header .brand { max-width: calc(100% - 110px); }
+  .brand-mark { width: 34px; height: 34px; }
   .footer-top { grid-template-columns: 1fr; }
   .footer-aside { min-width: 0; width: 100%; }
+}
+
+@media (max-width: 380px) {
+  .site-header .brand { gap: 8px; font-size: 0.85rem; }
+  .brand-mark { width: 30px; height: 30px; }
 }
 
 @media (max-width: 640px) {

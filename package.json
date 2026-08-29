@@ -13,7 +13,8 @@
     "audit:mobile": "node tools/mobile-audit.js",
     "build:data": "node tools/build-static-data.js",
     "audit:sticky": "node tools/sticky-audit.js",
-    "audit:scrim": "node tools/scrim-audit.js"
+    "audit:scrim": "node tools/scrim-audit.js",
+    "audit:header": "node tools/header-audit.js"
   },
   "dependencies": {}
 }

@@ -317,6 +317,21 @@ Rules held from the spec:
   `IntersectionObserver`. A slow 26s drift on the organic shapes. Nothing
   animates above the fold. `prefers-reduced-motion` drops to opacity only.
 
+### The header
+
+The wordmark carries her logo mark and is centred against the **page**, not
+against a grid column. That distinction matters: a three-column grid only
+centres its middle column while the outer two stay equal, and they do not — at
+1024px the five nav links outgrew their share and pushed the wordmark 41px
+right, while hiding the right-hand links on mobile collapsed that column and
+pushed it the other way. Absolute centring is immune to whatever the nav weighs.
+
+`tools/header-audit.js` (`npm run audit:header`) measures it at eleven widths
+from 320px to 1920px, and checks two things, because they are not the same
+question: that the wordmark is within 2px of the page centre, **and** that
+nothing in the header overlaps it. The first version of that audit passed while
+the nav links were running straight through the wordmark on every phone.
+
 ### The hero video
 
 The spec allows a video hero on strict terms — "muted, autoplay, playsinline,
@@ -391,6 +406,7 @@ tools/
   contrast-audit.js    WCAG AA check across every page and state
   mobile-audit.js      tap targets, iOS zoom traps and overflow, six handsets
   sticky-audit.js      heading clearance, nav parity, focus rings
+  header-audit.js      wordmark centring and collisions, 11 widths
   scrim-audit.js       white hero type vs the lightest pixel of the photo
   build-static-data.js writes the content snapshot the flat-file build reads
 data/db.json           created on first run; gitignored
