@@ -305,7 +305,14 @@ function paintCalendar(data) {
     })
     .join('');
 
-  $('#calGrid').innerHTML = head + blanks + cells;
+  // Pad the final row too. On a light palette the grid's gap colour shows
+  // through any unfilled cells as a solid block, so the month has to end on a
+  // complete row.
+  const filled = lead + data.days.length;
+  const trailing = (7 - (filled % 7)) % 7;
+  const tail = Array.from({ length: trailing }, () => '<div class="cal-cell cal-blank"></div>').join('');
+
+  $('#calGrid').innerHTML = head + blanks + cells + tail;
   $$('#calGrid .cal-cell[data-date]').forEach((btn) => {
     btn.addEventListener('click', () => selectDate(btn.dataset.date));
   });

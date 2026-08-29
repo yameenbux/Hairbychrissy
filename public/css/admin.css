@@ -43,8 +43,8 @@
 }
 .pill-ok { color: var(--success); border-color: var(--success); }
 .pill-warn { color: var(--warning); border-color: var(--warning); }
-.pill-cash { color: var(--stripe-1); border-color: var(--stripe-1); }
-.pill-card { color: var(--stripe-3); border-color: var(--stripe-3); }
+.pill-cash { color: var(--gold-deep); border-color: var(--gold-deep); }
+.pill-card { color: #7a4a44; border-color: #7a4a44; }
 .pill-off { color: var(--danger); border-color: var(--danger); }
 
 /* ---- hours editor ---- */

@@ -170,21 +170,65 @@ Saving hours or time off pushes straight to any client with the page open.
 
 ## Design
 
-Built to the supplied BMW M design analysis, adapted for a beauty brand:
+The structure follows the supplied BMW M design analysis; the colours come from
+Chrissy's own Instagram profile mark (`public/images/logo.jpg`).
 
-- near-black canvas (`#000`) with white type; no light mode
-- UPPERCASE display at weight 700 against Light (300) body — the weight contrast
-  is the whole editorial signature
-- **Inter** as the substitute the source names for BMW Type Next Latin, with
-  display tracking pulled to −0.5px
-- zero border radius everywhere except circular icon buttons
-- 1px hairline dividers, 96px section rhythm, full-bleed photography bands
-- a 4px signature stripe used only as a brand marker — never as a button fill
+**Kept from the source system:** UPPERCASE display at weight 700 against Light
+(300) body, zero border radius except circular icon buttons, 1px hairline
+dividers, the 96px section rhythm, full-bleed photography bands, alternating
+band surfaces, and a 4px signature stripe used only as a brand marker — never as
+a button fill. **Inter** remains the substitute the source document names for
+BMW Type Next Latin, with display tracking at −0.5px.
 
-**One deliberate substitution:** the source system's M tricolor is BMW's own
-brand identity, so it is swapped for a champagne / bronze / rose set that plays
-the same structural role. Reverting to the literal palette is a three-line
-change at the top of `public/css/app.css`, where the swap is documented.
+**Changed:** the palette. The source system is near-black; this is her brand.
+Every value below was sampled from the logo rather than picked by eye:
+
+| Sampled from the logo | Hex | Role |
+|---|---|---|
+| Logo ground | `#b99a7b` | `--taupe`, the brand tone |
+| Cream letterforms | `#fdf7ef` | type on dark grounds |
+| Blonde hair midtone | `#dccbb6` | elevated surfaces |
+| Crown and script gold | `#dcc189` · `#b8944f` · `#8a6d3a` | the signature stripe |
+
+The page floor is warm cream (`#f5efe7`); the hero and footer invert to a deep
+version of her taupe (`#5f4832`) carrying cream type, mirroring the logo's own
+cream-on-taupe. Inverted bands work by **re-scoping the tokens** in a single
+`.on-dark` block, so buttons, hairlines, inputs and labels all follow without
+being restyled individually.
+
+### Contrast
+
+Her logo is cream on a light taupe — beautiful as a mark, but that exact pairing
+is 2.5:1, well under the 4.5:1 body text needs. So the palette keeps her hue and
+takes each tone only as far in lightness as legibility requires:
+
+- a four-step ink ladder (`--ink` → `--body-strong` → `--body` → `--muted`),
+  every step ≥4.5:1 on all four light surfaces
+- three golds, because one gold cannot do every job on a light ground:
+  `--gold` for accents, `--gold-deep` for small text that must clear 4.5:1
+  (calendar counts, star rows), `--gold-pale` for dark grounds only
+- semantic colours warmed to sit in the palette rather than shipped as stock
+  red/green
+
+This is checked, not assumed:
+
+```bash
+npm start &
+npm run audit:contrast     # needs playwright-core + Chromium
+```
+
+`tools/contrast-audit.js` walks every rendered text node on every page and state
+— landing, calendar, slots, payment, and all seven dashboard views — resolves
+the real painted background behind each one, and applies the WCAG AA threshold
+for that text's own size and weight. It exits non-zero on any failure, so it
+drops straight into CI. **It currently reports zero failures.** Re-run it after
+any palette change.
+
+### Reverting or re-theming
+
+Every colour on the site derives from the token block at the top of
+`public/css/app.css`. Re-sampling a redrawn logo, or swapping the palette
+wholesale, means editing that one block — no rule below it hard-codes a colour.
 
 ### Photography
 
@@ -220,6 +264,10 @@ public/
   css/admin.css        dashboard-only additions
   js/app.js            booking flow
   js/admin.js          dashboard
+  sw.js                service worker (push notifications)
+  images/logo.jpg      the profile mark the palette is sampled from
+tools/
+  contrast-audit.js    WCAG AA check across every page and state
 data/db.json           created on first run; gitignored
 ```
 

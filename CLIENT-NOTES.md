@@ -67,7 +67,31 @@ and I'll put the genuine ones in with their first name and initial.
 
 ---
 
-## 5. Photography
+## 5. Colours
+
+The site now takes its colours straight from your Instagram profile picture. I
+sampled them from the image rather than guessing: the taupe background, the
+cream of the HAIR letters, the gold of the crown and the "Chrissy" script, and
+the blonde of the hair itself.
+
+- Pages sit on a **warm cream**, the same family as your logo
+- The top banner and the footer drop to a **deep version of your taupe** with
+  cream lettering — the same look as the logo itself
+- The **gold** runs through as a thin stripe at the top of the page, on buttons
+  and on the calendar, the way the crown does on your mark
+
+One thing worth knowing: your logo is cream lettering on a light taupe, which
+looks lovely as a small mark but is too low-contrast for paragraphs of text —
+some people genuinely could not read it. So where there's real text I've taken
+the same colours a few shades deeper. It's your palette, just made readable.
+Every page has been checked against the accessibility standard and passes.
+
+If you'd like it lighter, darker, pinker, or closer to the logo, say so — it's a
+single block of settings and takes minutes to change.
+
+---
+
+## 6. Photography
 
 Every photo slot is currently a styled placeholder. Send me:
 
@@ -79,7 +103,7 @@ placeholders sit there without breaking anything.
 
 ---
 
-## 6. Contact and location
+## 7. Contact and location
 
 Currently showing:
 
@@ -92,7 +116,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 7. Cancellation policy
+## 8. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -100,7 +124,7 @@ want the wording different.
 
 ---
 
-## 8. Card payments
+## 9. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -117,7 +141,7 @@ everyone, or from nobody, say so — it's a small change.
 
 ---
 
-## 9. Getting told about bookings
+## 10. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -161,7 +185,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 10. Not built yet
+## 11. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -177,7 +201,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 11. Your dashboard
+## 12. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.

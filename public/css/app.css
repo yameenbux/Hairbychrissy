@@ -10,40 +10,48 @@
    ========================================================================= */
 
 :root {
-  /* ---- Surface ---- */
-  --canvas:            #000000;
-  --surface-soft:      #0d0d0d;
-  --surface-card:      #1a1a1a;
-  --surface-elevated:  #262626;
-  --carbon-gray:       #2b2b2b;
+  /* ---- Surfaces: the warm cream and taupe of the logo ---- */
+  --canvas:            #f5efe7;   /* page floor — soft cream */
+  --surface-soft:      #ede3d7;   /* alternating band */
+  --surface-card:      #e6dbcc;   /* cards, inputs */
+  --surface-elevated:  #dccbb6;   /* nested / hover — the blonde-hair midtone */
+  --taupe:             #b99a7b;   /* the logo's own ground, sampled exactly */
+  --espresso:          #5f4832;   /* dark ground for hero, footer, photo scrims —
+                                     her taupe hue, taken only as deep as the
+                                     cream type needs to stay readable on it */
 
-  /* ---- Ink ---- */
-  --ink:               #ffffff;
-  --body:              #bbbbbb;
-  --body-strong:       #e6e6e6;
-  --muted:             #7e7e7e;
-  --on-primary:        #000000;
+  /* ---- Ink: a four-step ladder, every step ≥4.5:1 on cream ---- */
+  --ink:               #33261c;
+  --body-strong:       #463527;
+  --body:              #584637;
+  --muted:             #6f5d4d;
+  --on-primary:        #fdf7ef;   /* cream — reads on ink and on espresso */
 
   /* ---- Lines ---- */
-  --hairline:          #3c3c3c;
-  --hairline-strong:   #262626;
+  --hairline:          #c9b59c;
+  --hairline-strong:   #ddd0be;
 
-  /* ---- Signature stripe -------------------------------------------------
-     The source system's M tricolor is BMW brand identity, so it is swapped
-     here for a champagne / bronze / rose set that carries the same structural
-     role: a 4px brand marker on headers, dividers and active states.
-     To run the literal source palette instead, use:
-       --stripe-1:#0066b1;  --stripe-2:#1c69d4;  --stripe-3:#e22718;
-     -------------------------------------------------------------------- */
-  --stripe-1:          #e8d5b7;
-  --stripe-2:          #c9a227;
-  --stripe-3:          #b76e79;
-  --accent:            #c9a227;
+  /* ---- Gold, sampled from the crown and the script ----
+     Three weights because one gold cannot do every job on a light ground:
+     --gold      readable accent and large marks
+     --gold-deep small text (calendar counts, star rows) where 4.5:1 is required
+     --gold-pale for cream-on-dark surfaces only                              */
+  --gold:              #97783d;
+  --gold-deep:         #6f5626;
+  --gold-pale:         #e8d5a8;
+  --accent:            #97783d;
 
-  /* ---- Semantic ---- */
-  --warning:           #f4b400;
-  --success:           #0fa336;
-  --danger:            #e22718;
+  /* ---- Signature stripe: champagne → gold → bronze ----
+     Same structural role as the source system's tricolor: a 4px brand marker
+     on headers, dividers and active states. Never a button fill.            */
+  --stripe-1:          #dcc189;
+  --stripe-2:          #b8944f;
+  --stripe-3:          #8a6d3a;
+
+  /* ---- Semantic, warmed to sit in the palette ---- */
+  --warning:           #735214;
+  --success:           #3a5f31;
+  --danger:            #913b32;
 
   /* ---- Spacing ---- */
   --xxs: 4px;  --xs: 8px;  --sm: 12px;  --md: 16px;
@@ -53,8 +61,29 @@
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/**
+ * Bands that invert to the dark ground — the hero and the footer, mirroring
+ * the logo's cream-on-taupe. Re-scoping the tokens rather than restyling each
+ * element means buttons, hairlines, labels and inputs all follow on their own.
+ */
+.on-dark {
+  --ink:               #fdf7ef;
+  --body-strong:       #f0e4d5;
+  --body:              #d8c7b3;
+  --muted:             #cbbbab;
+  --on-primary:        #33261c;   /* flips, so filled buttons stay legible */
+  --hairline:          #94795c;
+  --hairline-strong:   #75593e;
+  --surface-card:      #664c34;
+  --surface-elevated:  #75593e;
+  --accent:            #e8d5a8;
+  background: var(--espresso);
+  color: var(--body);
+}
+
 /* The system inverts nothing — there is no light-mode marketing surface. */
-:root, :root[data-theme='light'], :root[data-theme='dark'] { color-scheme: dark; }
+/* A single committed light palette — the brand has no dark mode. */
+:root, :root[data-theme='light'], :root[data-theme='dark'] { color-scheme: light; }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -261,7 +290,7 @@ a { color: var(--ink); text-decoration: none; }
   min-height: min(78vh, 720px);
   display: flex; align-items: flex-end;
   padding: var(--xxl) 0;
-  background: var(--canvas);
+  background: var(--espresso);
   overflow: hidden;
 }
 .hero-photo {
@@ -269,20 +298,22 @@ a { color: var(--ink); text-decoration: none; }
   background-image: var(--hero-img, none);
   background-size: cover;
   background-position: center 30%;
-  background-color: var(--canvas);
+  background-color: var(--espresso);
   z-index: 0;
 }
 /* Placeholder texture shows through wherever a photograph has not been added. */
+/* Shown wherever a photograph has not been added yet — warm taupe, so a
+   missing image reads as brand texture rather than a hole in the page. */
 .photo-fallback {
   background-image:
-    radial-gradient(ellipse at 70% 20%, rgba(201, 162, 39, 0.10), transparent 55%),
-    radial-gradient(ellipse at 20% 80%, rgba(183, 110, 121, 0.10), transparent 55%),
-    repeating-linear-gradient(115deg, #0a0a0a 0 3px, #101010 3px 6px);
+    radial-gradient(ellipse at 70% 20%, rgba(232, 213, 168, 0.22), transparent 58%),
+    radial-gradient(ellipse at 20% 80%, rgba(185, 154, 123, 0.35), transparent 60%),
+    repeating-linear-gradient(115deg, #6d5339 0 3px, #5f4832 3px 6px);
 }
 .hero::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.35) 100%);
+  background: linear-gradient(to top, rgba(46, 34, 23, 0.92) 0%, rgba(56, 42, 29, 0.58) 48%, rgba(64, 48, 33, 0.28) 100%);
   z-index: 1;
 }
 .hero .shell { position: relative; z-index: 2; width: 100%; }
@@ -319,8 +350,8 @@ a { color: var(--ink); text-decoration: none; }
 .photo-card .photo .tag {
   position: absolute; left: var(--md); bottom: var(--md);
   font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-  color: var(--ink);
-  background: rgba(0,0,0,0.72);
+  color: #fdf7ef;
+  background: rgba(51, 38, 28, 0.88);
   padding: 6px 10px;
 }
 .photo-card .meta { padding: var(--md) 0 0; }
@@ -358,7 +389,7 @@ a { color: var(--ink); text-decoration: none; }
   padding: var(--lg);
   display: flex; flex-direction: column; gap: var(--md);
 }
-.review .stars { color: var(--accent); letter-spacing: 3px; font-size: 13px; }
+.review .stars { color: var(--gold-deep); letter-spacing: 3px; font-size: 13px; }
 .review .text { color: var(--body-strong); font-size: 16px; }
 .review .who { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); margin-top: auto; }
 
@@ -436,7 +467,7 @@ a { color: var(--ink); text-decoration: none; }
   text-align: left;
 }
 .cal-cell .n { font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; }
-.cal-cell .free { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
+.cal-cell .free { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--gold-deep); }
 .cal-cell .none { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--muted); }
 /* :not([aria-pressed]) keeps hover from out-specifying the selected state —
    without it a selected cell keeps the hover background and its black text
@@ -577,7 +608,7 @@ a { color: var(--ink); text-decoration: none; }
 
 /* ------------------------------------------------------------------ footer */
 
-.footer { background: var(--canvas); border-top: 1px solid var(--hairline-strong); padding: var(--xxl) 0 var(--lg); }
+.footer { background: var(--espresso); border-top: 0; padding: var(--xxl) 0 var(--lg); }
 .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--lg); }
 .footer h4 { font-size: 12px; letter-spacing: 1.5px; margin-bottom: var(--md); }
 .footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--xs); }
@@ -631,5 +662,5 @@ a { color: var(--ink); text-decoration: none; }
 /* --------------------------------------------------------------- printing */
 @media print {
   .topnav, .footer, .hero, .btn { display: none !important; }
-  body { background: #fff; color: #000; }
+  body { background: #fff; color: #241a12; }
 }
