@@ -77,6 +77,24 @@
       "text": "From everyday glam to special occasions — styled to make you feel your best."
     }
   ],
+  "benefits": [
+    {
+      "title": "Instant volume and length",
+      "text": "Perfect for those wanting to go from short to long, or just to boost the thickness of their natural length."
+    },
+    {
+      "title": "Low maintenance",
+      "text": "Good quality hair holds a style for a long time, which means gorgeous bouncy hair all day."
+    },
+    {
+      "title": "Protection for your natural hair",
+      "text": "Extensions cut down the time you spend styling, and take direct heat off your own hair."
+    },
+    {
+      "title": "Confidence boost",
+      "text": "Extensions tailored to your hair goals are the ultimate confidence boost, from the moment you wake up."
+    }
+  ],
   "transformations": [
     {
       "before": "before.jpg",
@@ -322,6 +340,6 @@
   },
   "today": "2026-08-29",
   "cardMode": "static",
-  "generatedAt": "2026-08-29T18:05:29.479Z",
+  "generatedAt": "2026-08-29T18:10:32.326Z",
   "static": true
 }

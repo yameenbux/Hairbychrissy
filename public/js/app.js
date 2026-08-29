@@ -114,6 +114,21 @@ function renderStatic() {
       .join('');
   }
 
+  // Why extensions — her own four benefits, as text rather than her graphic so
+  // it stays searchable, translatable and readable at any width.
+  const benefitList = $('#benefitList');
+  if (benefitList && state.site.benefits) {
+    benefitList.innerHTML = state.site.benefits
+      .map(
+        (b) => `
+        <article class="benefit reveal">
+          <h3>${esc(b.title)}</h3>
+          <p>${esc(b.text)}</p>
+        </article>`,
+      )
+      .join('');
+  }
+
   if (brand.signoff) $('#signoff').textContent = brand.signoff;
 
   renderTransformations();
