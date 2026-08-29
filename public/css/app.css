@@ -1,88 +1,47 @@
 /* ============================================================================
-   H A I R • B Y • C H R I S S Y — design system
-   Built from the supplied BMW M design analysis:
-   near-black canvas, UPPERCASE heavy display against Light body, zero radius,
-   full-bleed photography, hairline dividers, 96px section rhythm, and a 4px
-   signature tricolor stripe used only as a brand marker — never as a button.
+   HAIR BY CHRISSY — editorial luxury minimal
+   Built to CLAUDE.md. Palette resampled from her Instagram profile mark, as
+   that file instructs: token ROLES are the spec's, the VALUES are hers.
 
-   Inter is the substitute the source document names for BMW Type Next Latin,
-   with display tracking pulled to -0.5px as it specifies.
+     spec            resampled from the logo
+     --espresso      #2E1A12  ->  #33261c
+     --espresso-70   #4A3226  ->  #6b5646
+     --clay          #C98A7E  ->  #a98744   (her accent is gold, not rose)
+     --cream         #FAF7F4  ->  #f7f2ea
+
+   Rules held: one accent only, never on body copy and never on a button.
+   Backgrounds alternate paper/cream, no dark sections (the footer legal bar is
+   the single espresso band the spec allows). No gradients as fills, no shadows
+   on UI — the photography carries the depth.
    ========================================================================= */
 
 :root {
-  /* ---- Surfaces: the warm cream and taupe of the logo ---- */
-  --canvas:            #f5efe7;   /* page floor — soft cream */
-  --surface-soft:      #ede3d7;   /* alternating band */
-  --surface-card:      #e6dbcc;   /* cards, inputs */
-  --surface-elevated:  #dccbb6;   /* nested / hover — the blonde-hair midtone */
-  --taupe:             #b99a7b;   /* the logo's own ground, sampled exactly */
-  --espresso:          #5f4832;   /* dark ground for hero, footer, photo scrims —
-                                     her taupe hue, taken only as deep as the
-                                     cream type needs to stay readable on it */
+  --espresso:     #33261c;
+  --espresso-70:  #6b5646;
+  --clay:         #a98744;   /* accent: numerals, connector lines, markers */
+  --clay-deep:    #856a36;   /* the same accent where it must clear 4.5:1 */
+  --cream:        #f7f2ea;
+  --paper:        #ffffff;
+  --taupe:        #b99a7b;   /* her logo ground — imagery tint only */
+  --hairline:     rgba(51, 38, 28, 0.22);
+  --hairline-soft:rgba(51, 38, 28, 0.10);
 
-  /* ---- Ink: a four-step ladder, every step ≥4.5:1 on cream ---- */
-  --ink:               #33261c;
-  --body-strong:       #463527;
-  --body:              #584637;
-  --muted:             #6f5d4d;
-  --on-primary:        #fdf7ef;   /* cream — reads on ink and on espresso */
+  --ok:      #3a5f31;
+  --warn:    #735214;
+  --danger:  #913b32;
 
-  /* ---- Lines ---- */
-  --hairline:          #c9b59c;
-  --hairline-strong:   #ddd0be;
+  --wordmark: 'Cormorant Garamond', 'Times New Roman', Times, serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
-  /* ---- Gold, sampled from the crown and the script ----
-     Three weights because one gold cannot do every job on a light ground:
-     --gold      readable accent and large marks
-     --gold-deep small text (calendar counts, star rows) where 4.5:1 is required
-     --gold-pale for cream-on-dark surfaces only                              */
-  --gold:              #97783d;
-  --gold-deep:         #6f5626;
-  --gold-pale:         #e8d5a8;
-  --accent:            #97783d;
+  --shell: 1440px;
+  --gutter: clamp(20px, 5vw, 72px);
+  --header-h: 72px;
 
-  /* ---- Signature stripe: champagne → gold → bronze ----
-     Same structural role as the source system's tricolor: a 4px brand marker
-     on headers, dividers and active states. Never a button fill.            */
-  --stripe-1:          #dcc189;
-  --stripe-2:          #b8944f;
-  --stripe-3:          #8a6d3a;
-
-  /* ---- Semantic, warmed to sit in the palette ---- */
-  --warning:           #735214;
-  --success:           #3a5f31;
-  --danger:            #913b32;
-
-  /* ---- Spacing ---- */
-  --xxs: 4px;  --xs: 8px;  --sm: 12px;  --md: 16px;
-  --lg: 24px;  --xl: 40px; --xxl: 64px; --section: 96px;
-
-  --max: 1440px;
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Whitespace is the primary device: sections breathe before content. */
+  --band: clamp(88px, 18vh, 200px);
+  --band-tight: clamp(56px, 10vh, 112px);
 }
 
-/**
- * Bands that invert to the dark ground — the hero and the footer, mirroring
- * the logo's cream-on-taupe. Re-scoping the tokens rather than restyling each
- * element means buttons, hairlines, labels and inputs all follow on their own.
- */
-.on-dark {
-  --ink:               #fdf7ef;
-  --body-strong:       #f0e4d5;
-  --body:              #d8c7b3;
-  --muted:             #cbbbab;
-  --on-primary:        #33261c;   /* flips, so filled buttons stay legible */
-  --hairline:          #94795c;
-  --hairline-strong:   #75593e;
-  --surface-card:      #664c34;
-  --surface-elevated:  #75593e;
-  --accent:            #e8d5a8;
-  background: var(--espresso);
-  color: var(--body);
-}
-
-/* The system inverts nothing — there is no light-mode marketing surface. */
-/* A single committed light palette — the brand has no dark mode. */
 :root, :root[data-theme='light'], :root[data-theme='dark'] { color-scheme: light; }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -90,28 +49,17 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  /* A grey flash on every tap makes the whole site feel like a document.
-     Replaced with the brand tint. */
-  -webkit-tap-highlight-color: rgba(95, 72, 50, 0.14);
+  -webkit-tap-highlight-color: rgba(169, 135, 68, 0.14);
 }
-
-/* Kills the 300ms click delay and double-tap-to-zoom on controls, without
-   disabling pinch-zoom on the page itself. */
-button, a, label, summary, [role='tab'], .btn, .slot, .cal-cell, .service-pick {
-  touch-action: manipulation;
-}
-
-/* Anchor scrolling must not tuck a heading under the sticky header. */
-section[id], .step-panel, .steps, #slotHeading { scroll-margin-top: 76px; }
 
 body {
   margin: 0;
-  background: var(--canvas);
-  color: var(--body);
-  font-family: var(--font);
-  font-weight: 300;
-  font-size: 16px;
-  line-height: 1.5;
+  background: var(--paper);
+  color: var(--espresso-70);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -119,714 +67,673 @@ body {
 img { max-width: 100%; display: block; }
 [hidden] { display: none !important; }
 
-/* --------------------------------------------------------------- typography */
+button, a, label, summary, [role='tab'] { touch-action: manipulation; }
 
-h1, h2, h3, h4 {
-  font-weight: 700;
-  color: var(--ink);
-  text-transform: uppercase;
-  letter-spacing: -0.5px;
-  margin: 0;
+/* Focus is visible because the design is minimal, not despite it. */
+:focus-visible {
+  outline: 2px solid var(--clay-deep);
+  outline-offset: 3px;
 }
 
-.display-xl { font-size: clamp(40px, 8vw, 80px); line-height: 1; }
-.display-lg { font-size: clamp(32px, 5.5vw, 56px); line-height: 1.05; }
-.display-md { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; }
-.display-sm { font-size: clamp(24px, 3vw, 32px); line-height: 1.15; }
-.title-lg   { font-size: 24px; line-height: 1.3; font-weight: 700; }
-.title-md   { font-size: 20px; line-height: 1.4; font-weight: 400; text-transform: none; letter-spacing: 0; }
+/* Sticky header must never sit over a heading it scrolled to. */
+[id] { scroll-margin-top: calc(var(--header-h) + 24px); }
+
+/* --------------------------------------------------------------- type */
+
+h1, h2, h3, h4 { margin: 0; color: var(--espresso); font-weight: 500; }
+
+/* Role 1 — wordmark. Logo only. */
+.wordmark {
+  font-family: var(--wordmark);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--espresso);
+  line-height: 1;
+}
+
+/* Role 2 — display headings. */
+.display {
+  font-family: var(--sans);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+  font-size: clamp(2.5rem, 7vw, 6rem);
+  color: var(--espresso);
+}
+.display-sm {
+  font-family: var(--sans);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
+  color: var(--espresso);
+}
+
+/* Role 3 — body. Measure capped so lines stay readable. */
+p { margin: 0 0 1.1em; max-width: 42ch; }
+p:last-child { margin-bottom: 0; }
+.lede { font-size: 1.125rem; line-height: 1.6; color: var(--espresso-70); max-width: 42ch; }
 
 .label {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 1.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--espresso);
 }
-.label-muted { color: var(--muted); }
-
-.lede {
-  font-size: 18px;
-  font-weight: 300;
-  line-height: 1.6;
-  color: var(--body-strong);
-  max-width: 60ch;
+.label::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--clay);
 }
+.label-plain::before { display: none; }
 
-p { margin: 0 0 var(--md); }
-p:last-child { margin-bottom: 0; }
+.muted { color: var(--espresso-70); }
+.small { font-size: 0.875rem; }
 
-.body-sm  { font-size: 14px; font-weight: 300; line-height: 1.5; }
-.caption  { font-size: 12px; font-weight: 400; letter-spacing: 0.5px; color: var(--muted); }
-.muted    { color: var(--muted); }
-.strong   { color: var(--body-strong); }
-.white    { color: var(--ink); }
+a { color: inherit; text-decoration: none; }
 
-a { color: var(--ink); text-decoration: none; }
-
-/* ------------------------------------------------------------- the stripe */
-
-.stripe {
-  height: 4px;
-  width: 100%;
-  background: linear-gradient(
-    to right,
-    var(--stripe-1) 0%, var(--stripe-1) 33.33%,
-    var(--stripe-2) 33.33%, var(--stripe-2) 66.66%,
-    var(--stripe-3) 66.66%, var(--stripe-3) 100%
-  );
-}
-.stripe-short { width: 72px; }
-
-/* ------------------------------------------------------------------ layout */
-
-.shell {
-  max-width: var(--max);
-  margin: 0 auto;
-  /* max() keeps the normal gutter but grows it past a notch in landscape. */
-  padding-left: max(var(--lg), env(safe-area-inset-left));
-  padding-right: max(var(--lg), env(safe-area-inset-right));
+/* Oversized numerals as layout anchors — thin, clay, never decoration. */
+.numeral {
+  font-family: var(--sans);
+  font-weight: 200;
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  line-height: 0.8;
+  color: var(--clay);
+  letter-spacing: -0.02em;
 }
 
-.band { padding: var(--section) 0; }
-.band-tight { padding: var(--xxl) 0; }
-.band-soft { background: var(--surface-soft); }
-.band + .band { border-top: 1px solid var(--hairline-strong); }
+/* ------------------------------------------------------------- layout */
 
-.section-head { margin-bottom: var(--xl); }
-.section-head .label { display: block; margin-bottom: var(--sm); color: var(--muted); }
+.shell { max-width: var(--shell); margin: 0 auto; padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
 
-.grid { display: grid; gap: var(--lg); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.band { padding: var(--band) 0; background: var(--paper); }
+.band-cream { background: var(--cream); }
+.band-tight { padding: var(--band-tight) 0; }
 
-.row { display: flex; gap: var(--md); flex-wrap: wrap; align-items: center; }
-.spread { display: flex; justify-content: space-between; align-items: baseline; gap: var(--md); flex-wrap: wrap; }
+.rule { height: 1px; background: var(--hairline-soft); border: 0; margin: 0; }
 
-.hairline { height: 1px; background: var(--hairline); border: 0; margin: 0; }
+/* Asymmetric split — visual one side, offset text the other. Alternates. */
+.split {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(32px, 6vw, 96px);
+  align-items: center;
+}
+.split-flip > .split-visual { order: 2; }
+.split-text { max-width: 46ch; }
+.split-text .label { margin-bottom: 20px; }
+.split-text .display-sm { margin-bottom: 20px; }
 
-/* ----------------------------------------------------------------- buttons */
+.section-head { margin-bottom: clamp(40px, 7vh, 88px); }
+.section-head .label { margin-bottom: 20px; }
+.section-head .display { margin-bottom: 20px; }
+
+.stack-lg > * + * { margin-top: clamp(24px, 4vh, 48px); }
+
+/* ------------------------------------------------------------ buttons */
+/* Never clay. Espresso or outline only. */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--xs);
   min-height: 48px;
-  padding: 16px 32px;
+  padding: 14px 30px;
+  border: 1px solid var(--espresso);
   border-radius: 0;
-  border: 1px solid var(--ink);
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 1.5px;
+  background: var(--espresso);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 140ms linear, color 140ms linear, border-color 140ms linear;
+  transition: background 200ms ease, color 200ms ease;
 }
+.btn-outline { background: transparent; color: var(--espresso); }
+.btn-light { background: var(--paper); color: var(--espresso); border-color: var(--paper); }
+.btn-sm { min-height: 44px; padding: 10px 20px; font-size: 0.75rem; }
+.btn[disabled], .btn[aria-disabled='true'] { opacity: 0.35; pointer-events: none; }
 
-.btn:active { background: var(--body-strong); color: var(--on-primary); }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-.btn-solid { background: var(--ink); color: var(--on-primary); }
-
-
-.btn-ghost { border-color: var(--hairline); color: var(--body); }
-
-
-.btn-sm { min-height: 40px; padding: 12px 20px; font-size: 12px; }
-
-.btn[disabled], .btn[aria-disabled='true'] {
-  opacity: 0.35;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.btn-danger { border-color: var(--danger); color: var(--danger); }
-
-
-.textlink {
+.link-underline {
   display: inline-flex;
   align-items: center;
-  gap: var(--xs);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  min-height: 44px;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink);
-  padding: 8px 0;
-}
-.textlink::after { content: '→'; }
-
-
-.icon-btn {
-  width: 48px; height: 48px;
-  border-radius: 9999px;              /* the only non-rectangular shape */
-  border: 1px solid var(--hairline);
-  background: var(--surface-card);
-  color: var(--ink);
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 18px; cursor: pointer;
+  color: var(--espresso);
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 2px;
 }
 
-.icon-btn[disabled] { opacity: 0.3; cursor: not-allowed; }
-
-/* --------------------------------------------------------------------- nav */
-
-.topnav {
-  position: sticky; top: 0; z-index: 60;
-  background: var(--canvas);
-  border-bottom: 1px solid var(--hairline-strong);
-}
-.topnav-inner {
-  height: 64px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--lg);
-}
-.wordmark { display: flex; align-items: center; gap: var(--sm); }
-.wordmark .mark {
-  width: 4px; height: 28px;
-  background: linear-gradient(to bottom, var(--stripe-1) 0 33.33%, var(--stripe-2) 33.33% 66.66%, var(--stripe-3) 66.66% 100%);
-}
-.wordmark .name {
-  font-size: 15px; font-weight: 700; letter-spacing: 3px;
-  text-transform: uppercase; color: var(--ink); white-space: nowrap;
-}
-.navlinks { display: flex; gap: var(--lg); align-items: center; }
-.navlinks a {
-  font-size: 14px; font-weight: 400; letter-spacing: 0.5px;
-  color: var(--body); padding: 8px 0;
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--espresso-70); border-color: var(--espresso-70); color: var(--paper); }
+  .btn-outline:hover { background: var(--espresso); color: var(--paper); }
+  .btn-light:hover { background: var(--cream); border-color: var(--cream); }
+  .link-underline:hover { border-bottom-color: var(--espresso); }
 }
 
-.nav-toggle { display: none; }
+/* ------------------------------------------------------------- header */
 
-/* -------------------------------------------------------------------- hero */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.site-header .shell {
+  height: var(--header-h);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+.nav-left, .nav-right { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 32px); }
+/* The gap belongs on the nav itself, or the links run into one another. */
+.site-header nav { display: flex; align-items: center; gap: clamp(14px, 2vw, 28px); }
+.nav-right { justify-content: flex-end; }
+.site-header nav a,
+.site-header .nav-right a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--espresso-70);
+}
+.site-header .brand { font-size: clamp(1rem, 2vw, 1.35rem); white-space: nowrap; }
+.nav-toggle {
+  display: none;
+  width: 44px; height: 44px;
+  align-items: center; justify-content: center;
+  background: none; border: 0; cursor: pointer;
+  color: var(--espresso); font-size: 1.1rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-header nav a:hover, .site-header .nav-right a:hover { color: var(--espresso); }
+}
+
+/* --------------------------------------------------------------- hero */
 
 .hero {
   position: relative;
-  min-height: min(78vh, 720px);
-  /* dvh tracks the iOS URL bar as it collapses; vh above is the fallback. */
-  min-height: min(78dvh, 720px);
-  display: flex; align-items: flex-end;
-  padding: var(--xxl) 0;
-  background: var(--espresso);
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100dvh - var(--header-h));
+  display: flex;
+  align-items: flex-end;
+  padding: var(--band-tight) 0 clamp(48px, 9vh, 104px);
+  /* The imagery band's own ground. Cream here would leave the white hero type
+     unreadable in the moment before a photograph loads, or if one is missing —
+     "use a scrim, not hope" applies to the fallback as well as the photo. */
+  background: #2a1f16;
   overflow: hidden;
 }
-.hero-photo {
-  position: absolute; inset: 0;
-  background-image: var(--hero-img, none);
-  background-size: cover;
-  background-position: center 30%;
-  background-color: var(--espresso);
-  z-index: 0;
-}
-/* Placeholder texture shows through wherever a photograph has not been added. */
-/* Shown wherever a photograph has not been added yet — warm taupe, so a
-   missing image reads as brand texture rather than a hole in the page. */
-.photo-fallback {
-  background-image:
-    radial-gradient(ellipse at 70% 20%, rgba(232, 213, 168, 0.22), transparent 58%),
-    radial-gradient(ellipse at 20% 80%, rgba(185, 154, 123, 0.35), transparent 60%),
-    repeating-linear-gradient(115deg, #6d5339 0 3px, #5f4832 3px 6px);
-}
-.hero::after {
+.hero-media { position: absolute; inset: 0; z-index: 0; }
+.hero-media img, .hero-media video { width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
+/* A scrim, not hope — the spec's words. */
+.hero-media::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(46, 34, 23, 0.92) 0%, rgba(56, 42, 29, 0.58) 48%, rgba(64, 48, 33, 0.28) 100%);
-  z-index: 1;
+  background: linear-gradient(to top, rgba(35, 25, 17, 0.72) 0%, rgba(35, 25, 17, 0.34) 46%, rgba(35, 25, 17, 0.12) 100%);
 }
-.hero .shell { position: relative; z-index: 2; width: 100%; }
-.hero-kicker { display: flex; align-items: center; gap: var(--sm); margin-bottom: var(--md); }
-.hero h1 { margin-bottom: var(--md); }
-.hero .lede { margin-bottom: var(--xl); }
-.hero-actions { display: flex; gap: var(--md); flex-wrap: wrap; }
+.hero .shell { position: relative; z-index: 1; width: 100%; }
+.hero .label, .hero .display, .hero .lede { color: var(--paper); }
+.hero .label::before { background: var(--paper); }
+.hero .display { margin: 18px 0 22px; }
+.hero .lede { color: rgba(255, 255, 255, 0.92); margin-bottom: 34px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
-.method-strip {
-  display: flex; flex-wrap: wrap; gap: var(--xl);
-  padding: var(--lg) 0;
-  border-top: 1px solid var(--hairline);
-  margin-top: var(--xl);
+/* Placeholder texture, used until real photography is dropped in. */
+.media-placeholder {
+  background-color: var(--taupe);
+  background-image:
+    radial-gradient(ellipse at 68% 22%, rgba(253, 247, 239, 0.30), transparent 58%),
+    radial-gradient(ellipse at 22% 78%, rgba(51, 38, 28, 0.26), transparent 60%);
 }
-.method-strip span { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--body-strong); }
 
-/* ------------------------------------------------------------------- cards */
+/* ------------------------------------------------------- service grid */
 
-.card {
-  background: var(--surface-card);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 0;
-  padding: var(--lg);
-}
-.card-flat { background: var(--canvas); border: 1px solid var(--hairline); }
-
-.photo-card { background: var(--canvas); border-radius: 0; }
-.photo-card .photo {
-  aspect-ratio: 4 / 5;
-  background-size: cover; background-position: center;
-  background-color: var(--surface-card);
-  position: relative;
-}
-.photo-card .photo .tag {
-  position: absolute; left: var(--md); bottom: var(--md);
-  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-  color: #fdf7ef;
-  background: rgba(51, 38, 28, 0.88);
-  padding: 6px 10px;
-}
-.photo-card .meta { padding: var(--md) 0 0; }
-
-/* Spec cells — the "by the numbers" strip. */
-.spec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--hairline-strong); }
-.spec-cell { background: var(--surface-soft); padding: var(--lg); }
-.spec-cell .value { font-size: 32px; font-weight: 700; line-height: 1.15; color: var(--ink); letter-spacing: -0.5px; }
-.spec-cell .key { display: block; margin-top: var(--xs); font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); }
-
-/* ------------------------------------------------------------ service list */
-
-.service-row {
+.grid-services {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--lg);
-  padding: var(--lg) 0;
-  border-bottom: 1px solid var(--hairline-strong);
-  align-items: start;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(16px, 2vw, 28px);
 }
-.service-row:first-of-type { border-top: 1px solid var(--hairline-strong); }
-.service-row .name { font-size: 20px; font-weight: 700; text-transform: uppercase; color: var(--ink); letter-spacing: -0.3px; }
-.service-row .blurb { margin-top: var(--xs); max-width: 56ch; font-size: 15px; }
-.service-row .facts { margin-top: var(--sm); display: flex; gap: var(--md); flex-wrap: wrap; }
-.service-row .facts span { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); }
-.service-row .price { text-align: right; }
-.service-row .price .amount { font-size: 28px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; white-space: nowrap; }
-.service-row .price .from { display: block; font-size: 11px; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; }
-
-/* ---------------------------------------------------------------- reviews */
-
-.review {
-  background: var(--canvas);
-  border: 1px solid var(--hairline);
-  padding: var(--lg);
-  display: flex; flex-direction: column; gap: var(--md);
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
-.review .stars { color: var(--gold-deep); letter-spacing: 3px; font-size: 13px; }
-.review .text { color: var(--body-strong); font-size: 16px; }
-.review .who { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); margin-top: auto; }
+.card-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  /* No background here: .media-placeholder is declared earlier in the file and
+     a background on this rule would win and blank the texture out. The
+     placeholder or the real photograph fills it. */
+}
+.card-media > * { width: 100%; height: 100%; }
+/* Hover reveals a full-width SELECT bar over the image bottom. */
+.card-select {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 14px;
+  background: var(--espresso);
+  color: var(--paper);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  transform: translateY(100%);
+  transition: transform 220ms ease;
+}
+.card-body { padding-top: 16px; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.card-name { font-size: 0.875rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso); }
+.card-price { font-size: 0.875rem; color: var(--espresso-70); white-space: nowrap; }
+.card[aria-pressed='true'] .card-select { transform: translateY(0); }
+.card[aria-pressed='true'] .card-name { border-bottom: 1px solid var(--clay); }
 
-/* ------------------------------------------------------------------- FAQ */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card-select { transform: translateY(0); }
+}
+.card:focus-visible .card-select { transform: translateY(0); }
 
-.faq { border-top: 1px solid var(--hairline-strong); }
-.faq details { border-bottom: 1px solid var(--hairline-strong); }
+/* ------------------------------------------------------------ process */
+
+.process { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 64px); }
+.step .numeral { display: block; margin-bottom: 18px; }
+.step h3 { font-size: 0.9375rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+/* Connector line in clay, as a marker — not decoration. */
+.step { position: relative; padding-top: 26px; border-top: 1px solid var(--hairline-soft); }
+.step::before { content: ''; position: absolute; top: -1px; left: 0; width: 42px; height: 1px; background: var(--clay); }
+
+/* ------------------------------------------------------------ reviews */
+
+.reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px, 4vw, 56px); }
+.review p { font-size: 1.0625rem; color: var(--espresso); }
+.review footer { margin-top: 18px; font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso-70); }
+.review .mark { color: var(--clay); font-size: 1.5rem; line-height: 1; display: block; margin-bottom: 14px; }
+
+/* ---------------------------------------------------------------- FAQ */
+
+.faq details { border-bottom: 1px solid var(--hairline-soft); }
 .faq summary {
   list-style: none; cursor: pointer;
-  padding: var(--lg) 0;
-  font-size: 14px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink);
-  display: flex; justify-content: space-between; gap: var(--md);
+  min-height: 64px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  font-size: 0.9375rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--espresso);
 }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: '+'; font-size: 20px; line-height: 1; color: var(--muted); }
+.faq summary::after { content: '+'; color: var(--clay); font-size: 1.25rem; font-weight: 300; }
 .faq details[open] summary::after { content: '–'; }
-.faq .answer { padding: 0 0 var(--lg); max-width: 68ch; }
+.faq .answer { padding: 0 0 28px; }
 
-/* =========================================================== BOOKING FLOW */
+/* ------------------------------------------------------------- forms */
 
-.booking { display: grid; grid-template-columns: 1fr 380px; gap: var(--xl); align-items: start; }
+.field { margin-bottom: 18px; }
+.field label { display: block; margin-bottom: 8px; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso); }
+.input, .textarea, .select {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  border-radius: 0;
+  color: var(--espresso);
+  font-family: var(--sans);
+  font-size: 1rem;
+}
+.band-cream .input, .band-cream .textarea, .band-cream .select { background: var(--paper); }
+.textarea { min-height: 104px; resize: vertical; }
+.input:focus, .textarea:focus, .select:focus { outline: none; border-color: var(--espresso); }
+.field .hint { margin-top: 8px; font-size: 0.8125rem; color: var(--espresso-70); }
 
-.steps { display: flex; gap: var(--lg); flex-wrap: wrap; margin-bottom: var(--xl); border-bottom: 1px solid var(--hairline-strong); }
+.notice {
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--clay);
+  background: var(--paper);
+  padding: 18px 20px;
+  font-size: 0.9375rem;
+  color: var(--espresso-70);
+}
+.notice p { max-width: none; }
+.notice-error { border-left-color: var(--danger); }
+.notice-ok { border-left-color: var(--ok); }
+.notice-warn { border-left-color: var(--warn); }
+
+.empty {
+  padding: 40px 24px;
+  border: 1px dashed var(--hairline);
+  text-align: center;
+  color: var(--espresso-70);
+  font-size: 0.875rem;
+  letter-spacing: 0.06em;
+}
+
+/* -------------------------------------------------------------- motion */
+
+.reveal { opacity: 0; transform: translateY(20px); }
+.reveal.in { opacity: 1; transform: none; transition: opacity 600ms ease-out, transform 600ms ease-out; }
+
+/* Organic drift — slow, never bouncy. */
+.blob {
+  position: absolute;
+  border-radius: 46% 54% 58% 42% / 52% 46% 54% 48%;
+  background: rgba(169, 135, 68, 0.10);
+  filter: blur(2px);
+  animation: drift 26s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  to   { transform: translate3d(2.5%, -3%, 0) rotate(8deg) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .blob { animation: none; }
+  .reveal { transform: none; }
+  .reveal.in { transition: opacity 300ms linear; transform: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* -------------------------------------------------------------- footer */
+
+.site-footer { background: var(--cream); padding: var(--band-tight) 0 0; }
+.footer-top { display: grid; grid-template-columns: 1fr auto; gap: clamp(32px, 6vw, 80px); align-items: start; }
+.footer-lockup { display: flex; align-items: flex-end; gap: 18px; }
+.footer-lockup .rotated {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--wordmark);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.875rem;
+  color: var(--espresso-70);
+}
+.footer-lockup .giant {
+  font-family: var(--wordmark);
+  font-size: clamp(3rem, 11vw, 9rem);
+  line-height: 0.82;
+  text-transform: uppercase;
+  color: var(--espresso);
+  letter-spacing: 0.01em;
+}
+.footer-aside { display: grid; gap: 20px; justify-items: start; min-width: min(320px, 100%); }
+.newsletter { display: flex; gap: 0; width: 100%; }
+.newsletter .input { border-right: 0; }
+.newsletter .btn { white-space: nowrap; }
+.footer-links {
+  margin-top: clamp(40px, 7vh, 80px);
+  padding: 24px 0;
+  border-top: 1px solid var(--hairline-soft);
+  display: flex; flex-wrap: wrap; gap: clamp(16px, 3vw, 40px);
+}
+.footer-links a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso-70);
+}
+@media (hover: hover) and (pointer: fine) { .footer-links a:hover { color: var(--espresso); } }
+
+/* The one espresso band the spec allows, and it closes the page. */
+.legal-bar { background: var(--espresso); color: rgba(253, 247, 239, 0.86); }
+.legal-bar .shell {
+  padding-top: 18px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+  display: flex; flex-wrap: wrap; gap: 12px 32px; justify-content: space-between;
+  font-size: 0.75rem; letter-spacing: 0.06em;
+}
+.legal-bar a { color: var(--paper); }
+
+
+/* ---------------------------------------------------- accessibility utils
+   A 1px clip rather than left:-9999px: the offscreen technique pushes a real
+   box outside the viewport, which is indistinguishable from a layout overflow
+   bug and trips the mobile audit. */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.skip-link:focus {
+  position: fixed;
+  top: 12px; left: 12px;
+  width: auto; height: auto;
+  margin: 0; padding: 14px 24px;
+  clip-path: none;
+  overflow: visible;
+  z-index: 999;
+}
+
+/* Every link a thumb has to find clears 44px, and narrow labels get enough
+   width not to be a lottery. */
+.site-header .brand { min-height: 44px; display: inline-flex; align-items: center; }
+.footer-links a { padding: 0 4px; min-width: 44px; justify-content: center; }
+.footer-aside ul a,
+.legal-bar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.footer-aside ul li { display: flex; align-items: center; min-height: 32px; }
+
+@media (pointer: coarse), (max-width: 900px) {
+  .footer-aside ul li { min-height: 44px; }
+  .legal-bar .shell { gap: 4px 32px; }
+}
+
+/* --------------------------------------------------------- responsive */
+
+@media (max-width: 1100px) {
+  .grid-services { grid-template-columns: repeat(2, 1fr); }
+  .process { grid-template-columns: 1fr; gap: 32px; }
+  .reviews { grid-template-columns: 1fr; }
+  .split { grid-template-columns: 1fr; }
+  .split-flip > .split-visual { order: 0; }
+}
+
+@media (max-width: 860px) {
+  .site-header { position: sticky; }
+  .site-header .shell { grid-template-columns: auto 1fr auto; position: relative; }
+  .site-header nav { display: none; }
+  .site-header nav.open {
+    display: flex;
+    position: absolute; top: var(--header-h); left: 0; right: 0;
+    flex-direction: column; align-items: stretch; gap: 0;
+    background: var(--paper);
+    border-bottom: 1px solid var(--hairline);
+    padding: 8px max(var(--gutter), env(safe-area-inset-left)) max(20px, env(safe-area-inset-bottom));
+    max-height: calc(100dvh - var(--header-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .site-header nav.open a { min-height: 52px; border-bottom: 1px solid var(--hairline-soft); }
+  .nav-toggle { display: inline-flex; }
+  .nav-right { display: none; }
+  .site-header .brand { justify-self: center; }
+  .footer-top { grid-template-columns: 1fr; }
+  .footer-aside { min-width: 0; width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .grid-services { grid-template-columns: 1fr; gap: 28px; }
+  .btn { width: 100%; }
+  .hero-actions .btn { width: auto; flex: 1 1 220px; }
+  /* Touch: the SELECT bar cannot rely on hover, so it is always visible. */
+  .card-select { transform: translateY(0); position: static; }
+  .newsletter { flex-direction: column; }
+  .newsletter .input { border-right: 1px solid var(--hairline); }
+}
+
+@media print {
+  .site-header, .site-footer, .legal-bar, .hero, .btn { display: none !important; }
+  body { background: #fff; color: #241a12; }
+}
+
+/* ==================================================== BOOKING =============
+   The live calendar, kept in the same editorial register: hairlines, no fills,
+   the accent used only as a marker.
+   ======================================================================== */
+
+.booking-grid { display: grid; grid-template-columns: 1fr 340px; gap: clamp(32px, 5vw, 80px); align-items: start; }
+
+.steps { display: flex; flex-wrap: wrap; gap: clamp(16px, 3vw, 40px); border-bottom: 1px solid var(--hairline-soft); margin-bottom: clamp(28px, 5vh, 56px); }
 .step-tab {
   position: relative;
+  min-height: 48px;
   padding: 12px 0;
-  font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
-  color: var(--muted);
   background: none; border: 0; cursor: pointer;
-  font-family: var(--font); text-transform: uppercase;
+  font-family: var(--sans); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--espresso-70);
 }
-.step-tab[aria-selected='true'] { color: var(--ink); }
-.step-tab[aria-selected='true']::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--ink);
-}
+.step-tab[aria-selected='true'] { color: var(--espresso); }
+.step-tab[aria-selected='true']::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--clay); }
 .step-tab[disabled] { opacity: 0.35; cursor: not-allowed; }
 
-/* -- service picker -- */
-.service-pick {
-  display: grid; grid-template-columns: 1fr auto; gap: var(--md);
-  width: 100%; text-align: left;
-  padding: var(--md);
-  background: var(--surface-card);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 0;
-  color: var(--body);
-  font-family: var(--font); font-size: 15px;
-  cursor: pointer;
-  align-items: center;
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.cal-month { font-size: 0.9375rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--espresso); }
+.cal-nav {
+  width: 48px; height: 48px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--hairline); background: none; cursor: pointer;
+  color: var(--espresso); font-size: 1rem;
 }
+.cal-nav[disabled] { opacity: 0.3; cursor: not-allowed; }
 
-.service-pick[aria-pressed='true'] { border-color: var(--ink); background: var(--surface-elevated); }
-.service-pick .n { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink); }
-.service-pick .d { font-size: 12px; letter-spacing: 1px; color: var(--muted); margin-top: 4px; font-weight: 700; }
-.service-pick .p { font-size: 20px; font-weight: 700; color: var(--ink); white-space: nowrap; }
-
-/* -- calendar -- */
-.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--lg); gap: var(--md); }
-.cal-month { font-size: 20px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink); }
-
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--hairline-strong); border: 1px solid var(--hairline-strong); }
-.cal-dow {
-  background: var(--canvas); padding: var(--xs) 0; text-align: center;
-  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted);
-}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid var(--hairline-soft); border-left: 1px solid var(--hairline-soft); }
+.cal-dow { padding: 10px 0; text-align: center; font-size: 0.625rem; letter-spacing: 0.12em; color: var(--espresso-70); border-right: 1px solid var(--hairline-soft); border-bottom: 1px solid var(--hairline-soft); }
 .cal-cell {
-  background: var(--surface-soft);
   min-height: 76px;
-  padding: var(--xs);
-  border: 0; border-radius: 0;
-  color: var(--body);
-  font-family: var(--font);
+  padding: 10px;
+  background: var(--paper);
+  border: 0;
+  border-right: 1px solid var(--hairline-soft);
+  border-bottom: 1px solid var(--hairline-soft);
+  font-family: var(--sans);
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
-  cursor: pointer;
-  text-align: left;
+  cursor: pointer; text-align: left;
 }
-.cal-cell .n { font-size: 16px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; }
-.cal-cell .free { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--gold-deep); }
-.cal-cell .none { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--muted); }
-/* :not([aria-pressed]) keeps hover from out-specifying the selected state —
-   without it a selected cell keeps the hover background and its black text
-   becomes unreadable. */
+.band-cream .cal-cell, .band-cream .cal-dow { background: var(--cream); }
+.cal-cell .n { font-size: 1rem; color: var(--espresso); }
+.cal-cell .free { font-size: 0.625rem; letter-spacing: 0.06em; color: var(--clay-deep); }
+.cal-cell .none { font-size: 0.625rem; letter-spacing: 0.06em; color: var(--espresso-70); }
+.cal-cell[aria-pressed='true'] { background: var(--espresso); }
+.cal-cell[aria-pressed='true'] .n,
+.cal-cell[aria-pressed='true'] .free { color: var(--paper); }
+.cal-cell[disabled] { cursor: not-allowed; opacity: 0.4; }
+.cal-blank { background: transparent; cursor: default; }
+.band-cream .cal-blank { background: transparent; }
+.cal-cell.is-today .n { border-bottom: 1px solid var(--clay); }
 
-.cal-cell[aria-pressed='true'],
-.cal-cell[aria-pressed='true']:hover { background: var(--ink); }
-.cal-cell[aria-pressed='true'] .n { color: var(--on-primary); }
-.cal-cell[aria-pressed='true'] .free { color: var(--on-primary); }
-.cal-cell[disabled] { cursor: not-allowed; opacity: 0.4; background: var(--canvas); }
-/* Named cal-blank, not .empty — the global .empty helper below would otherwise
-   win on padding and border and blow the leading cells out of the grid. */
-.cal-blank { background: var(--canvas); cursor: default; }
-.cal-cell.is-today { box-shadow: inset 0 3px 0 0 var(--accent); }
+@media (hover: hover) and (pointer: fine) {
+  .cal-cell:not([disabled]):not([aria-pressed='true']):hover { background: var(--cream); }
+  .band-cream .cal-cell:not([disabled]):not([aria-pressed='true']):hover { background: var(--paper); }
+  .cal-nav:hover:not([disabled]) { border-color: var(--espresso); }
+}
 
-.cal-legend { display: flex; gap: var(--lg); flex-wrap: wrap; margin-top: var(--md); }
-.cal-legend span { font-size: 11px; letter-spacing: 1px; color: var(--muted); font-weight: 700; display: flex; align-items: center; gap: 6px; }
-.swatch { width: 10px; height: 10px; display: inline-block; }
-.swatch-free { background: var(--accent); }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 18px; font-size: 0.75rem; color: var(--espresso-70); }
+.cal-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.swatch { width: 8px; height: 8px; display: inline-block; }
+.swatch-free { background: var(--clay); }
 .swatch-none { background: var(--hairline); }
-.swatch-today { background: var(--ink); }
+.swatch-sel { background: var(--espresso); }
 
-/* -- slots -- */
-.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--xs); }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
 .slot {
-  min-height: 48px;
+  min-height: 56px;
   border: 1px solid var(--hairline);
-  background: var(--canvas);
-  color: var(--ink);
-  border-radius: 0;
-  font-family: var(--font); font-size: 14px; font-weight: 700; letter-spacing: 1px;
+  background: var(--paper);
+  color: var(--espresso);
+  font-family: var(--sans); font-size: 0.9375rem;
   cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
 }
-.slot small { font-size: 10px; font-weight: 400; letter-spacing: 1px; color: var(--muted); }
-
-.slot[aria-pressed='true'],
-.slot[aria-pressed='true']:hover { background: var(--ink); color: var(--on-primary); border-color: var(--ink); }
-.slot[aria-pressed='true'] small { color: var(--on-primary); }
-
-.live-dot {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted);
-}
-.live-dot::before {
-  content: ''; width: 8px; height: 8px; border-radius: 9999px;
-  background: var(--success);
-  animation: pulse 2.4s ease-in-out infinite;
-}
-.live-dot[data-state='offline']::before { background: var(--warning); animation: none; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-  html { scroll-behavior: auto; }
-}
-
-/* -------------------------------------------------------------- forms */
-
-.field { margin-bottom: var(--md); }
-.field label {
-  display: block; margin-bottom: var(--xs);
-  font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--body-strong);
-}
-.input, .select, .textarea {
-  width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
-  background: var(--surface-card);
-  border: 1px solid var(--hairline);
-  border-radius: 0;
-  color: var(--ink);
-  font-family: var(--font);
-  font-size: 16px;
-  font-weight: 300;
-}
-.textarea { min-height: 96px; resize: vertical; }
-.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--ink); }
-.input::placeholder, .textarea::placeholder { color: var(--muted); }
-.field .hint { margin-top: 6px; font-size: 12px; color: var(--muted); }
-
-/* -- payment choice -- */
-.pay-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--md); }
-.pay-option {
-  position: relative;              /* contains the visually-hidden radio */
-  padding: var(--md);
-  background: var(--surface-card);
-  border: 1px solid var(--hairline-strong);
-  cursor: pointer;
-  display: block;
-}
-
-.pay-option input { position: absolute; opacity: 0; pointer-events: none; }
-.pay-option:has(input:checked) { border-color: var(--ink); background: var(--surface-elevated); }
-.pay-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.pay-option .t { display: block; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink); }
-.pay-option .s { display: block; font-size: 13px; color: var(--body); margin-top: 6px; }
-
-/* -- summary rail -- */
-.summary { background: var(--surface-card); border: 1px solid var(--hairline-strong); position: sticky; top: 88px; }
-.summary .inner { padding: var(--lg); }
-.summary h3 { font-size: 14px; letter-spacing: 1.5px; margin-bottom: var(--md); }
-.summary dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: var(--xs) var(--md); }
-.summary dt { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
-.summary dd { margin: 0; font-size: 14px; color: var(--ink); text-align: right; font-weight: 400; }
-.summary .total { border-top: 1px solid var(--hairline); margin-top: var(--md); padding-top: var(--md); }
-.summary .total .amount { font-size: 32px; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; }
-
-/* -- messages -- */
-.notice {
-  border: 1px solid var(--hairline);
-  border-left: 4px solid var(--accent);
-  background: var(--surface-card);
-  padding: var(--md);
-  font-size: 14px;
-  color: var(--body-strong);
-}
-.notice-error { border-left-color: var(--danger); }
-.notice-ok { border-left-color: var(--success); }
-.notice-warn { border-left-color: var(--warning); }
-
-.empty {
-  padding: var(--xl);
-  border: 1px dashed var(--hairline);
-  text-align: center;
-  color: var(--muted);
-  font-size: 14px;
-  letter-spacing: 1px;
-}
-
-.skeleton {
-  background: linear-gradient(90deg, var(--surface-card) 25%, var(--surface-elevated) 50%, var(--surface-card) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
-  min-height: 48px;
-}
-@keyframes shimmer { to { background-position: -200% 0; } }
-
-/* ------------------------------------------------------------------ footer */
-
-.footer { background: var(--espresso); border-top: 0; padding: var(--xxl) 0 var(--lg); }
-.footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--lg); }
-.footer h4 { font-size: 12px; letter-spacing: 1.5px; margin-bottom: var(--md); }
-.footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--xs); }
-.footer a, .footer li { font-size: 14px; font-weight: 300; color: var(--muted); }
-
-.footer-bottom {
-  margin-top: var(--xl); padding-top: var(--lg);
-  border-top: 1px solid var(--hairline-strong);
-  display: flex; justify-content: space-between; gap: var(--md); flex-wrap: wrap;
-}
-
-
-/* ---------------------------------------------------------------- hover
-   A phone has no hover, but it does leave :hover applied after a tap — which
-   on a slot or a calendar cell reads as a selection the client did not make.
-   Gate every hover-only rule so touch devices never see one. The pressed-state
-   rules above are deliberately left outside this block: they must hold
-   whatever the input device. */
+.slot small { font-size: 0.625rem; color: var(--espresso-70); letter-spacing: 0.06em; }
+.slot[aria-pressed='true'] { background: var(--espresso); color: var(--paper); border-color: var(--espresso); }
+.slot[aria-pressed='true'] small { color: rgba(255,255,255,0.8); }
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover { background: var(--ink); color: var(--on-primary); }
-  .btn-solid:hover { background: var(--body-strong); }
-  .btn-ghost:hover { border-color: var(--ink); background: transparent; color: var(--ink); }
-  .btn-danger:hover { background: var(--danger); color: var(--ink); }
-  .textlink:hover { color: var(--accent); }
-  .icon-btn:hover { border-color: var(--ink); }
-  .navlinks a:hover { color: var(--ink); }
-  .service-pick:hover { border-color: var(--hairline); }
-  .cal-cell:not([disabled]):not([aria-pressed='true']):hover { background: var(--surface-elevated); }
-  .slot:not([aria-pressed='true']):hover { border-color: var(--ink); background: var(--surface-card); }
-  .pay-option:hover { border-color: var(--hairline); }
-  .footer a:hover { color: var(--ink); }
+  .slot:not([aria-pressed='true']):hover { border-color: var(--espresso); }
 }
 
-/* ------------------------------------------------------------- responsive */
+.live-dot { display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso-70); }
+.live-dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+.live-dot[data-state='offline']::before { background: var(--warn); }
+.live-dot[data-state='static']::before { background: var(--hairline); }
 
-@media (max-width: 1024px) {
-  .booking { grid-template-columns: 1fr; }
-  .summary { position: static; }
+.pay-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pay-option { position: relative; display: block; padding: 20px; border: 1px solid var(--hairline); cursor: pointer; background: var(--paper); }
+.pay-option input { position: absolute; opacity: 0; pointer-events: none; }
+.pay-option:has(input:checked) { border-color: var(--espresso); }
+.pay-option:has(input:focus-visible) { outline: 2px solid var(--clay-deep); outline-offset: 2px; }
+.pay-option .t { display: block; font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--espresso); }
+.pay-option .s { display: block; margin-top: 8px; font-size: 0.875rem; color: var(--espresso-70); }
 
-  /* The pinned running total already carries the service, date, time and
-     price, so the full rail is duplication on a narrow screen until the
-     payment step, where the deposit breakdown genuinely matters. */
-  .summary { display: none; }
-  body[data-step='4'] .summary { display: block; }
-  .grid-3 { grid-template-columns: repeat(2, 1fr); }
-  .spec-grid { grid-template-columns: repeat(2, 1fr); }
-  .footer-cols { grid-template-columns: repeat(2, 1fr); }
-}
+.summary { border: 1px solid var(--hairline); padding: 28px; position: sticky; top: calc(var(--header-h) + 24px); background: var(--paper); }
+.summary h3 { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 20px; }
+.summary dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; }
+.summary dt { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso-70); }
+.summary dd { margin: 0; font-size: 0.875rem; color: var(--espresso); text-align: right; }
+.summary .total { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--hairline-soft); }
+.summary .total dd { font-size: 1.5rem; }
 
-@media (max-width: 768px) {
-  :root { --section: 64px; --xxl: 48px; }
-  .navlinks {
-    display: none;
-    position: absolute; top: 64px; left: 0; right: 0;
-    background: var(--canvas);
-    border-bottom: 1px solid var(--hairline);
-    flex-direction: column; align-items: flex-start;
-    gap: 0; padding: var(--md) var(--lg) var(--lg);
-  }
-  .navlinks.open { display: flex; }
-  .navlinks a { padding: var(--sm) 0; width: 100%; border-bottom: 1px solid var(--hairline-strong); }
-  .nav-toggle { display: inline-flex; }
-  .grid-3, .grid-2 { grid-template-columns: 1fr; }
-  .footer-cols { grid-template-columns: 1fr; }
-  .service-row { grid-template-columns: 1fr; }
-  .service-row .price { text-align: left; }
-  .pay-options { grid-template-columns: 1fr; }
-  .cal-cell { min-height: 58px; }
-  .cal-cell .free, .cal-cell .none { font-size: 9px; }
-  .btn { width: 100%; }
-  .hero-actions .btn { width: auto; flex: 1 1 200px; }
-}
-
-@media (max-width: 420px) {
-  .shell { padding: 0 var(--md); }
-  .spec-grid { grid-template-columns: 1fr; }
-}
-
-
-/* ======================================================= TOUCH DEVICES
-   Most of Chrissy's clients book on a phone, so this is not a fallback — it
-   is the primary target. Sizes below are Apple's 44x44 HIG minimum, applied
-   by input type rather than screen width so a touch tablet gets them too.
-   ==================================================================== */
-
-@media (pointer: coarse), (max-width: 900px) {
-  /* Every control clears 44px. Several of these were 16–40px tall. */
-  .wordmark,
-  .textlink,
-  .step-tab,
-  .btn-sm,
-  .footer a,
-  .navlinks a,
-  .faq summary {
-    min-height: 44px;
-  }
-  .wordmark, .textlink, .footer a, .navlinks a {
-    display: inline-flex;
-    align-items: center;
-  }
-  .footer ul { gap: 0; }
-  .footer li { display: flex; }
-
-  /* Step tabs: wider spacing so neighbouring tabs are not mis-tapped. */
-  .steps { gap: var(--md); }
-  .step-tab { padding: 12px 2px; }
-
-  /* Inputs at 16px or iOS Safari zooms the page the moment one is focused,
-     leaving the client scrolled sideways in the middle of a booking. */
-  .input, .select, .textarea,
-  input[type='time'], input[type='date'], input[type='number'] {
-    font-size: 16px;
-  }
-
-  /* Buttons go full width and stack — easier to hit with a thumb. */
-  .btn { width: 100%; }
-  .row .btn { flex: 1 1 auto; }
-}
-
-@media (max-width: 768px) {
-  /* The calendar runs edge to edge: on a 360px handset the boxed grid left
-     cells 43px wide, under the minimum. Full bleed gives them ~50px. */
-  .cal-grid {
-    margin-left: calc(max(var(--md), env(safe-area-inset-left)) * -1);
-    margin-right: calc(max(var(--md), env(safe-area-inset-right)) * -1);
-    border-left: 0;
-    border-right: 0;
-  }
-  .cal-cell { min-height: 62px; }
-  .cal-cell .n { font-size: 17px; }
-  .cal-cell .free, .cal-cell .none { font-size: 10px; letter-spacing: 0.5px; }
-
-  /* Slots: two comfortable columns rather than three cramped ones. */
-  .slots { grid-template-columns: repeat(auto-fill, minmax(94px, 1fr)); gap: var(--xs); }
-  .slot { min-height: 56px; }
-
-  /* The nav sheet scrolls on its own and never rubber-bands the page. */
-  .navlinks {
-    max-height: calc(100dvh - 64px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-bottom: max(var(--lg), env(safe-area-inset-bottom));
-  }
-
-  .footer { padding-bottom: max(var(--lg), env(safe-area-inset-bottom)); }
-}
-
-/* ---- running total, pinned while booking on a phone ----
-   The summary rail sits after the form in the source, so on a narrow screen a
-   client would have to scroll past everything to see what they are paying.
-   This keeps it in view from the moment a service is chosen. */
+/* Running total pinned on phones. */
 .mobile-summary { display: none; }
-
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
+  .booking-grid { grid-template-columns: 1fr; }
+  .summary { position: static; display: none; }
+  body[data-step='4'] .summary { display: block; }
   .mobile-summary {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    z-index: 70;
-    background: var(--surface-card);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+    background: var(--paper);
     border-top: 1px solid var(--hairline);
-    padding: var(--sm) max(var(--md), env(safe-area-inset-left))
-             calc(var(--sm) + env(safe-area-inset-bottom))
-             max(var(--md), env(safe-area-inset-right));
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--md);
+    padding: 12px max(16px, env(safe-area-inset-left)) calc(12px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
     transform: translateY(110%);
-    transition: transform 180ms ease-out;
+    transition: transform 200ms ease-out;
   }
   .mobile-summary[data-shown='true'] { transform: translateY(0); }
-  .mobile-summary .what {
-    font-size: 12px; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; color: var(--ink);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .mobile-summary .when { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .mobile-summary .amount {
-    font-size: 22px; font-weight: 700; color: var(--ink);
-    letter-spacing: -0.5px; white-space: nowrap;
-  }
-  .mobile-summary .amount small {
-    display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px;
-    color: var(--muted); text-align: right;
-  }
-  /* Clear the bar so it never covers the last control on the page. */
-  body[data-summary='true'] #book { padding-bottom: 96px; }
+  .mobile-summary .what { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--espresso); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-summary .when { font-size: 0.75rem; color: var(--espresso-70); margin-top: 2px; }
+  .mobile-summary .amount { font-size: 1.25rem; color: var(--espresso); white-space: nowrap; }
+  .mobile-summary .amount small { display: block; font-size: 0.625rem; color: var(--espresso-70); letter-spacing: 0.06em; text-align: right; }
+  body[data-summary='true'] #book { padding-bottom: 104px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .mobile-summary { transition: none; }
-}
-
-/* --------------------------------------------------------------- printing */
-@media print {
-  .topnav, .footer, .hero, .btn { display: none !important; }
-  body { background: #fff; color: #241a12; }
+@media (max-width: 640px) {
+  .cal-grid { margin-left: calc(max(var(--gutter), env(safe-area-inset-left)) * -1); margin-right: calc(max(var(--gutter), env(safe-area-inset-right)) * -1); border-left: 0; }
+  .cal-cell { min-height: 62px; padding: 8px; }
+  .pay-options { grid-template-columns: 1fr; }
+  .slots { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
 }

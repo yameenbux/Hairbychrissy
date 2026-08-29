@@ -1,0 +1,297 @@
+{
+  "photos": [
+    "logo.jpg"
+  ],
+  "brand": {
+    "name": "HAIR BY CHRISSY",
+    "handle": "@hairbychrissy_x",
+    "instagram": "https://www.instagram.com/hairbychrissy_x",
+    "website": "https://www.cecescollectionofficial.com",
+    "websiteLabel": "Cece's Collection",
+    "tagline": "HAIR EXTENSION SPECIALIST + STYLIST",
+    "strapline": "BEAUTY. CONFIDENCE. EVERY DAY.",
+    "location": "LONDON BASED",
+    "addressLines": [
+      "Private studio",
+      "London",
+      "Exact address sent on booking"
+    ],
+    "email": "hello@hairbychrissy.co.uk",
+    "phone": "",
+    "notice": "WE DO NOT USE FACEBOOK.",
+    "intro": "Nano rings, tapes, micro, weave and invisi, fitted by hand in a private London studio. Every set is colour-matched, cut and blended to you.",
+    "methods": [
+      "NANO RINGS",
+      "TAPES",
+      "MICRO",
+      "WEAVE",
+      "INVISI"
+    ]
+  },
+  "reviews": [
+    {
+      "name": "Sophie R.",
+      "service": "Nano Rings — Full Head",
+      "text": "Third set with Chrissy and I still get asked whose hair it is. The colour match is unreal.",
+      "rating": 5
+    },
+    {
+      "name": "Amira K.",
+      "service": "Invisi-Weft",
+      "text": "Completely flat, completely invisible. I can wear my hair up again without a second thought.",
+      "rating": 5
+    },
+    {
+      "name": "Leah M.",
+      "service": "Maintenance / Refit",
+      "text": "Been going every ten weeks for over a year. My own hair underneath is in better condition than when I started.",
+      "rating": 5
+    },
+    {
+      "name": "Danielle P.",
+      "service": "LA Weave",
+      "text": "Booked a consultation first and I am glad I did. She talked me out of the length I wanted and she was right.",
+      "rating": 5
+    },
+    {
+      "name": "Nicole T.",
+      "service": "Tape-In Extensions",
+      "text": "Two hours, in and out, and it looks like I have twice the hair. Studio is lovely and calm too.",
+      "rating": 5
+    },
+    {
+      "name": "Georgia W.",
+      "service": "Nano Rings — Half Head",
+      "text": "Fine hair and I was nervous about damage. Six months in, zero breakage.",
+      "rating": 5
+    }
+  ],
+  "gallery": [
+    {
+      "file": "work-01.jpg",
+      "label": "NANO RINGS",
+      "caption": "Full head, blended balayage, cut in"
+    },
+    {
+      "file": "work-02.jpg",
+      "label": "INVISI",
+      "caption": "Flat weft, root shadow, undetectable up"
+    },
+    {
+      "file": "work-03.jpg",
+      "label": "WEAVE",
+      "caption": "Double weft for density"
+    },
+    {
+      "file": "work-04.jpg",
+      "label": "TAPES",
+      "caption": "Fine hair, discreet placement"
+    },
+    {
+      "file": "work-05.jpg",
+      "label": "OMBRÉ",
+      "caption": "Colour melt through the lengths"
+    },
+    {
+      "file": "work-06.jpg",
+      "label": "MAINTENANCE",
+      "caption": "Bonds moved up and re-blended"
+    }
+  ],
+  "faqs": [
+    {
+      "q": "HOW OFTEN DO I NEED MAINTENANCE?",
+      "a": "Every 6 to 8 weeks. Your own hair grows, so the bonds need moving back up — that is what keeps a set sitting seamlessly and stops it looking like it is growing out."
+    },
+    {
+      "q": "WHY DOES MAINTENANCE MATTER SO MUCH?",
+      "a": "Left too long, extensions start pulling on the hair they are attached to. Moving them up on time takes that tension off, protects against breakage and keeps your own hair growing healthily underneath."
+    },
+    {
+      "q": "WHAT IF I LEAVE IT LONGER THAN 8 WEEKS?",
+      "a": "It becomes more work to put right, and the results do not last as well. Staying on top of your appointments genuinely means less time in the chair and longer-lasting hair."
+    },
+    {
+      "q": "HOW LONG DOES A SET LAST?",
+      "a": "With maintenance on schedule, good quality hair lasts nine to twelve months. The hair is reusable — it is the fitting that gets moved up as your own hair grows."
+    },
+    {
+      "q": "IS THE HAIR INCLUDED IN THE PRICE?",
+      "a": "Prices shown are for fitting. Hair is quoted separately at your consultation, once we know the length, weight and colour you need."
+    },
+    {
+      "q": "WILL IT DAMAGE MY HAIR?",
+      "a": "Fitted correctly and maintained on time, no. Every method offered here is heat-free and glue-free against your own hair."
+    },
+    {
+      "q": "DO I NEED A CONSULTATION FIRST?",
+      "a": "For a first set, yes — it is free and takes thirty minutes. It lets us colour match properly and order the right hair in advance."
+    },
+    {
+      "q": "WHAT IF I NEED TO CANCEL?",
+      "a": "Give at least 48 hours notice and your deposit moves to your new date. Inside 48 hours the deposit is retained."
+    }
+  ],
+  "services": [
+    {
+      "id": "consultation",
+      "name": "Consultation & Colour Match",
+      "category": "CONSULTATION",
+      "duration": 30,
+      "price": 0,
+      "deposit": 0,
+      "blurb": "Free 30-minute sit-down. We look at your hair, match your colour and plan the right method for you."
+    },
+    {
+      "id": "nano-full",
+      "name": "Nano Rings — Full Head",
+      "category": "EXTENSIONS",
+      "duration": 240,
+      "price": 550,
+      "deposit": 100,
+      "blurb": "The lightest, most discreet fit. No heat, no glue, fully reusable hair."
+    },
+    {
+      "id": "nano-half",
+      "name": "Nano Rings — Half Head",
+      "category": "EXTENSIONS",
+      "duration": 180,
+      "price": 360,
+      "deposit": 75,
+      "blurb": "Added length and thickness through the mid-section without a full set."
+    },
+    {
+      "id": "micro-full",
+      "name": "Micro Rings — Full Head",
+      "category": "EXTENSIONS",
+      "duration": 240,
+      "price": 500,
+      "deposit": 100,
+      "blurb": "A slightly larger bead than nano — strong, secure and long-wearing."
+    },
+    {
+      "id": "tape-full",
+      "name": "Tapes — Full Head",
+      "category": "EXTENSIONS",
+      "duration": 120,
+      "price": 320,
+      "deposit": 75,
+      "blurb": "Fast to fit and completely flat to the head. Ideal for finer hair."
+    },
+    {
+      "id": "la-weave",
+      "name": "Weave — Full Head",
+      "category": "EXTENSIONS",
+      "duration": 180,
+      "price": 340,
+      "deposit": 75,
+      "blurb": "Wefts sewn onto a micro-ring track. Big volume, no glue on your own hair."
+    },
+    {
+      "id": "invisi-weft",
+      "name": "Invisi — Full Head",
+      "category": "EXTENSIONS",
+      "duration": 210,
+      "price": 620,
+      "deposit": 125,
+      "blurb": "The flattest weft on the market. Genuinely undetectable in a ponytail."
+    },
+    {
+      "id": "maintenance",
+      "name": "Maintenance / Refit",
+      "category": "MAINTENANCE",
+      "duration": 150,
+      "price": 190,
+      "deposit": 50,
+      "blurb": "Every 6–8 weeks. Bonds moved up, hair washed, re-tinted if needed and refitted."
+    },
+    {
+      "id": "removal",
+      "name": "Extension Removal",
+      "category": "MAINTENANCE",
+      "duration": 60,
+      "price": 60,
+      "deposit": 20,
+      "blurb": "Careful, damage-free take-down with a treatment finish."
+    },
+    {
+      "id": "cut-blowdry",
+      "name": "Cut & Blow Dry",
+      "category": "STYLING",
+      "duration": 75,
+      "price": 55,
+      "deposit": 15,
+      "blurb": "Restyle, blend or a straight tidy-up — on your own hair or your extensions."
+    },
+    {
+      "id": "hair-up",
+      "name": "Hair Up / Occasion Styling",
+      "category": "STYLING",
+      "duration": 90,
+      "price": 65,
+      "deposit": 20,
+      "blurb": "Braided updos, soft waves and event hair. Bring a picture and we will work to it."
+    }
+  ],
+  "workingHours": {
+    "0": {
+      "open": false,
+      "start": "10:00",
+      "end": "16:00",
+      "breakStart": "",
+      "breakEnd": ""
+    },
+    "1": {
+      "open": false,
+      "start": "09:00",
+      "end": "18:00",
+      "breakStart": "",
+      "breakEnd": ""
+    },
+    "2": {
+      "open": true,
+      "start": "09:00",
+      "end": "18:00",
+      "breakStart": "13:00",
+      "breakEnd": "13:45"
+    },
+    "3": {
+      "open": true,
+      "start": "09:00",
+      "end": "18:00",
+      "breakStart": "13:00",
+      "breakEnd": "13:45"
+    },
+    "4": {
+      "open": true,
+      "start": "09:00",
+      "end": "20:00",
+      "breakStart": "13:00",
+      "breakEnd": "13:45"
+    },
+    "5": {
+      "open": true,
+      "start": "09:00",
+      "end": "18:00",
+      "breakStart": "13:00",
+      "breakEnd": "13:45"
+    },
+    "6": {
+      "open": true,
+      "start": "09:00",
+      "end": "17:00",
+      "breakStart": "",
+      "breakEnd": ""
+    }
+  },
+  "rules": {
+    "cancellationHours": 48,
+    "leadTimeHours": 12,
+    "horizonDays": 90,
+    "timezone": "Europe/London"
+  },
+  "today": "2026-08-29",
+  "cardMode": "static",
+  "generatedAt": "2026-08-29T15:32:24.401Z",
+  "static": true
+}

@@ -25,7 +25,7 @@ self.addEventListener('push', (event) => {
     (async () => {
       let detail = FALLBACK;
       try {
-        const res = await fetch('/api/admin/notifications/latest', {
+        const res = await fetch('./api/admin/notifications/latest', {
           credentials: 'include',
           cache: 'no-store',
         });
@@ -41,13 +41,13 @@ self.addEventListener('push', (event) => {
 
       await self.registration.showNotification(detail.title, {
         body: detail.body,
-        icon: '/icon-192.png',
-        badge: '/badge-96.png',
+        icon: './icon-192.png',
+        badge: './badge-96.png',
         tag: 'hbc-booking',
         renotify: true,
         requireInteraction: true,
         vibrate: [200, 80, 200],
-        data: { url: '/admin' },
+        data: { url: './admin' },
       });
     })(),
   );
@@ -55,7 +55,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const target = event.notification.data?.url || '/admin';
+  const target = event.notification.data?.url || './admin';
 
   event.waitUntil(
     (async () => {
@@ -78,7 +78,7 @@ self.addEventListener('pushsubscriptionchange', (event) => {
   event.waitUntil(
     (async () => {
       try {
-        const res = await fetch('/api/admin/notifications', { credentials: 'include' });
+        const res = await fetch('./api/admin/notifications', { credentials: 'include' });
         if (!res.ok) return;
         const { vapidPublicKey } = await res.json();
         const key = Uint8Array.from(atob(vapidPublicKey.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -86,7 +86,7 @@ self.addEventListener('pushsubscriptionchange', (event) => {
           userVisibleOnly: true,
           applicationServerKey: key,
         });
-        await fetch('/api/admin/push/subscribe', {
+        await fetch('./api/admin/push/subscribe', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

@@ -46,13 +46,41 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
+/**
+ * Origins allowed to call the booking API cross-origin, so the site can be
+ * published as flat files (GitHub Pages) while the API lives elsewhere.
+ * Set ALLOWED_ORIGINS as a comma-separated list. Deliberately an allowlist and
+ * never "*": the admin routes share this origin and carry a session cookie.
+ */
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+function corsHeaders(req) {
+  const origin = req.headers.origin;
+  if (!origin || !ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ''))) return {};
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Max-Age': '600',
+    Vary: 'Origin',
+  };
+}
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, { 'Cache-Control': 'no-store', ...headers });
   res.end(body);
 }
 
 function json(res, status, data, headers = {}) {
-  send(res, status, JSON.stringify(data), { 'Content-Type': 'application/json; charset=utf-8', ...headers });
+  send(res, status, JSON.stringify(data), {
+    'Content-Type': 'application/json; charset=utf-8',
+    ...(res._cors || {}),
+    ...headers,
+  });
 }
 
 function readBody(req, limit = 64 * 1024) {
@@ -108,6 +136,7 @@ function handleStream(req, res) {
     'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
+    ...corsHeaders(req),
   });
   res.write('retry: 4000\n\n');
   res.write(`event: hello\ndata: ${JSON.stringify({ at: Date.now() })}\n\n`);
@@ -195,9 +224,19 @@ function notifyNewBooking(booking) {
     .catch((err) => console.error('[notify]', err.message));
 }
 
+/** Photographs actually present, so the page never probes for missing files. */
+function availablePhotos() {
+  try {
+    return fs.readdirSync(path.join(PUBLIC, 'images')).filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f));
+  } catch {
+    return [];
+  }
+}
+
 function siteConfig() {
   const db = read();
   return {
+    photos: availablePhotos(),
     brand,
     reviews,
     gallery,
@@ -691,6 +730,13 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname;
 
   try {
+    // Stash the CORS headers for this request so every json() reply carries them.
+    res._cors = corsHeaders(req);
+
+    if (req.method === 'OPTIONS' && p.startsWith('/api/')) {
+      return send(res, 204, '', res._cors);
+    }
+
     if (p === '/api/stream') return handleStream(req, res);
     if (p.startsWith('/api/admin/')) return await handleAdminApi(req, res, url);
     if (p.startsWith('/api/')) return await handlePublicApi(req, res, url);

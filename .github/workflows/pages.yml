@@ -1,0 +1,90 @@
+# Publishes the client site to GitHub Pages.
+#
+# ONE SETTING IS REQUIRED, once:
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+#
+# With that set, every push to the branch below republishes the site. Nothing
+# else is needed — no gh-pages branch, no /docs folder.
+#
+# What gets published is public/ — the same files the Node app serves, so the
+# two never drift. The booking API cannot run on Pages, so the published page
+# falls back to public/data/site.json and routes bookings to an enquiry. Point
+# it at a hosted API by setting the HBC_API repository variable.
+
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - claude/beauty-booking-platform-ppwhet
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Regenerate the content snapshot so the published page can never drift
+      # from lib/seed.js.
+      - name: Build static content snapshot
+        run: node tools/build-static-data.js
+
+      # Optional: point the published page at a hosted booking API so the live
+      # calendar works from Pages. Set the HBC_API repository variable to the
+      # API's base URL. Without it the page runs in enquiry mode.
+      - name: Point at hosted booking API
+        if: ${{ vars.HBC_API != '' }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          api = os.environ['HBC_API'].rstrip('/')
+          tag = f'<meta name="hbc-api" content="{api}">'
+          for name in ('index.html', 'confirmed.html'):
+              p = pathlib.Path('public') / name
+              if not p.exists():
+                  continue
+              html = p.read_text()
+              if 'name="hbc-api"' not in html:
+                  html = html.replace('</head>', f'{tag}\n</head>', 1)
+                  p.write_text(html)
+                  print(f'{name}: pointed at {api}')
+          PY
+        env:
+          HBC_API: ${{ vars.HBC_API }}
+
+      # Jekyll would otherwise skip files and folders beginning with an
+      # underscore.
+      - name: Disable Jekyll processing
+        run: touch public/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

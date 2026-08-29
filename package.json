@@ -10,7 +10,9 @@
     "dev": "node --watch server.js",
     "reset": "rm -f data/db.json && echo 'database reset'",
     "audit:contrast": "node tools/contrast-audit.js",
-    "audit:mobile": "node tools/mobile-audit.js"
+    "audit:mobile": "node tools/mobile-audit.js",
+    "build:data": "node tools/build-static-data.js",
+    "audit:sticky": "node tools/sticky-audit.js"
   },
   "dependencies": {}
 }

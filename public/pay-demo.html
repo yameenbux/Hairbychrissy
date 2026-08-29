@@ -8,43 +8,43 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
-<meta name="theme-color" content="#5f4832">
+<meta name="theme-color" content="#33261c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hair by Chrissy">
 <meta name="format-detection" content="telephone=no">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/icon-180.png">
-<link rel="stylesheet" href="/css/app.css">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="stylesheet" href="./css/app.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%234a382a'/><rect x='6' y='5' width='4' height='22' fill='%23dcc189'/><rect x='12' y='5' width='4' height='22' fill='%23b8944f'/><rect x='18' y='5' width='4' height='22' fill='%238a6d3a'/></svg>">
 </head>
 <body>
 <div class="stripe"></div>
 <header class="topnav">
   <div class="shell topnav-inner">
-    <a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
+    <a class="wordmark" href="./"><span class="mark" aria-hidden="true"></span><span class="name">Hair by Chrissy</span></a>
     <span class="label label-muted">Secure checkout</span>
   </div>
 </header>
 
 <section class="band">
   <div class="shell" style="max-width:560px">
-    <div class="notice notice-warn" style="margin-bottom:var(--xl)">
+    <div class="notice notice-warn" style="margin-bottom:40px">
       <strong>Simulated checkout.</strong> This is the draft stand-in for Stripe. No card details are stored and no money moves. Adding a Stripe key to the server replaces this page with real Stripe Checkout.
     </div>
 
-    <span class="label label-muted" style="display:block;margin-bottom:var(--sm)">Deposit payment</span>
-    <h1 class="display-md" style="margin-bottom:var(--lg)">Secure your slot.</h1>
+    <span class="label label-muted" style="display:block;margin-bottom:12px">Deposit payment</span>
+    <h1 class="display-sm" style="margin-bottom:24px">Secure your slot.</h1>
 
-    <div class="card" id="detail"><div class="empty">Loading…</div></div>
+    <div class="panel" id="detail"><div class="empty">Loading…</div></div>
 
-    <form id="cardForm" style="margin-top:var(--xl)" novalidate>
+    <form id="cardForm" style="margin-top:40px" novalidate>
       <div class="field">
         <label for="cardNo">Card number</label>
         <input class="input" id="cardNo" inputmode="numeric" value="4242 4242 4242 4242" autocomplete="off">
       </div>
-      <div class="grid grid-2" style="gap:var(--md)">
+      <div class="grid grid-2" style="gap:16px">
         <div class="field">
           <label for="exp">Expiry</label>
           <input class="input" id="exp" value="12 / 30" autocomplete="off">
@@ -54,9 +54,9 @@
           <input class="input" id="cvc" value="123" autocomplete="off">
         </div>
       </div>
-      <div id="err" class="notice notice-error" hidden style="margin-bottom:var(--md)"></div>
-      <button class="btn btn-solid" type="submit" id="payBtn" style="width:100%">Pay deposit</button>
-      <a class="textlink" href="/" style="margin-top:var(--md)">Cancel and go back</a>
+      <div id="err" class="notice notice-error" hidden style="margin-bottom:16px"></div>
+      <button class="btn" type="submit" id="payBtn" style="width:100%">Pay deposit</button>
+      <a class="link-underline" href="./" style="margin-top:16px">Cancel and go back</a>
     </form>
   </div>
 </section>
@@ -73,17 +73,17 @@ fetch('/api/bookings/' + encodeURIComponent(ref))
   .then(b => {
     booking = b;
     detail.innerHTML = `
-      <dl style="margin:0;display:grid;grid-template-columns:1fr auto;gap:var(--xs) var(--md)">
+      <dl style="margin:0;display:grid;grid-template-columns:1fr auto;gap:8px 16px">
         <dt class="label label-muted" style="font-size:12px">Service</dt><dd style="margin:0;text-align:right" class="white">${esc(b.serviceName)}</dd>
         <dt class="label label-muted" style="font-size:12px">When</dt><dd style="margin:0;text-align:right" class="white">${esc(b.dateLong)}, ${esc(b.start)}</dd>
         <dt class="label label-muted" style="font-size:12px">Reference</dt><dd style="margin:0;text-align:right" class="white">${esc(b.ref)}</dd>
       </dl>
-      <div class="hairline" style="margin:var(--md) 0"></div>
+      <div class="hairline" style="margin:16px 0"></div>
       <div class="spread">
         <span class="label">Deposit due now</span>
         <span class="white" style="font-size:32px;font-weight:700;letter-spacing:-.5px">${money(b.depositDue)}</span>
       </div>
-      <p class="caption" style="margin-top:var(--xs)">${money(b.balanceDue)} balance payable in the studio.</p>`;
+      <p class="caption" style="margin-top:8px">${money(b.balanceDue)} balance payable in the studio.</p>`;
     document.getElementById('payBtn').textContent = 'Pay ' + money(b.depositDue) + ' deposit';
   })
   .catch(e => { detail.innerHTML = '<div class="notice notice-error">' + esc(e.message) + '</div>'; });

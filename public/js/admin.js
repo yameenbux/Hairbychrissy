@@ -34,8 +34,15 @@ function duration(mins) {
   return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
 }
 
+/**
+ * Site root, derived from this script's own URL rather than assumed to be "/".
+ * Keeps the dashboard working when the app is mounted at a subpath — behind a
+ * reverse proxy, or on a project-scoped host.
+ */
+const BASE = new URL('../', import.meta.url).href.replace(/\/$/, '');
+
 async function api(path, options = {}) {
-  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const res = await fetch(`${BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...options });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && !path.endsWith('/login')) {
     showLogin();
@@ -195,7 +202,7 @@ function raiseAlert(booking) {
   // A desktop notification as well, for when the dashboard is behind something.
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
-      const n = new Notification(title, { body, icon: '/icon-192.png', tag: `hbc-${booking.ref}` });
+      const n = new Notification(title, { body, icon: './icon-192.png', tag: `hbc-${booking.ref}` });
       n.onclick = () => { window.focus(); n.close(); };
     } catch {
       /* some browsers only allow this via the service worker — the banner covers it */
@@ -323,7 +330,7 @@ function apptRow(b) {
         <div class="tags">${statusPill}${payPill}${owed}</div>
       </div>
       <div class="actions">
-        ${b.balanceDue > 0 && active ? '<button class="btn btn-sm btn-ghost" data-action="mark-paid">Mark paid</button>' : ''}
+        ${b.balanceDue > 0 && active ? '<button class="btn btn-sm btn-outline" data-action="mark-paid">Mark paid</button>' : ''}
         ${active ? '<button class="btn btn-sm btn-danger" data-action="cancel">Cancel</button>' : ''}
       </div>
       ${b.client.notes ? `<div class="notes"><strong class="white">Client notes:</strong> ${esc(b.client.notes)}</div>` : ''}
@@ -444,7 +451,7 @@ function renderBlocked() {
             <div class="d">${esc(shortDate(b.date))} ${new Date(`${b.date}T00:00:00Z`).getUTCFullYear()}</div>
             <div class="r">${esc(b.reason)}</div>
           </div>
-          <button class="btn btn-sm btn-ghost" data-unblock="${esc(b.date)}">Unblock</button>
+          <button class="btn btn-sm btn-outline" data-unblock="${esc(b.date)}">Unblock</button>
         </div>`,
         )
         .join('')
@@ -579,7 +586,7 @@ function renderAlerts() {
             <div class="n">${esc(d.label)}</div>
             <div class="d">${esc(d.host)} · added ${esc(shortDate(d.createdAt.slice(0, 10)))}${d.lastOk ? ` · last alert ${esc(shortDate(d.lastOk.slice(0, 10)))}` : ''}</div>
           </div>
-          <button class="btn btn-sm btn-ghost" data-forget="${esc(d.id)}">Remove</button>
+          <button class="btn btn-sm btn-outline" data-forget="${esc(d.id)}">Remove</button>
         </div>`,
         )
         .join('')
@@ -687,7 +694,7 @@ async function enablePush() {
       return;
     }
 
-    const reg = await navigator.serviceWorker.register('/sw.js');
+    const reg = await navigator.serviceWorker.register('./sw.js');
     await navigator.serviceWorker.ready;
 
     let sub = await reg.pushManager.getSubscription();
@@ -855,7 +862,7 @@ $('#rulesForm').addEventListener('submit', async (e) => {
 
 function connectLive() {
   const dot = $('#adminLive');
-  const source = new EventSource('/api/stream');
+  const source = new EventSource(`${BASE}/api/stream`);
   source.addEventListener('hello', () => {
     dot.dataset.state = 'live';
     dot.textContent = 'Live';

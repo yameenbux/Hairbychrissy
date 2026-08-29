@@ -14,6 +14,50 @@ from a private dashboard — and the client calendar updates the moment she save
 
 ---
 
+## Publishing
+
+There are two deployments, and they are not interchangeable:
+
+| | What it serves | Where |
+|---|---|---|
+| **GitHub Pages** | the site as flat files | `https://<user>.github.io/Hairbychrissy/` |
+| **Node** | the same site **plus the booking API** | any host that runs Node |
+
+**GitHub Pages cannot run the booking engine.** Live availability, the event
+stream, admin sessions, push notifications and payments are all server-side.
+Published to Pages alone, the site shows the full price list and routes bookings
+to an enquiry rather than pretending to hold a slot it cannot.
+
+### Configuring Pages — one setting
+
+`.github/workflows/pages.yml` publishes `public/` on every push. It needs one
+change, once:
+
+> **Settings → Pages → Build and deployment → Source: `GitHub Actions`**
+
+No `gh-pages` branch and no `/docs` folder — the workflow uploads the same
+`public/` the Node app serves, so the two cannot drift. It regenerates
+`public/data/site.json` on every deploy, so the published content always matches
+`lib/seed.js`.
+
+### Making the published page book for real
+
+Host the Node app somewhere (Render, Railway, Fly, a VPS), then:
+
+1. Set the repository variable **`HBC_API`** to the API's base URL. The workflow
+   injects `<meta name="hbc-api">` and the Pages site switches to the live
+   calendar.
+2. Set **`ALLOWED_ORIGINS`** on the Node app to the Pages origin, so CORS
+   permits it. It is an allowlist and never `*` — the admin routes share that
+   origin and carry a session cookie.
+
+### Subpath safety
+
+Pages serves from `/Hairbychrissy/`, not a domain root. Every asset path is
+relative, and both scripts derive their base from their own URL via
+`import.meta.url` rather than assuming `/`. The manifest uses `./` for
+`start_url` and `scope`, so Add to Home Screen works from the subpath too.
+
 ## Running it
 
 ```bash
@@ -224,79 +268,53 @@ notifications**, which Safari only permits for an installed site.
 
 ## Design
 
-The structure follows the supplied BMW M design analysis; the colours come from
-Chrissy's own Instagram profile mark (`public/images/logo.jpg`).
+Built to `CLAUDE.md` — editorial luxury minimal. The palette is resampled from
+her Instagram profile mark, as that file instructs ("resample from source
+assets before finalising"): the token **roles** are the spec's, the **values**
+are hers.
 
-**Kept from the source system:** UPPERCASE display at weight 700 against Light
-(300) body, zero border radius except circular icon buttons, 1px hairline
-dividers, the 96px section rhythm, full-bleed photography bands, alternating
-band surfaces, and a 4px signature stripe used only as a brand marker — never as
-a button fill. **Inter** remains the substitute the source document names for
-BMW Type Next Latin, with display tracking at −0.5px.
-
-**Changed:** the palette. The source system is near-black; this is her brand.
-Every value below was sampled from the logo rather than picked by eye:
-
-| Sampled from the logo | Hex | Role |
+| Role | Spec | Resampled from her logo |
 |---|---|---|
-| Logo ground | `#b99a7b` | `--taupe`, the brand tone |
-| Cream letterforms | `#fdf7ef` | type on dark grounds |
-| Blonde hair midtone | `#dccbb6` | elevated surfaces |
-| Crown and script gold | `#dcc189` · `#b8944f` · `#8a6d3a` | the signature stripe |
+| `--espresso` | `#2E1A12` | `#33261c` |
+| `--espresso-70` | `#4A3226` | `#6b5646` |
+| `--clay` | `#C98A7E` | `#a98744` |
+| `--cream` | `#FAF7F4` | `#f7f2ea` |
+| `--paper` | `#FFFFFF` | `#ffffff` |
 
-The page floor is warm cream (`#f5efe7`); the hero and footer invert to a deep
-version of her taupe (`#5f4832`) carrying cream type, mirroring the logo's own
-cream-on-taupe. Inverted bands work by **re-scoping the tokens** in a single
-`.on-dark` block, so buttons, hairlines, inputs and labels all follow without
-being restyled individually.
+The one real divergence is clay. The spec's is a dusty rose; her single accent
+is the gold of the crown and script, so that is what the resample gives.
 
-### Contrast
+Rules held from the spec:
 
-Her logo is cream on a light taupe — beautiful as a mark, but that exact pairing
-is 2.5:1, well under the 4.5:1 body text needs. So the palette keeps her hue and
-takes each tone only as far in lightness as legibility requires:
+- **One accent, used as a marker only** — process numerals, connector lines,
+  the active tab rule, the FAQ toggle. Never on body copy, never on a button.
+- **Backgrounds alternate paper and cream**, no dark sections. The espresso
+  legal bar closing the footer is the single band the spec allows. The hero is
+  an imagery band with a scrim, not a dark section.
+- **No gradients as fills, no shadows on UI.** Depth comes from photography.
+- **Three type roles**: a display serif for the wordmark only, a grotesque for
+  uppercase display headings at `clamp(2.5rem, 7vw, 6rem)` / `0.95` line-height
+  / `0.02em` tracking, and body at `1rem–1.125rem` / `1.6` capped to `42ch`.
+- **Oversized thin numerals as layout anchors** on the process section.
+- **Whitespace as the primary device** — bands run `clamp(88px, 18vh, 200px)`.
+- **Asymmetric splits that alternate sides** down the page.
+- **Service grid 4 / 2 / 1** with a full-width SELECT bar revealed over the
+  image bottom. On touch, where there is no hover, the bar is always visible.
+- **Motion**: fade plus 20px rise, 600ms ease-out, 80ms stagger, driven by
+  `IntersectionObserver`. A slow 26s drift on the organic shapes. Nothing
+  animates above the fold. `prefers-reduced-motion` drops to opacity only.
 
-- a four-step ink ladder (`--ink` → `--body-strong` → `--body` → `--muted`),
-  every step ≥4.5:1 on all four light surfaces
-- three golds, because one gold cannot do every job on a light ground:
-  `--gold` for accents, `--gold-deep` for small text that must clear 4.5:1
-  (calendar counts, star rows), `--gold-pale` for dark grounds only
-- semantic colours warmed to sit in the palette rather than shipped as stock
-  red/green
+### The non-negotiables, checked not assumed
 
-This is checked, not assumed:
+`tools/sticky-audit.js` (`npm run audit:sticky`) navigates to every in-page
+anchor at **1280, 1440 and 1920** and asserts the destination heading clears the
+sticky header — the spec's explicit requirement. It also asserts the nav labels
+are identical in header and footer, and that focus rings are visible. It exits
+non-zero on failure and currently reports **zero**.
 
-```bash
-npm start &
-npm run audit:contrast     # needs playwright-core + Chromium
-```
-
-`tools/contrast-audit.js` walks every rendered text node on every page and state
-— landing, calendar, slots, payment, and all seven dashboard views — resolves
-the real painted background behind each one, and applies the WCAG AA threshold
-for that text's own size and weight. It exits non-zero on any failure, so it
-drops straight into CI. **It currently reports zero failures.** Re-run it after
-any palette change.
-
-### Reverting or re-theming
-
-Every colour on the site derives from the token block at the top of
-`public/css/app.css`. Re-sampling a redrawn logo, or swapping the palette
-wholesale, means editing that one block — no rule below it hard-codes a colour.
-
-### Photography
-
-The site expects Chrissy's own Instagram photography in `public/images/`:
-
-```
-hero.jpg          full-bleed hero (landscape, ~2000px wide)
-work-01.jpg …     portfolio grid (4:5 portrait)
-```
-
-Any file that is missing degrades to a styled placeholder panel — nothing
-breaks, and the layout is identical once the real photographs are dropped in.
-
----
+Prices render as clean rounded values (`£550`, never raw FX output). Text over
+imagery sits on a scrim, and the hero's own ground is espresso so the white
+type stays readable even before a photograph loads.
 
 ## Layout
 
@@ -314,16 +332,21 @@ public/
   admin.html           dashboard
   confirmed.html       confirmation
   pay-demo.html        simulated card checkout
-  css/app.css          the design system
+  css/app.css          the design system + booking UI
   css/admin.css        dashboard-only additions
-  js/app.js            booking flow
+  js/app.js            client site — live under Node, static on Pages
   js/admin.js          dashboard
   sw.js                service worker (push notifications)
   manifest.webmanifest home-screen install (and the iOS push precondition)
+  data/site.json       generated content snapshot for the flat-file build
   images/logo.jpg      the profile mark the palette is sampled from
+.github/workflows/
+  pages.yml            GitHub Pages deployment
 tools/
   contrast-audit.js    WCAG AA check across every page and state
   mobile-audit.js      tap targets, iOS zoom traps and overflow, six handsets
+  sticky-audit.js      heading clearance, nav parity, focus rings
+  build-static-data.js writes the content snapshot the flat-file build reads
 data/db.json           created on first run; gitignored
 ```
 

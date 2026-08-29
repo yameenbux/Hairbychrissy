@@ -94,7 +94,37 @@ and I'll put the genuine ones in with their first name and initial.
 
 ---
 
-## 5. Colours
+## 5. The look, and where the site lives
+
+The site has been rebuilt in a quieter, more editorial style — lots of white
+space, cream and white sections alternating, one gold accent used sparingly, and
+your name set large in a serif at the bottom of every page. It reads more like a
+magazine feature than a shop, which suits the work.
+
+Colours are still taken from your Instagram profile picture, sampled from the
+image rather than guessed.
+
+**About the live page.** You mentioned publishing it through GitHub. Two things
+you should know:
+
+1. There was nothing for it to publish — the page would have been blank. That is
+   now set up properly, and it needs **one setting** flipped once:
+   *Settings → Pages → Build and deployment → Source: **GitHub Actions***.
+   After that it republishes itself every time anything changes.
+
+2. **A page published that way cannot take live bookings.** GitHub Pages can
+   only serve fixed files; the calendar, your dashboard and the notifications
+   all need a running server behind them. So the published page shows your full
+   price list and sends clients to message you, rather than pretending to hold a
+   slot it cannot.
+
+   To get the real calendar on the live page, the booking side needs hosting
+   somewhere that runs a server — a few pounds a month, and I can set it up.
+   Nothing about the site changes; it just switches on.
+
+---
+
+## 6. Colours
 
 The site now takes its colours straight from your Instagram profile picture. I
 sampled them from the image rather than guessing: the taupe background, the
@@ -118,7 +148,7 @@ single block of settings and takes minutes to change.
 
 ---
 
-## 6. On phones
+## 7. On phones
 
 You mentioned most clients book from their phone, so that's now the main target
 rather than an afterthought. Checked on iPhone SE, 13 mini, 15 Pro, 15 Pro Max,
@@ -150,7 +180,7 @@ work at all.
 
 ---
 
-## 7. Photography
+## 8. Photography
 
 Every photo slot is currently a styled placeholder. Send me:
 
@@ -162,7 +192,7 @@ placeholders sit there without breaking anything.
 
 ---
 
-## 8. Contact and location
+## 9. Contact and location
 
 Currently showing:
 
@@ -175,7 +205,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 9. Cancellation policy
+## 10. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -183,7 +213,7 @@ want the wording different.
 
 ---
 
-## 10. Card payments
+## 11. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -200,7 +230,7 @@ everyone, or from nobody, say so — it's a small change.
 
 ---
 
-## 11. Getting told about bookings
+## 12. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -244,7 +274,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 12. Not built yet
+## 13. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -260,7 +290,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 13. Your dashboard
+## 14. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.
