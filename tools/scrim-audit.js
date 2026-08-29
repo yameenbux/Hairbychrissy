@@ -35,24 +35,73 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-/** Minimal PNG reader — enough for the RGBA screenshots Playwright produces. */
-async function readPixels(file) {
-  const { chromium: c } = await import('playwright-core');
-  const b = await c.launch({ executablePath: EXE });
-  const p = await b.newPage();
-  const data = fs.readFileSync(file).toString('base64');
-  const px = await p.evaluate(async (b64) => {
-    const img = new Image();
-    img.src = `data:image/png;base64,${b64}`;
-    await img.decode();
-    const cv = document.createElement('canvas');
-    cv.width = img.width; cv.height = img.height;
-    cv.getContext('2d').drawImage(img, 0, 0);
-    const d = cv.getContext('2d').getImageData(0, 0, img.width, img.height);
-    return { w: img.width, h: img.height, data: Array.from(d.data) };
-  }, data);
-  await b.close();
-  return px;
+/**
+ * PNG decoding, via one long-lived page rather than a browser per screenshot.
+ * Launching Chromium six times took longer than the rest of the audit combined.
+ */
+let decoderBrowser = null;
+let decoderPage = null;
+
+async function decoder() {
+  if (decoderPage) return decoderPage;
+  decoderBrowser = await chromium.launch({ executablePath: EXE });
+  decoderPage = await decoderBrowser.newPage();
+  return decoderPage;
+}
+
+async function closeDecoder() {
+  if (decoderBrowser) await decoderBrowser.close();
+  decoderBrowser = null;
+  decoderPage = null;
+}
+
+/**
+ * Returns the lightest pixel inside each box, in one pass per image. Doing the
+ * scan in the page avoids shipping several megabytes of pixel data per frame
+ * across the bridge.
+ */
+async function lightestInBoxes(file, boxes) {
+  const page = await decoder();
+  const b64 = fs.readFileSync(file).toString('base64');
+  return page.evaluate(
+    async ([data, boxList]) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${data}`;
+      await img.decode();
+      const cv = document.createElement('canvas');
+      cv.width = img.width;
+      cv.height = img.height;
+      const ctx = cv.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      const px = ctx.getImageData(0, 0, img.width, img.height).data;
+
+      const lum = ([r, g, b]) => {
+        const c = [r, g, b].map((v) => {
+          const x = v / 255;
+          return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      };
+
+      const out = {};
+      for (const [name, box] of boxList) {
+        const [x0, y0, x1, y1] = box;
+        let best = [0, 0, 0];
+        let bestL = -1;
+        for (let y = Math.max(0, y0); y < Math.min(img.height, y1); y += 2) {
+          for (let x = Math.max(0, x0); x < Math.min(img.width, x1); x += 2) {
+            const i = (y * img.width + x) * 4;
+            const p = [px[i], px[i + 1], px[i + 2]];
+            const l = lum(p);
+            if (l > bestL) { bestL = l; best = p; }
+          }
+        }
+        out[name] = best;
+      }
+      return out;
+    },
+    [b64, Object.entries(boxes).filter(([, b]) => b)],
+  );
 }
 
 (async () => {
@@ -73,32 +122,79 @@ async function readPixels(file) {
 
   await page.evaluate(() => { document.querySelector('.hero .shell').style.visibility = 'hidden'; });
   await page.waitForTimeout(250);
-  const shot = path.join(os.tmpdir(), `hbc-scrim-${Date.now()}.png`);
-  await page.screenshot({ path: shot });
+
+  /**
+   * A video hero shows a different frame every moment, so measuring one is
+   * measuring luck. Pause it and step through the clip, keeping the worst case
+   * per element across every frame sampled — plus the poster, which is what
+   * anyone with reduced motion or a failed autoplay actually sees.
+   */
+  const timestamps = await page.evaluate(async () => {
+    const v = document.getElementById('heroVideo');
+    if (!v || !v.duration || !isFinite(v.duration)) return null;
+    v.pause();
+    const d = v.duration;
+    return [0, d * 0.25, d * 0.5, d * 0.75, Math.max(0, d - 0.1)];
+  });
+
+  const shots = [];
+  const shoot = async (labelText) => {
+    const f = path.join(os.tmpdir(), `hbc-scrim-${Date.now()}-${Math.random().toString(36).slice(2)}.png`);
+    await page.screenshot({ path: f });
+    shots.push({ label: labelText, file: f });
+  };
+
+  if (timestamps) {
+    for (const t of timestamps) {
+      await page.evaluate(
+        (time) =>
+          new Promise((resolve) => {
+            const v = document.getElementById('heroVideo');
+            v.addEventListener('seeked', resolve, { once: true });
+            v.currentTime = time;
+            setTimeout(resolve, 1200);
+          }),
+        t,
+      );
+      await page.waitForTimeout(180);
+      await shoot(`t=${t.toFixed(1)}s`);
+    }
+    // And the poster on its own.
+    await page.evaluate(() => {
+      const v = document.getElementById('heroVideo');
+      v.style.visibility = 'hidden';
+      const el = document.getElementById('heroMedia');
+      el.style.backgroundImage = `url("${v.poster}")`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center 28%';
+    });
+    await page.waitForTimeout(400);
+    await shoot('poster');
+  } else {
+    await shoot('still');
+  }
   await browser.close();
 
-  const { w, h, data } = await readPixels(shot);
-  fs.unlinkSync(shot);
+  const white = [255, 255, 255];
+  const worst = {};
+  for (const shot of shots) {
+    const lightestPerBox = await lightestInBoxes(shot.file, boxes);
+    fs.unlinkSync(shot.file);
+    for (const [name, lightest] of Object.entries(lightestPerBox)) {
+      const ratio = contrast(white, lightest);
+      if (!worst[name] || ratio < worst[name].ratio) worst[name] = { ratio, lightest, at: shot.label };
+    }
+  }
+  await closeDecoder();
 
   let failures = 0;
-  const white = [255, 255, 255];
-  for (const [name, box] of Object.entries(boxes)) {
-    if (!box) continue;
-    const [x0, y0, x1, y1] = box;
-    let lightest = [0, 0, 0];
-    for (let y = Math.max(0, y0); y < Math.min(h, y1); y += 2) {
-      for (let x = Math.max(0, x0); x < Math.min(w, x1); x += 2) {
-        const i = (y * w + x) * 4;
-        const px = [data[i], data[i + 1], data[i + 2]];
-        if (luminance(px) > luminance(lightest)) lightest = px;
-      }
-    }
-    const ratio = contrast(white, lightest);
+  console.log(`  sampled ${shots.length} frame(s): ${shots.map((s) => s.label).join(', ')}\n`);
+  for (const [name, r] of Object.entries(worst)) {
     const need = NEED[name] ?? 4.5;
-    const ok = ratio >= need;
+    const ok = r.ratio >= need;
     if (!ok) failures += 1;
-    const hex = lightest.map((v) => v.toString(16).padStart(2, '0')).join('');
-    console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(6)} white on #${hex}  ${ratio.toFixed(2)}:1  (need ${need})`);
+    const hex = r.lightest.map((v) => v.toString(16).padStart(2, '0')).join('');
+    console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(6)} white on #${hex}  ${r.ratio.toFixed(2)}:1  (need ${need})  worst at ${r.at}`);
   }
 
   console.log(`\n########## HERO SCRIM FAILURES: ${failures} ##########`);

@@ -165,10 +165,55 @@ function loadImagery() {
     el.classList.remove('media-placeholder');
   });
 
-  if (have.has('hero.jpg')) {
-    const el = $('#heroMedia');
-    el.classList.remove('media-placeholder');
-    el.innerHTML = '<img src="./images/hero.jpg" alt="" width="2000" height="1200" fetchpriority="high">';
+  const heroEl = $('#heroMedia');
+  const video = $('#heroVideo');
+
+  if (video) {
+    // The poster alone is a complete hero, so the placeholder can go as soon
+    // as we know the poster exists.
+    if (have.has('hero-poster.jpg')) heroEl.classList.remove('media-placeholder');
+    startHeroVideo(video);
+  } else if (have.has('hero.jpg')) {
+    heroEl.classList.remove('media-placeholder');
+    heroEl.innerHTML = '<img src="./images/hero.jpg" alt="" width="2000" height="1200" fetchpriority="high">';
+  }
+}
+
+/**
+ * Load and play the hero video only when it is wanted.
+ *
+ * Skipped entirely — not merely paused — when the viewer has asked for reduced
+ * motion or has Save Data on. Pausing still costs the download; on a phone
+ * that is someone's data for a decoration they did not want. The poster is a
+ * complete hero on its own.
+ */
+function startHeroVideo(video) {
+  // loadImagery() runs once per rendered grid, so this can be called several
+  // times. Without a guard the element collects duplicate <source> tags and a
+  // fresh observer on each pass.
+  if (video.dataset.started === 'true') return;
+  video.dataset.started = 'true';
+
+  if (!motionOK()) return;
+  if (navigator.connection?.saveData) return;
+
+  const webm = video.dataset.webm;
+  const mp4 = video.dataset.mp4;
+  if (webm) video.insertAdjacentHTML('beforeend', `<source src="${webm}" type="video/webm">`);
+  if (mp4) video.insertAdjacentHTML('beforeend', `<source src="${mp4}" type="video/mp4">`);
+
+  video.preload = 'auto';
+  video.load();
+  // A rejected autoplay is normal on some devices; the poster stays, which is
+  // exactly the intended fallback.
+  video.play().catch(() => {});
+
+  // Stop decoding while the hero is off screen.
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(
+      (entries) => entries.forEach((e) => (e.isIntersecting ? video.play().catch(() => {}) : video.pause())),
+      { threshold: 0.1 },
+    ).observe(video);
   }
 }
 

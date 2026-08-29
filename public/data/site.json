@@ -1,5 +1,8 @@
 {
   "photos": [
+    "after.jpg",
+    "before.jpg",
+    "hero-poster.jpg",
     "hero.jpg",
     "logo.jpg",
     "maintenance-essentials.jpg",
@@ -285,6 +288,6 @@
   },
   "today": "2026-08-29",
   "cardMode": "static",
-  "generatedAt": "2026-08-29T15:49:04.745Z",
+  "generatedAt": "2026-08-29T16:12:30.134Z",
   "static": true
 }

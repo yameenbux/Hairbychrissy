@@ -317,6 +317,23 @@ Rules held from the spec:
   `IntersectionObserver`. A slow 26s drift on the organic shapes. Nothing
   animates above the fold. `prefers-reduced-motion` drops to opacity only.
 
+### The hero video
+
+The spec allows a video hero on strict terms — "muted, autoplay, playsinline,
+loop, poster image mandatory" — and this one meets them, with two additions the
+spec does not require but a phone-first audience does:
+
+- **Nothing downloads until it is wanted.** The `<source>` tags are `data-`
+  attributes; the script adds them only after checking `prefers-reduced-motion`
+  and `navigator.connection.saveData`. Pausing a video still costs the
+  download, which on a phone is someone's data spent on a decoration they asked
+  not to see. The poster is a complete hero on its own.
+- **Trimmed and re-encoded**: 22s to 12s, 30fps to 24, 576px to 640, audio
+  stripped. 3.6MB to 435KB (mp4) with a 440KB webm alternative. Audio is
+  removed because the spec requires a muted hero anyway and shipping someone
+  else's music on a website is a licensing problem.
+- Playback pauses when the hero scrolls out of view.
+
 ### The non-negotiables, checked not assumed
 
 `tools/sticky-audit.js` (`npm run audit:sticky`) navigates to every in-page
@@ -329,13 +346,19 @@ Prices render as clean rounded values (`£50`, never raw FX output), and a
 service with no fixed price reads "On request" rather than "£0".
 
 Text over imagery sits on a scrim, and `tools/scrim-audit.js`
-(`npm run audit:scrim`) proves it: it renders the hero, hides the text,
+(`npm run audit:scrim`) proves it. It renders the hero, hides the text,
 screenshots the bare background and measures white against the **lightest pixel
 behind each element** — the worst case, which no stylesheet can tell you because
-it depends on the photograph. Her real hero shot failed on first measurement
-(label 3.63:1, heading 2.71:1); the scrim is now weighted to the band the type
-occupies and all four elements pass. **Re-run it whenever the hero photo
-changes.**
+it depends on the imagery.
+
+With a video hero, one frame is not enough: the background changes every moment,
+so measuring one frame measures luck. The audit pauses the video, steps through
+it at five points plus the poster, and keeps the worst case per element, naming
+which frame caused it.
+
+It has caught two real regressions so far — her still hero (label 3.63:1) and
+again when the video replaced it (label 4.23:1 at t=0). **Re-run it whenever the
+hero media changes.**
 
 ## Layout
 
@@ -360,6 +383,7 @@ public/
   sw.js                service worker (push notifications)
   manifest.webmanifest home-screen install (and the iOS push precondition)
   data/site.json       generated content snapshot for the flat-file build
+  video/               hero reel, trimmed and re-encoded, audio stripped
   images/logo.jpg      the profile mark the palette is sampled from
 .github/workflows/
   pages.yml            GitHub Pages deployment

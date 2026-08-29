@@ -283,6 +283,9 @@ a { color: inherit; text-decoration: none; }
 }
 .hero-media { position: absolute; inset: 0; z-index: 0; }
 .hero-media img, .hero-media video { width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
+/* The video is a vertical reel; on a wide screen it crops to the subject
+   rather than letterboxing. */
+@media (min-width: 861px) { .hero-media video { object-position: center 22%; } }
 /* A scrim, not hope — the spec's words. */
 .hero-media::after {
   content: '';
@@ -292,11 +295,11 @@ a { color: inherit; text-decoration: none; }
      see tools/scrim-audit.js. */
   background: linear-gradient(
     to top,
-    rgba(35, 25, 17, 0.88) 0%,
-    rgba(35, 25, 17, 0.72) 30%,
-    rgba(35, 25, 17, 0.58) 55%,
-    rgba(35, 25, 17, 0.42) 78%,
-    rgba(35, 25, 17, 0.30) 100%
+    rgba(35, 25, 17, 0.90) 0%,
+    rgba(35, 25, 17, 0.78) 30%,
+    rgba(35, 25, 17, 0.68) 55%,
+    rgba(35, 25, 17, 0.52) 78%,
+    rgba(35, 25, 17, 0.38) 100%
   );
 }
 .hero .shell { position: relative; z-index: 1; width: 100%; }

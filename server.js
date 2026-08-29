@@ -36,6 +36,8 @@ const MIME = {
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
   '.svg': 'image/svg+xml',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -171,7 +173,7 @@ function serveStatic(res, urlPath) {
   fs.stat(target, (err, stat) => {
     if (err || !stat.isFile()) return send(res, 404, 'Not found');
     const type = MIME[path.extname(target).toLowerCase()] || 'application/octet-stream';
-    const cacheable = /\.(jpg|jpeg|png|webp|avif|svg|woff2|ico)$/i.test(target);
+    const cacheable = /\.(jpg|jpeg|png|webp|avif|svg|woff2|ico|mp4|webm)$/i.test(target);
     res.writeHead(200, {
       'Content-Type': type,
       'Content-Length': stat.size,

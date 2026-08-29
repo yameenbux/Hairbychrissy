@@ -45,7 +45,34 @@ instead, say the amount and I will set it.
 
 ---
 
-## 2. Your photos are on the site
+## 2. Your video is now the top of the page
+
+The transformation reel you sent is the moving image at the top of the site —
+her before, then the finished hair. It is the strongest thing on the page: it
+shows what you actually do in about ten seconds.
+
+A few things I did to it:
+
+- **Trimmed and compressed.** The original was 3.6MB, which is a lot to push
+  down a phone connection before a client sees anything. It is now 435KB, and
+  there is a still image behind it so something is on screen instantly.
+- **Muted, and the music removed.** Autoplaying sound would be blocked by every
+  browser anyway, and putting someone else's track on a website is a licensing
+  risk you do not need.
+- **It does not play for everyone.** If a client has "reduce motion" turned on,
+  or Data Saver, they get the still instead and the video never downloads. That
+  is the polite thing to do and it saves their data.
+
+I also pulled a **before and after pair** out of the reel and gave them their own
+section — that comparison is the most persuasive thing on the whole site.
+
+**One note:** I checked all 23 seconds and there is no text or pricing in the
+video. The prices, services and maintenance points on the site came from the
+three graphics you sent before, and they are all already in.
+
+---
+
+## 3. Your photos are on the site
 
 The two you sent are now doing real work:
 
@@ -62,7 +89,7 @@ afters — and every card has its own.
 
 ---
 
-## 3. Your hours — currently a guess
+## 4. Your hours — currently a guess
 
 Set as Tuesday–Saturday, 9–6 (Thursday to 8pm), Saturday 9–5, with a 1:00–1:45
 lunch. Sunday and Monday closed.
@@ -72,7 +99,7 @@ set your times, save. Clients see it immediately.
 
 ---
 
-## 4. Reviews are placeholder text
+## 5. Reviews are placeholder text
 
 The six testimonials on the site are **written by me, not by real clients**.
 They must be replaced before this goes public.
@@ -82,7 +109,7 @@ and I'll put the genuine ones in with their first name and initial.
 
 ---
 
-## 5. The look, and where the site lives
+## 6. The look, and where the site lives
 
 The site has been rebuilt in a quieter, more editorial style — lots of white
 space, cream and white sections alternating, one gold accent used sparingly, and
@@ -112,7 +139,7 @@ you should know:
 
 ---
 
-## 6. Colours
+## 7. Colours
 
 The site now takes its colours straight from your Instagram profile picture. I
 sampled them from the image rather than guessing: the taupe background, the
@@ -136,7 +163,7 @@ single block of settings and takes minutes to change.
 
 ---
 
-## 7. On phones
+## 8. On phones
 
 You mentioned most clients book from their phone, so that's now the main target
 rather than an afterthought. Checked on iPhone SE, 13 mini, 15 Pro, 15 Pro Max,
@@ -168,7 +195,7 @@ work at all.
 
 ---
 
-## 8. Contact and location
+## 9. Contact and location
 
 Currently showing:
 
@@ -181,7 +208,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 9. Cancellation policy
+## 10. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -189,7 +216,7 @@ want the wording different.
 
 ---
 
-## 10. Card payments
+## 11. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -207,7 +234,7 @@ tell me the amount.
 
 ---
 
-## 11. Getting told about bookings
+## 12. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -251,7 +278,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 12. Not built yet
+## 13. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -267,7 +294,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 13. Your dashboard
+## 14. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.

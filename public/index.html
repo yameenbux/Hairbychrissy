@@ -54,7 +54,16 @@
 
 <!-- =============================================================== HERO -->
 <section class="hero">
-  <div class="hero-media media-placeholder" id="heroMedia" aria-hidden="true"></div>
+  <div class="hero-media media-placeholder" id="heroMedia" aria-hidden="true">
+    <!-- Poster is mandatory and carries the frame on its own. The sources are
+         data attributes so nothing downloads until the script has checked
+         reduced-motion and Save Data — a hero that ignores either is a hero
+         that wastes a client's allowance. -->
+    <video id="heroVideo" poster="./images/hero-poster.jpg"
+           muted loop playsinline preload="none" disablepictureinpicture
+           data-webm="./video/transformation.webm"
+           data-mp4="./video/transformation.mp4"></video>
+  </div>
   <div class="shell">
     <span class="label" id="heroLocation">London based</span>
     <h1 class="display" id="heroHeading">Hair extension<br>specialist<br>+ stylist</h1>
@@ -144,6 +153,27 @@
         <p>Staying on top of appointments is also less work in the chair, and the results last longer.</p>
         <a class="link-underline" href="#book">Book maintenance</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== TRANSFORMATION -->
+<section class="band" id="transformation">
+  <div class="shell">
+    <div class="section-head reveal">
+      <span class="label">The difference</span>
+      <h2 class="display">Before<br>and after</h2>
+      <p class="lede">One fitting. Colour matched to her own hair, cut in and blended so the join does not show.</p>
+    </div>
+    <div class="grid-services" style="grid-template-columns:repeat(2,1fr);max-width:840px">
+      <figure class="reveal" style="margin:0">
+        <div class="card-media media-placeholder" data-img="./images/before.jpg"></div>
+        <figcaption class="card-body"><span class="card-name">Before</span></figcaption>
+      </figure>
+      <figure class="reveal" style="margin:0">
+        <div class="card-media media-placeholder" data-img="./images/after.jpg"></div>
+        <figcaption class="card-body"><span class="card-name">After</span></figcaption>
+      </figure>
     </div>
   </div>
 </section>
