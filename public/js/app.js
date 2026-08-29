@@ -42,6 +42,9 @@ const money = (n) => {
   return `£${Math.round(v).toLocaleString('en-GB')}`;
 };
 
+/** Her extensions are quoted, not listed, so a price is not always a number. */
+const priceLabel = (s) => (s?.priceOnRequest ? 'On request' : money(s?.price));
+
 function duration(mins) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -94,6 +97,24 @@ function renderStatic() {
   $('#heroIntro').textContent = brand.intro;
   $('#navInstagram').href = brand.instagram;
   if (brand.strapline) $('#strapline').textContent = brand.strapline;
+
+  // Her three headline services, in her own words, above the price list.
+  const offerList = $('#offerList');
+  if (offerList && state.site.offers) {
+    offerList.innerHTML = state.site.offers
+      .map(
+        (o, i) => `
+        <article class="step reveal">
+          <span class="numeral">${i + 1}/</span>
+          <h3>${esc(o.title)}</h3>
+          <p class="small muted" style="letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">${esc(o.kicker)}</p>
+          <p>${esc(o.text)}</p>
+        </article>`,
+      )
+      .join('');
+  }
+
+  if (brand.signoff) $('#signoff').textContent = brand.signoff;
 
   renderServiceCards('#serviceGrid', false);
 
@@ -164,7 +185,7 @@ function renderServiceCards(target, selectable) {
         </span>
         <span class="card-body">
           <span class="card-name">${esc(s.name)}</span>
-          <span class="card-price">${money(s.price)}</span>
+          <span class="card-price">${priceLabel(s)}</span>
         </span>
       </button>`,
     )
@@ -437,15 +458,36 @@ function bindDetails() {
 
 function renderPayCopy() {
   const s = state.service;
-  const deposit = s ? Math.min(s.deposit, s.price) : 0;
+  const quoted = Boolean(s?.priceOnRequest);
+  const cardRadio = $('input[name="payment"][value="card"]');
+  const cardOption = cardRadio?.closest('.pay-option');
+  const note = $('#payNote');
+
+  // A consultation has no price yet, so there is nothing to pay online.
+  // Offering a card option here would be a dead end.
+  if (quoted) {
+    if (cardOption) cardOption.hidden = true;
+    const cash = $('input[name="payment"][value="cash"]');
+    if (cash) cash.checked = true;
+    state.payment = 'cash';
+    $('#cashCopy').textContent = 'Nothing to pay. We agree the price at your consultation.';
+    note.className = 'notice';
+    note.innerHTML = '<p>Extensions are quoted once we have seen your hair and matched your colour. Your consultation is free and there is nothing to pay today.</p>';
+    updateSummary();
+    return;
+  }
+
+  if (cardOption) cardOption.hidden = false;
+  const deposit = s ? (s.deposit > 0 ? Math.min(s.deposit, s.price) : s.price) : 0;
   $('#cashCopy').textContent = s
     ? `Nothing taken now. ${money(s.price)} paid in the studio on the day.`
     : 'Nothing taken now — you pay in the studio on the day.';
-  $('#cardCopy').textContent = deposit
-    ? `${money(deposit)} deposit secures the slot. ${money(s.price - deposit)} on the day.`
-    : 'No deposit needed for this service.';
+  $('#cardCopy').textContent = !s
+    ? 'Pay by card.'
+    : s.deposit > 0
+      ? `${money(s.deposit)} deposit secures the slot. ${money(s.price - s.deposit)} on the day.`
+      : `Pay the full ${money(deposit)} now and there is nothing to settle on the day.`;
 
-  const note = $('#payNote');
   if (state.site.cardMode === 'demo') {
     note.className = 'notice notice-warn';
     note.innerHTML = '<p><strong>Draft mode.</strong> Card runs through a simulated checkout — no money moves. A Stripe key switches it to live payments with no other change.</p>';
@@ -514,12 +556,14 @@ function updateSummary() {
   $('#sumDate').textContent = state.date ? prettyDate(state.date) : '—';
   $('#sumTime').textContent = state.slot ? `${state.slot.start}–${state.slot.end}` : '—';
   $('#sumDuration').textContent = s ? duration(s.duration) : '—';
-  $('#sumTotal').textContent = s ? money(s.price) : '—';
+  const quoted = Boolean(s?.priceOnRequest);
+  $('#sumTotal').textContent = s ? (quoted ? 'On request' : money(s.price)) : '—';
 
-  const deposit = s && state.payment === 'card' ? Math.min(s.deposit, s.price) : 0;
-  $('#sumDueNow').textContent = deposit ? money(deposit) : 'Nothing now';
-  const later = s ? s.price - deposit : null;
-  $('#sumDueLater').textContent = s ? (later ? money(later) : 'Nothing') : '—';
+  const payingByCard = s && !quoted && state.payment === 'card';
+  const deposit = payingByCard ? (s.deposit > 0 ? Math.min(s.deposit, s.price) : s.price) : 0;
+  $('#sumDueNow').textContent = quoted ? 'Nothing' : deposit ? money(deposit) : 'Nothing now';
+  const later = s && !quoted ? s.price - deposit : 0;
+  $('#sumDueLater').textContent = s ? (quoted ? 'Quoted on the day' : later ? money(later) : 'Nothing') : '—';
 
   const bar = $('#mobileSummary');
   const show = Boolean(s);
@@ -530,8 +574,8 @@ function updateSummary() {
   $('#msWhen').textContent = state.slot && state.date
     ? `${prettyDate(state.date)} · ${state.slot.start}`
     : state.date ? `${prettyDate(state.date)} · pick a time` : 'Choose a date and time';
-  $('#msTotal').firstChild.nodeValue = money(s.price);
-  $('#msDue').textContent = deposit ? `${money(deposit)} now` : 'nothing now';
+  $('#msTotal').firstChild.nodeValue = quoted ? 'Quote' : money(s.price);
+  $('#msDue').textContent = quoted ? 'free consultation' : deposit ? `${money(deposit)} now` : 'nothing now';
 }
 
 /* ----------------------------------------------------------- live feed */

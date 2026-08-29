@@ -117,7 +117,7 @@ async function scan(page, label, results) {
 
     // Walk the booking flow — the screens that actually matter.
     await page.locator('#book').scrollIntoViewIfNeeded();
-    await page.locator('#bookServiceGrid .card[data-id="la-weave"]').click();
+    await page.locator('#bookServiceGrid .card[data-id="hollywood-waves"]').click();
     await page.waitForTimeout(1700);
     await scan(page, 'calendar', results);
 

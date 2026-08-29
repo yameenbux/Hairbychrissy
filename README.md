@@ -7,9 +7,9 @@ Clients pick a service, see genuine live availability, choose a slot and pay by
 **cash or card**. Chrissy sets her own working days, hours, breaks and time off
 from a private dashboard — and the client calendar updates the moment she saves.
 
-> **This is a draft.** Her bio, methods, strapline and maintenance guidance are
-> taken from her actual profile. Prices, reviews, photography and contact
-> details are still placeholders pending her confirmation — see
+> **Draft.** Prices, services, copy and photography are now hers — taken from
+> her price list, services and maintenance graphics. Still outstanding: service
+> durations, real reviews, and contact details. See
 > [CLIENT-NOTES.md](CLIENT-NOTES.md).
 
 ---
@@ -108,6 +108,19 @@ a second client booking a slot drops it out of the first client's view in under
 a second.
 
 ---
+
+## Pricing model
+
+Her price list has three shapes, and the booking engine handles each:
+
+| Shape | Example | What happens |
+|---|---|---|
+| **Price on request** | Extensions & fittings | Books a consultation. No payment offered, the card option is hidden, and the slot is held. She quotes in person. |
+| **Fixed price, no deposit** | Hollywood waves, £30 | Cash pays on the day; card pays the full amount at booking. A zero-value checkout would be rejected by Stripe, so "deposit of £0" is never charged. |
+| **Fixed price with deposit** | none currently | Deposit online, balance on the day. Set a deposit per service in the dashboard to switch a service to this. |
+
+Deposits are all zero because her list does not mention any. Changing one in the
+dashboard moves that service to the third shape with no code change.
 
 ## Payments — cash and card
 
@@ -312,9 +325,17 @@ sticky header — the spec's explicit requirement. It also asserts the nav label
 are identical in header and footer, and that focus rings are visible. It exits
 non-zero on failure and currently reports **zero**.
 
-Prices render as clean rounded values (`£550`, never raw FX output). Text over
-imagery sits on a scrim, and the hero's own ground is espresso so the white
-type stays readable even before a photograph loads.
+Prices render as clean rounded values (`£50`, never raw FX output), and a
+service with no fixed price reads "On request" rather than "£0".
+
+Text over imagery sits on a scrim, and `tools/scrim-audit.js`
+(`npm run audit:scrim`) proves it: it renders the hero, hides the text,
+screenshots the bare background and measures white against the **lightest pixel
+behind each element** — the worst case, which no stylesheet can tell you because
+it depends on the photograph. Her real hero shot failed on first measurement
+(label 3.63:1, heading 2.71:1); the scrim is now weighted to the band the type
+occupies and all four elements pass. **Re-run it whenever the hero photo
+changes.**
 
 ## Layout
 
@@ -346,6 +367,7 @@ tools/
   contrast-audit.js    WCAG AA check across every page and state
   mobile-audit.js      tap targets, iOS zoom traps and overflow, six handsets
   sticky-audit.js      heading clearance, nav parity, focus rings
+  scrim-audit.js       white hero type vs the lightest pixel of the photo
   build-static-data.js writes the content snapshot the flat-file build reads
 data/db.json           created on first run; gitignored
 ```

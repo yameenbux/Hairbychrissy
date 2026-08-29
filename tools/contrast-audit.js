@@ -78,7 +78,7 @@ const AUDIT = `(() => {
   await p.waitForTimeout(1200);
   await audit('client site — landing');
 
-  await p.locator('#bookServiceGrid .card[data-id="la-weave"]').click();
+  await p.locator('#bookServiceGrid .card[data-id="hollywood-waves"]').click();
   await p.waitForTimeout(1800);
   await p.locator('.cal-cell[data-date]:not([disabled])').first().click();
   await p.waitForTimeout(900);

@@ -287,7 +287,17 @@ a { color: inherit; text-decoration: none; }
 .hero-media::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(35, 25, 17, 0.72) 0%, rgba(35, 25, 17, 0.34) 46%, rgba(35, 25, 17, 0.12) 100%);
+  /* Weighted to the band the type actually occupies. Measured against the
+     lightest pixel of the photograph behind each element, not eyeballed —
+     see tools/scrim-audit.js. */
+  background: linear-gradient(
+    to top,
+    rgba(35, 25, 17, 0.88) 0%,
+    rgba(35, 25, 17, 0.72) 30%,
+    rgba(35, 25, 17, 0.58) 55%,
+    rgba(35, 25, 17, 0.42) 78%,
+    rgba(35, 25, 17, 0.30) 100%
+  );
 }
 .hero .shell { position: relative; z-index: 1; width: 100%; }
 .hero .label, .hero .display, .hero .lede { color: var(--paper); }

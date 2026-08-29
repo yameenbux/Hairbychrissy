@@ -56,11 +56,13 @@ function render(b) {
   const cancelled = b.status === 'cancelled';
   const awaiting = b.status === 'pending-payment';
 
-  const payLine = b.payment === 'cash'
+  const payLine = b.priceOnRequest
+    ? 'A consultation — nothing to pay. We agree the price when I have seen your hair.'
+    : b.payment === 'cash'
     ? 'Paying cash in the studio — ' + money(b.total) + ' due on the day.'
     : (b.paymentStatus === 'deposit-paid'
         ? 'Deposit of ' + money(b.depositDue) + ' received. ' + money(b.balanceDue) + ' due on the day.'
-        : b.paymentStatus === 'paid-in-full'
+        : b.paymentStatus === 'paid-in-full' || b.balanceDue === 0
           ? 'Paid in full. Nothing to pay on the day.'
           : 'Deposit of ' + money(b.depositDue) + ' not yet received.');
 

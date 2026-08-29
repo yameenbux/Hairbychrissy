@@ -1,6 +1,16 @@
 {
   "photos": [
-    "logo.jpg"
+    "hero.jpg",
+    "logo.jpg",
+    "maintenance-essentials.jpg",
+    "price-list.jpg",
+    "service-extensions.jpg",
+    "service-hollywood-waves-clipins.jpg",
+    "service-hollywood-waves.jpg",
+    "service-removals.jpg",
+    "services-i-offer.jpg",
+    "work-01.jpg",
+    "work-02.jpg"
   ],
   "brand": {
     "name": "HAIR BY CHRISSY",
@@ -10,6 +20,7 @@
     "websiteLabel": "Cece's Collection",
     "tagline": "HAIR EXTENSION SPECIALIST + STYLIST",
     "strapline": "BEAUTY. CONFIDENCE. EVERY DAY.",
+    "signoff": "Let's create your next hair chapter.",
     "location": "LONDON BASED",
     "addressLines": [
       "Private studio",
@@ -28,6 +39,23 @@
       "INVISI"
     ]
   },
+  "offers": [
+    {
+      "title": "Hair Extensions",
+      "kicker": "All methods",
+      "text": "Custom extensions for length, volume and the hair of your dreams. All methods."
+    },
+    {
+      "title": "Hair Extension Removals",
+      "kicker": "Safe and gentle",
+      "text": "Safe, gentle and professional removal to protect your natural hair and keep it healthy."
+    },
+    {
+      "title": "Hair Styling",
+      "kicker": "Everyday to occasion",
+      "text": "From everyday glam to special occasions — styled to make you feel your best."
+    }
+  ],
   "reviews": [
     {
       "name": "Sophie R.",
@@ -134,103 +162,68 @@
   ],
   "services": [
     {
-      "id": "consultation",
-      "name": "Consultation & Colour Match",
-      "category": "CONSULTATION",
+      "id": "extensions",
+      "name": "Extensions & Fittings",
+      "category": "EXTENSIONS",
       "duration": 30,
       "price": 0,
+      "priceOnRequest": true,
       "deposit": 0,
-      "blurb": "Free 30-minute sit-down. We look at your hair, match your colour and plan the right method for you."
+      "blurb": "Custom extensions for length, volume and the hair of your dreams. All methods. Book a consultation and I will colour match you and quote for the fitting."
     },
     {
-      "id": "nano-full",
-      "name": "Nano Rings — Full Head",
+      "id": "removals",
+      "name": "Removals",
       "category": "EXTENSIONS",
-      "duration": 240,
-      "price": 550,
-      "deposit": 100,
-      "blurb": "The lightest, most discreet fit. No heat, no glue, fully reusable hair."
-    },
-    {
-      "id": "nano-half",
-      "name": "Nano Rings — Half Head",
-      "category": "EXTENSIONS",
-      "duration": 180,
-      "price": 360,
-      "deposit": 75,
-      "blurb": "Added length and thickness through the mid-section without a full set."
-    },
-    {
-      "id": "micro-full",
-      "name": "Micro Rings — Full Head",
-      "category": "EXTENSIONS",
-      "duration": 240,
-      "price": 500,
-      "deposit": 100,
-      "blurb": "A slightly larger bead than nano — strong, secure and long-wearing."
-    },
-    {
-      "id": "tape-full",
-      "name": "Tapes — Full Head",
-      "category": "EXTENSIONS",
-      "duration": 120,
-      "price": 320,
-      "deposit": 75,
-      "blurb": "Fast to fit and completely flat to the head. Ideal for finer hair."
-    },
-    {
-      "id": "la-weave",
-      "name": "Weave — Full Head",
-      "category": "EXTENSIONS",
-      "duration": 180,
-      "price": 340,
-      "deposit": 75,
-      "blurb": "Wefts sewn onto a micro-ring track. Big volume, no glue on your own hair."
-    },
-    {
-      "id": "invisi-weft",
-      "name": "Invisi — Full Head",
-      "category": "EXTENSIONS",
-      "duration": 210,
-      "price": 620,
-      "deposit": 125,
-      "blurb": "The flattest weft on the market. Genuinely undetectable in a ponytail."
-    },
-    {
-      "id": "maintenance",
-      "name": "Maintenance / Refit",
-      "category": "MAINTENANCE",
-      "duration": 150,
-      "price": 190,
-      "deposit": 50,
-      "blurb": "Every 6–8 weeks. Bonds moved up, hair washed, re-tinted if needed and refitted."
-    },
-    {
-      "id": "removal",
-      "name": "Extension Removal",
-      "category": "MAINTENANCE",
       "duration": 60,
-      "price": 60,
-      "deposit": 20,
-      "blurb": "Careful, damage-free take-down with a treatment finish."
+      "price": 50,
+      "deposit": 0,
+      "blurb": "Safe, gentle and professional removal to protect your natural hair and keep it healthy."
     },
     {
-      "id": "cut-blowdry",
-      "name": "Cut & Blow Dry",
+      "id": "hollywood-waves",
+      "name": "Hollywood Waves",
+      "category": "STYLING",
+      "duration": 60,
+      "price": 30,
+      "deposit": 0,
+      "blurb": "The signature soft, glossy wave — set and brushed out to last the night."
+    },
+    {
+      "id": "hollywood-waves-clipins",
+      "name": "Hollywood Waves with Clip-Ins",
       "category": "STYLING",
       "duration": 75,
-      "price": 55,
-      "deposit": 15,
-      "blurb": "Restyle, blend or a straight tidy-up — on your own hair or your extensions."
+      "price": 35,
+      "deposit": 0,
+      "blurb": "The same set, with your clip-ins fitted and blended through first."
     },
     {
-      "id": "hair-up",
-      "name": "Hair Up / Occasion Styling",
+      "id": "pinned-curls",
+      "name": "Pinned Curls",
       "category": "STYLING",
-      "duration": 90,
-      "price": 65,
-      "deposit": 20,
-      "blurb": "Braided updos, soft waves and event hair. Bring a picture and we will work to it."
+      "duration": 60,
+      "price": 35,
+      "deposit": 0,
+      "blurb": "Pinned and set for a fuller, longer-lasting curl."
+    },
+    {
+      "id": "hair-ups",
+      "name": "Hair Ups / Any Style",
+      "category": "STYLING",
+      "duration": 60,
+      "price": 35,
+      "deposit": 0,
+      "blurb": "From everyday glam to special occasions — bring a picture and we will work to it."
+    },
+    {
+      "id": "dry-style",
+      "name": "Dry From Wet & Style",
+      "category": "STYLING",
+      "duration": 60,
+      "price": 45,
+      "deposit": 0,
+      "blurb": "Washed, dried and finished however you want it."
     }
   ],
   "workingHours": {
@@ -292,6 +285,6 @@
   },
   "today": "2026-08-29",
   "cardMode": "static",
-  "generatedAt": "2026-08-29T15:32:24.401Z",
+  "generatedAt": "2026-08-29T15:49:04.745Z",
   "static": true
 }

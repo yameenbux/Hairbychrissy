@@ -12,7 +12,8 @@
     "audit:contrast": "node tools/contrast-audit.js",
     "audit:mobile": "node tools/mobile-audit.js",
     "build:data": "node tools/build-static-data.js",
-    "audit:sticky": "node tools/sticky-audit.js"
+    "audit:sticky": "node tools/sticky-audit.js",
+    "audit:scrim": "node tools/scrim-audit.js"
   },
   "dependencies": {}
 }

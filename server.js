@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { read, write, nextRef, flush } from './lib/store.js';
-import { brand, reviews, gallery, faqs } from './lib/seed.js';
+import { brand, reviews, gallery, faqs, offers } from './lib/seed.js';
 import { slotsFor, monthSummary, validateSlot, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
@@ -202,6 +202,7 @@ function publicBooking(b) {
     serviceName: service?.name || b.serviceName,
     duration: b.duration,
     total: b.total,
+    priceOnRequest: Boolean(b.priceOnRequest),
     depositDue: b.depositDue,
     balanceDue: b.balanceDue,
     payment: b.payment,
@@ -238,6 +239,7 @@ function siteConfig() {
   return {
     photos: availablePhotos(),
     brand,
+    offers,
     reviews,
     gallery,
     faqs,
@@ -369,9 +371,23 @@ async function createBooking(req, res) {
 
   const { service, startMin, endMin } = check;
 
-  // Card clients pay a deposit now; cash clients settle the whole amount in studio.
-  const depositDue = payment === 'card' ? Math.min(service.deposit, service.price) : 0;
-  const balanceDue = service.price - depositDue;
+  /**
+   * Three shapes, because her price list has three:
+   *
+   *   price on request  — extensions. Nothing to charge until it is quoted, so
+   *                       the appointment is held and no payment is offered.
+   *   deposit set       — a deposit online, balance in the studio.
+   *   no deposit        — her styling prices are small, so paying by card means
+   *                       paying the whole thing now. A zero-value checkout
+   *                       would be rejected by Stripe anyway.
+   */
+  const quoted = Boolean(service.priceOnRequest);
+  const total = quoted ? 0 : service.price;
+  const wantsCard = payment === 'card' && !quoted && total > 0;
+  const depositDue = wantsCard ? (service.deposit > 0 ? Math.min(service.deposit, total) : total) : 0;
+  const balanceDue = total - depositDue;
+  // A quoted service cannot take a card payment, so it is always held as cash.
+  const effectivePayment = wantsCard ? 'card' : 'cash';
 
   const booking = {
     id: `bk_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
@@ -385,20 +401,21 @@ async function createBooking(req, res) {
     endMin,
     duration: service.duration,
     client: { name, email, phone, notes },
-    total: service.price,
+    total,
+    priceOnRequest: quoted,
     depositDue,
     balanceDue,
-    payment,
+    payment: effectivePayment,
     // Cash bookings are confirmed immediately. Card bookings wait for payment.
-    paymentStatus: payment === 'cash' ? 'due-in-studio' : 'awaiting-deposit',
-    status: payment === 'cash' ? 'confirmed' : 'pending-payment',
+    paymentStatus: effectivePayment === 'cash' ? (quoted ? 'to-be-quoted' : 'due-in-studio') : 'awaiting-deposit',
+    status: effectivePayment === 'cash' ? 'confirmed' : 'pending-payment',
     createdAt: new Date().toISOString(),
   };
 
   write((db) => db.bookings.push(booking));
   broadcast('bookings-changed', { date });
 
-  if (payment === 'cash') {
+  if (effectivePayment === 'cash') {
     notifyNewBooking(booking);
     return json(res, 201, { booking: publicBooking(booking), next: 'confirmed' });
   }
@@ -587,6 +604,7 @@ async function handleAdminApi(req, res, url) {
         category: clean(s.category, 40).toUpperCase() || 'EXTENSIONS',
         duration,
         price,
+        priceOnRequest: Boolean(s.priceOnRequest),
         deposit,
         blurb: clean(s.blurb, 300),
       });

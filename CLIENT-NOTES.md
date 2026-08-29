@@ -6,71 +6,59 @@ it is all content you or I can change in minutes.
 
 ---
 
-## 1. What I now have from your profile — and what is still missing
+## 1. Your real prices are now in — thank you
 
-Instagram blocks automated access, so I could not read your posts directly, but
-the screenshot gave me plenty. **Now taken from your actual profile and used on
-the site:**
+The price list and services graphics you sent replaced the biggest guess in the
+whole project. **Everything below is now yours, not my estimate:**
 
-- "Hair Extension Specialist **+ Stylist**" — the headline is now your own wording
-- "London Based."
-- Your methods in your order and your words: **Nano Rings | Tapes | Micro |
-  Weave | Invisi** (I had been calling them tape-ins, LA weave and invisi-weft)
-- "WE DO NOT USE FACEBOOK." — kept in the footer
-- **"BEAUTY. CONFIDENCE. EVERY DAY."** from your services graphic, now under the
-  hero
-- Your **maintenance-essentials post**, which corrected me: maintenance is
-  **every 6–8 weeks**, not the 8–10 I had guessed. The FAQ is now written around
-  your own points — moving the bonds up, taking tension off, protecting against
-  breakage, supporting healthy growth, and staying on top of appointments
-  meaning less work later
-- Your **Styling** highlight and the occasion hair in your grid, so I have added
-  a **Hair Up / Occasion Styling** service — confirm you want to take those
-  bookings online
-- Your **Ombrè** highlight, reflected in the gallery labels
+| Service | Price |
+|---|---|
+| Extensions & fittings | **Price on request** |
+| Removals | **£50** |
+| Hollywood waves | **£30** |
+| Hollywood waves with clip-ins | **£35** |
+| Pinned curls | **£35** |
+| Hair ups / any style | **£35** |
+| Dry from wet & style | **£45** |
 
-**Your website.** Your bio links `www.cecescollectionofficial.com`. It is now
-linked in the footer, but I could not open it from here — the sandbox I am
-working in blocks outbound access to it. **If you send me what is on it** (or
-just the price list and services pages) I can pull the real content across
-instead of the placeholders below. If it also sells hair, we should decide
-whether the booking site links to it for hair purchases.
+Your three headline services now lead the page in your own words — Hair
+Extensions (all methods), Hair Extension Removals, Hair Styling — with
+"BEAUTY. CONFIDENCE. EVERY DAY." and your closing line, "Let's create your next
+hair chapter."
 
-**Two posts I can see but cannot read:** your **PRICE LIST** and **SERVICES I
-OFFER** graphics. Those are exactly what I need — send me those two images and
-almost everything in section 2 stops being a guess.
+**How extensions work on the site.** Because they are priced on request, I have
+not invented a number. Booking extensions books a **consultation** instead: the
+site says the price is agreed once you have seen the hair, takes no payment, and
+holds the slot. You quote in person and book the fitting yourself. If you would
+rather clients booked a fitting directly at a set price, tell me the price and I
+will change it.
+
+**One thing I still need: how long each service takes.** Your graphics give
+prices but not timings, so those are still my estimates — an hour for most
+styling, 30 minutes for a consultation. Durations decide how many appointments
+fit in your day, so they are worth getting right. Just tell me the real ones.
+
+**Deposits.** Your list does not mention any, so I have set them to zero. That
+means: cash clients pay on the day, and card clients pay the whole amount when
+they book (a £30 booking takes £30). If you would rather take a small deposit
+instead, say the amount and I will set it.
 
 ---
 
-## 2. Prices and timings — please confirm or correct
+## 2. Your photos are on the site
 
-These are plausible London market figures, **not yours** — I can see you have a
-PRICE LIST post but not read it. Send me that image and I'll replace the lot.
-You can also edit every one yourself in the dashboard under **Services**.
+The two you sent are now doing real work:
 
-Service names now follow your bio (Tapes, Micro, Weave, Invisi rather than the
-longer technical names). Tell me if you'd rather they read the long way for
-clients who don't know the shorthand.
+- The **Hollywood waves** shot is the full-width image at the top of the page.
+- The **studio shot** runs alongside the "how it works" section and on the
+  service cards.
+- Your **maintenance essentials** graphic sits in the maintenance section.
 
-| Service | Time | Price | Deposit |
-|---|---|---|---|
-| Consultation & colour match | 30m | Free | — |
-| Nano rings — full head | 4h | £550 | £100 |
-| Nano rings — half head | 3h | £360 | £75 |
-| Micro rings — full head | 4h | £500 | £100 |
-| Tapes — full head | 2h | £320 | £75 |
-| Weave — full head | 3h | £340 | £75 |
-| Invisi — full head | 3h 30m | £620 | £125 |
-| Maintenance / refit | 2h 30m | £190 | £50 |
-| Removal | 1h | £60 | £20 |
-| Cut & blow dry | 1h 15m | £55 | £15 |
-| Hair up / occasion styling | 1h 30m | £65 | £20 |
+They are resized and compressed so the page still loads fast on a phone.
 
-**Durations matter more than you'd think** — they decide how many appointments
-fit in a day, so it's worth getting them honest rather than optimistic.
-
-The site currently says prices are for **fitting only**, with hair quoted
-separately at consultation. Tell me if that's wrong.
+**More would help.** Right now four service cards share two photographs, cropped
+differently. Six or seven more — one per service, plus a couple of before and
+afters — and every card has its own.
 
 ---
 
@@ -180,19 +168,7 @@ work at all.
 
 ---
 
-## 8. Photography
-
-Every photo slot is currently a styled placeholder. Send me:
-
-- **one landscape hero shot** — your best piece of work, or you in the studio
-- **six portfolio shots** (portrait crops work best) with a one-line caption each
-
-Drop them into `public/images/` and they appear automatically. Until then the
-placeholders sit there without breaking anything.
-
----
-
-## 9. Contact and location
+## 8. Contact and location
 
 Currently showing:
 
@@ -205,7 +181,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 10. Cancellation policy
+## 9. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -213,7 +189,7 @@ want the wording different.
 
 ---
 
-## 11. Card payments
+## 10. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -224,13 +200,14 @@ switching it on is a single setting — nothing else changes.
 
 Cash bookings already work exactly as they will on the live site.
 
-**Currently the deposit model is:** card clients pay a deposit to hold the slot,
-cash clients pay everything on the day. If you'd rather take a deposit from
-everyone, or from nobody, say so — it's a small change.
+**Currently:** your list has no deposits, so card clients pay the full amount
+when they book and cash clients pay on the day. Extensions take nothing at all,
+since they are quoted. If you'd rather take a small deposit to stop no-shows,
+tell me the amount.
 
 ---
 
-## 12. Getting told about bookings
+## 11. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -274,7 +251,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 13. Not built yet
+## 12. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -290,7 +267,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 14. Your dashboard
+## 13. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.
@@ -305,13 +282,12 @@ notifications.
 
 ## What I need from you to move to a proper version
 
-**Quickest win: send me your PRICE LIST and SERVICES I OFFER posts, and whatever
-is on cecescollectionofficial.com.** That covers most of this list in one go.
+Prices are done. What is left:
 
-1. Real prices and durations
+1. **How long each service takes** — the last real guess in the booking system
 2. Your actual working hours
-3. Real reviews (with permission)
-4. Photographs
+3. Real reviews (with permission) — your Reviews highlight is the place
+4. A few more photographs, one per service
 5. Real email address and how much location detail to show
-6. A yes/no on setting up Stripe
+6. A yes/no on setting up Stripe, and whether you want deposits
 7. Which alert channels you want beyond phone notifications (email? text?)
