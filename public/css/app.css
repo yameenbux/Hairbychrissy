@@ -847,11 +847,19 @@ a { color: inherit; text-decoration: none; }
      specificity and the links stay visible over the wordmark. */
   /* Everything in the right-hand column goes, the CTA included. It is a
      130px button and the wordmark is centred against the page, so keeping it
-     would push the wordmark off centre or sit on top of it — the exact
-     failure the header audit exists to catch. Nothing is lost: the hero CTA
-     is directly below the fold line, and "Book your slot" is the first item
-     in the menu the hamburger opens. */
-  .site-header .nav-right a { display: none; }
+     would sit on top of the wordmark — the exact failure the header audit
+     exists to catch. Nothing is lost: the hero CTA is directly below the fold
+     line, and "Book your slot" is the first item in the menu the hamburger
+     opens.
+
+     BOTH selectors are needed and both must carry the :not()/.btn weight of
+     the base rule above. The base rule became `a:not(.btn)` so the CTA could
+     keep the button's own colour; that raised its specificity above a plain
+     `.nav-right a`, and this hide silently stopped applying — putting the
+     Instagram link back on top of the wordmark at every width under 640px.
+     The comment that used to live here warned about precisely this and I
+     broke it anyway. The header audit caught it. */
+  .site-header .nav-right a:not(.btn) { display: none; }
   .site-header .brand { max-width: calc(100% - 110px); }
   .brand-mark { width: 34px; height: 34px; }
   .footer-top { grid-template-columns: 1fr; }
@@ -864,6 +872,11 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 640px) {
+  /* Below this the wordmark is wide enough, and the button close enough to
+     it, that the two collide — measured, not guessed. Above it there is a
+     clear 150px between them and the one action stays on screen. */
+  .site-header .nav-right a.btn { display: none; }
+
   /* Two columns, not one.
      One card per row put seven 4:5 images at full bleed down a 375px screen —
      3,654px for the price list, and the same seven cards appear again inside
