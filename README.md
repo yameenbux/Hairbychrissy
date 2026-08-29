@@ -602,6 +602,7 @@ tools/
   header-audit.js      wordmark centring and collisions, 11 widths
   scrim-audit.js       white hero type vs the lightest pixel of the photo
   banlist-audit.js     the ban list, the type and rhythm scales, the motion band
+  hero-audit.js        the hero CTA is inside the first window, 9 viewports
   shot-375.js          every page and state captured and measured at 375px
   contact-sheet.py     those captures laid out side by side on one sheet
   build-static-data.js writes the content snapshot the flat-file build reads
@@ -611,6 +612,39 @@ data/db.json           created on first run; gitignored
 Data lives in a single JSON file. For one stylist that is genuinely enough, and
 it keeps the whole thing deployable anywhere Node runs. If the business grows
 past it, `lib/store.js` is the only file that changes.
+
+---
+
+## The hero fits in one window
+
+The whole page has one job, so the button that does it cannot start below the
+fold. It did.
+
+The heading was sized from viewport **width** alone — `clamp(…, 11vw, …)` — and
+a landscape tablet has width to spare and very little height. The type grew to
+its 95px cap and stayed there as the window got shorter, so the hero content
+stayed about 680px tall whatever the screen: on anything under roughly 700px of
+viewport height the CTA started off-screen. That was a landscape iPad, and also
+a perfectly ordinary 1280x800 laptop, which was cut by 28px.
+
+Two changes:
+
+- **The heading answers to whichever axis is tighter**, `min(10vw, 11.5vh)`, so
+  a short window gets smaller type instead of the same type pushed off the end.
+  The lede scales on height too, and the hero's padding is measured against the
+  window rather than sitting on a fixed floor — at 320px of viewport height the
+  old values spent 120px, over a third of the screen, on nothing.
+- **A phone held sideways gets a two-column hero.** At roughly 850x330 there is
+  no stacking order that fits label, heading, lede and button, and the usual
+  answers — shrink everything, or hide the lede — either make it unreadable or
+  throw the copy away. So the axis with room does the work: the heading takes a
+  tall left column and the lede and CTA sit beside it, the same editorial split
+  used further down the page.
+
+`tools/hero-audit.js` (`npm run audit:hero`) holds it, at nine viewports chosen
+for short landscape sizes rather than the portrait phones that were never the
+problem. It asserts the CTA, the heading and the lede are all inside the first
+window, and that the hero does not overflow the window it is meant to fill.
 
 ---
 

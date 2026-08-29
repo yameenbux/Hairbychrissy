@@ -449,7 +449,10 @@ a { color: inherit; text-decoration: none; }
   min-height: calc(100dvh - var(--header-h));
   display: flex;
   align-items: flex-end;
-  padding: var(--band-tight) 0 clamp(48px, 9vh, 104px);
+  /* Padding measured against the window, not a fixed floor. At 320px of
+     viewport height the old values spent 120px — 37% of the screen — on
+     nothing. */
+  padding: clamp(28px, 8vh, 128px) 0 clamp(24px, 7vh, 104px);
   /* The imagery band's own ground. Cream here would leave the white hero type
      unreadable in the moment before a photograph loads, or if one is missing —
      "use a scrim, not hope" applies to the fallback as well as the photo. */
@@ -478,6 +481,52 @@ a { color: inherit; text-decoration: none; }
   );
 }
 .hero .shell { position: relative; z-index: 1; width: 100%; }
+
+/*
+ * The hero has to fit in one window, because the CTA inside it is the only
+ * thing this page is for.
+ *
+ * The heading was sized from viewport WIDTH alone — clamp(…, 11vw, …) — and a
+ * landscape tablet has width to spare and very little height. So the type
+ * grew to its 95px cap and stayed there while the window got shorter, and the
+ * whole stack stayed ~680px tall: on anything under about 700px of viewport
+ * height the "Book your slot" button started below the fold. Sizing on the
+ * tighter of the two axes is the fix; tools/hero-audit.js holds it.
+ */
+.hero .display { font-size: clamp(var(--t-2xl), min(10vw, 11.5vh), var(--t-4xl)); }
+.hero .lede { font-size: clamp(var(--t-sm), 2.4vh, var(--t-md)); }
+
+/*
+ * A phone held sideways: ~850px of width and ~320px of height. Stacking
+ * label, heading, lede and button down that is hopeless — the button ends up
+ * 350px below the fold — and the usual answers (shrink everything, or hide
+ * the lede) either make it unreadable or throw away the copy.
+ *
+ * So use the axis that has room. The heading takes a tall left column and the
+ * lede and the CTA sit beside it, which is the same editorial split used
+ * further down the page and reads deliberately rather than squeezed.
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .hero .shell {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    column-gap: clamp(24px, 4vw, 64px);
+    align-items: end;
+  }
+  .hero .label   { grid-area: 1 / 1 / 2 / 2; }
+  .hero .display { grid-area: 2 / 1 / 4 / 2; margin: var(--s-1) 0 0; }
+  .hero .lede    { grid-area: 2 / 2 / 3 / 3; margin-bottom: var(--s-2); max-width: 34ch; }
+  .hero-actions  { grid-area: 3 / 2 / 4 / 3; }
+  .hero .display { font-size: clamp(var(--t-xl), 11.5vh, var(--t-3xl)); }
+  /* At 330px of window the padding is the difference between fitting and
+     not, so it comes off the scale here and is measured instead. */
+  .hero { padding: clamp(20px, 5vh, 48px) 0 clamp(18px, 5vh, 48px); }
+  /* The right column is not wide enough to hold the button and the secondary
+     link on one line, so the link wrapped under it and off the bottom of the
+     screen. It goes here: it points at the price list, and "Services" is in
+     the menu two centimetres above it. The one action stays. */
+  .hero-secondary { display: none; }
+}
 .hero .label, .hero .display, .hero .lede { color: var(--paper); }
 .hero .label::before { background: var(--paper); }
 .hero .display { margin: 18px 0 22px; }

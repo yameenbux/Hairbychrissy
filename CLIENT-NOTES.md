@@ -6,7 +6,36 @@ it is all content you or I can change in minutes.
 
 ---
 
-## 1. Latest round — the look, tightened
+## 1. Latest round — the top of the page now fits the screen
+
+You spotted it: on your iPad the **Book your slot** button was cut off at the
+bottom of the first screen. Fixed, and it was a worse problem than it looked.
+
+The big heading was being sized off the **width** of the screen. An iPad held
+sideways is wide but not tall, so the heading grew to its maximum and stayed
+there while the screen got shorter — which pushed the button off the bottom.
+It was doing the same on an ordinary laptop, cutting the button off by about
+28 pixels there too. So anyone landing on the site on a laptop or a sideways
+tablet saw a beautiful page with no way to book on it until they scrolled.
+
+The heading now takes its size from whichever direction is tighter, so a short
+screen gets slightly smaller type instead of the same type falling off the end.
+Everything — heading, text and button — is inside the first screen now.
+
+**A phone held sideways** was the hardest case: about 850 wide and only 330
+tall. Nothing stacks into that. Rather than shrink it all to nothing or throw
+the words away, the heading now takes the left half and the text and button sit
+beside it on the right — using the space that screen actually has.
+
+I have added an automatic check (nine screen sizes, from an iPhone SE up to a
+1920 desktop) that fails if the button, the heading or the text ever falls
+below the first screen again. It caught a second one while I was fixing this:
+the small *See the price list* link had wrapped underneath the button and off
+the edge on a sideways phone.
+
+---
+
+## 2. The look, tightened
 
 A design pass. Nothing about how the booking works changed; this is all about
 how it reads.
@@ -47,7 +76,7 @@ would fix it properly**.
 
 ---
 
-## 2. Previous round — your dashboard, and email
+## 3. Previous round — your dashboard, and email
 
 Two things you asked for.
 
@@ -121,7 +150,7 @@ hours you could sell, but only if you find out before Thursday.
 
 ---
 
-## 3. Your "4 Benefits" graphic
+## 4. Your "4 Benefits" graphic
 
 Your four benefits are now a section on the page, under **Why extensions**,
 sitting just after "Hair that is maintained, not fixed" and before the prices.
@@ -146,7 +175,7 @@ them and they stood out. Easy to put back if you want the warmth.
 
 ---
 
-## 4. Previous round
+## 5. Previous round
 
 Your three photos and two reels are all in:
 
@@ -168,7 +197,7 @@ bottom. I cropped them out rather than letting the page squash around them.
 
 ---
 
-## 5. Earlier round
+## 6. Earlier round
 
 - **Your logo is now in the header**, beside the "Hair by Chrissy" wordmark,
   masked to a circle so it reads as a mark rather than a photo tile.
@@ -180,7 +209,7 @@ bottom. I cropped them out rather than letting the page squash around them.
 
 ---
 
-## 6. Your real prices are now in — thank you
+## 7. Your real prices are now in — thank you
 
 The price list and services graphics you sent replaced the biggest guess in the
 whole project. **Everything below is now yours, not my estimate:**
@@ -219,7 +248,7 @@ instead, say the amount and I will set it.
 
 ---
 
-## 7. Your video is now the top of the page
+## 8. Your video is now the top of the page
 
 The transformation reel you sent is the moving image at the top of the site —
 her before, then the finished hair. It is the strongest thing on the page: it
@@ -246,7 +275,7 @@ three graphics you sent before, and they are all already in.
 
 ---
 
-## 8. Your photos are on the site
+## 9. Your photos are on the site
 
 The two you sent are now doing real work:
 
@@ -263,7 +292,7 @@ afters — and every card has its own.
 
 ---
 
-## 9. Your hours — currently a guess
+## 10. Your hours — currently a guess
 
 Set as Tuesday–Saturday, 9–6 (Thursday to 8pm), Saturday 9–5, with a 1:00–1:45
 lunch. Sunday and Monday closed.
@@ -273,7 +302,7 @@ set your times, save. Clients see it immediately.
 
 ---
 
-## 10. Reviews are placeholder text
+## 11. Reviews are placeholder text
 
 The six testimonials on the site are **written by me, not by real clients**.
 They must be replaced before this goes public.
@@ -283,7 +312,7 @@ and I'll put the genuine ones in with their first name and initial.
 
 ---
 
-## 11. The look, and where the site lives
+## 12. The look, and where the site lives
 
 The site has been rebuilt in a quieter, more editorial style — lots of white
 space, cream and white sections alternating, one gold accent used sparingly, and
@@ -313,7 +342,7 @@ you should know:
 
 ---
 
-## 12. Colours
+## 13. Colours
 
 The site now takes its colours straight from your Instagram profile picture. I
 sampled them from the image rather than guessing: the taupe background, the
@@ -337,7 +366,7 @@ single block of settings and takes minutes to change.
 
 ---
 
-## 13. On phones
+## 14. On phones
 
 You mentioned most clients book from their phone, so that's now the main target
 rather than an afterthought. Checked on iPhone SE, 13 mini, 15 Pro, 15 Pro Max,
@@ -369,7 +398,7 @@ work at all.
 
 ---
 
-## 14. Contact and location
+## 15. Contact and location
 
 Currently showing:
 
@@ -382,7 +411,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 15. Cancellation policy
+## 16. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -390,7 +419,7 @@ want the wording different.
 
 ---
 
-## 16. Card payments
+## 17. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -408,7 +437,7 @@ tell me the amount.
 
 ---
 
-## 17. Getting told about bookings
+## 18. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -452,7 +481,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 18. Not built yet
+## 19. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -470,7 +499,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 19. Your dashboard
+## 20. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.
