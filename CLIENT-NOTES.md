@@ -6,25 +6,51 @@ it is all content you or I can change in minutes.
 
 ---
 
-## 1. Instagram content could not be pulled automatically
+## 1. What I now have from your profile — and what is still missing
 
-Instagram blocks automated access, so I could not read your posts, captions,
-comments or photographs directly. What I could confirm from public search
-results is on the site already:
+Instagram blocks automated access, so I could not read your posts directly, but
+the screenshot gave me plenty. **Now taken from your actual profile and used on
+the site:**
 
-- hair extension specialist and stylist, **London**
-- methods: **nano rings, micro rings, tapes, LA weave, invisi-weft**
-- the "**WE DO NOT USE FACEBOOK**" line from your bio, kept in the footer
-- your handle and profile link
+- "Hair Extension Specialist **+ Stylist**" — the headline is now your own wording
+- "London Based."
+- Your methods in your order and your words: **Nano Rings | Tapes | Micro |
+  Weave | Invisi** (I had been calling them tape-ins, LA weave and invisi-weft)
+- "WE DO NOT USE FACEBOOK." — kept in the footer
+- **"BEAUTY. CONFIDENCE. EVERY DAY."** from your services graphic, now under the
+  hero
+- Your **maintenance-essentials post**, which corrected me: maintenance is
+  **every 6–8 weeks**, not the 8–10 I had guessed. The FAQ is now written around
+  your own points — moving the bonds up, taking tension off, protecting against
+  breakage, supporting healthy growth, and staying on top of appointments
+  meaning less work later
+- Your **Styling** highlight and the occasion hair in your grid, so I have added
+  a **Hair Up / Occasion Styling** service — confirm you want to take those
+  bookings online
+- Your **Ombrè** highlight, reflected in the gallery labels
 
-Everything else marked below is my best guess and needs your word.
+**Your website.** Your bio links `www.cecescollectionofficial.com`. It is now
+linked in the footer, but I could not open it from here — the sandbox I am
+working in blocks outbound access to it. **If you send me what is on it** (or
+just the price list and services pages) I can pull the real content across
+instead of the placeholders below. If it also sells hair, we should decide
+whether the booking site links to it for hair purchases.
+
+**Two posts I can see but cannot read:** your **PRICE LIST** and **SERVICES I
+OFFER** graphics. Those are exactly what I need — send me those two images and
+almost everything in section 2 stops being a guess.
 
 ---
 
 ## 2. Prices and timings — please confirm or correct
 
-These are plausible London market figures, **not yours**. You can edit every one
-of them yourself in the dashboard under **Services**, or tell me and I'll set them.
+These are plausible London market figures, **not yours** — I can see you have a
+PRICE LIST post but not read it. Send me that image and I'll replace the lot.
+You can also edit every one yourself in the dashboard under **Services**.
+
+Service names now follow your bio (Tapes, Micro, Weave, Invisi rather than the
+longer technical names). Tell me if you'd rather they read the long way for
+clients who don't know the shorthand.
 
 | Service | Time | Price | Deposit |
 |---|---|---|---|
@@ -32,12 +58,13 @@ of them yourself in the dashboard under **Services**, or tell me and I'll set th
 | Nano rings — full head | 4h | £550 | £100 |
 | Nano rings — half head | 3h | £360 | £75 |
 | Micro rings — full head | 4h | £500 | £100 |
-| Tape-in — full head | 2h | £320 | £75 |
-| LA weave — full head | 3h | £340 | £75 |
-| Invisi-weft — full head | 3h 30m | £620 | £125 |
+| Tapes — full head | 2h | £320 | £75 |
+| Weave — full head | 3h | £340 | £75 |
+| Invisi — full head | 3h 30m | £620 | £125 |
 | Maintenance / refit | 2h 30m | £190 | £50 |
 | Removal | 1h | £60 | £20 |
 | Cut & blow dry | 1h 15m | £55 | £15 |
+| Hair up / occasion styling | 1h 30m | £65 | £20 |
 
 **Durations matter more than you'd think** — they decide how many appointments
 fit in a day, so it's worth getting them honest rather than optimistic.
@@ -247,6 +274,9 @@ notifications.
 ---
 
 ## What I need from you to move to a proper version
+
+**Quickest win: send me your PRICE LIST and SERVICES I OFFER posts, and whatever
+is on cecescollectionofficial.com.** That covers most of this list in one go.
 
 1. Real prices and durations
 2. Your actual working hours

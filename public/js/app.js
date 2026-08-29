@@ -57,12 +57,13 @@ async function api(path, options) {
 function renderStatic() {
   const { brand, services, reviews, gallery, faqs, workingHours } = state.site;
 
-  document.title = `${brand.name.replace(/\b\w/g, (c) => c.toUpperCase())} — ${brand.tagline.toLowerCase()}, ${brand.location.split(',')[0].toLowerCase()}`;
+  document.title = `Hair by Chrissy — ${brand.tagline.toLowerCase()}, london`;
   $('#heroLocation').textContent = brand.location;
   $('#heroIntro').textContent = brand.intro;
   $('#igLink').href = brand.instagram;
 
-  $('#methodStrip').innerHTML = brand.methods.map((m) => `<span>${m}</span>`).join('');
+  $('#methodStrip').innerHTML = brand.methods.map((m) => `<span>${esc(m)}</span>`).join('');
+  if (brand.strapline) $('#strapline').textContent = brand.strapline;
   $('#statMethods').textContent = brand.methods.length;
   $('#statOpen').textContent = Object.values(workingHours).filter((h) => h.open).length;
 
@@ -128,6 +129,9 @@ function renderStatic() {
     ...brand.addressLines.map((l) => `<li>${esc(l)}</li>`),
     brand.email ? `<li><a href="mailto:${esc(brand.email)}">${esc(brand.email)}</a></li>` : '',
     `<li><a href="${esc(brand.instagram)}" target="_blank" rel="noopener">${esc(brand.handle)}</a></li>`,
+    brand.website
+      ? `<li><a href="${esc(brand.website)}" target="_blank" rel="noopener">${esc(brand.websiteLabel || brand.website)}</a></li>`
+      : '',
   ].join('');
   $('#footHours').innerHTML = [1, 2, 3, 4, 5, 6, 0]
     .map((d) => {

@@ -7,8 +7,10 @@ Clients pick a service, see genuine live availability, choose a slot and pay by
 **cash or card**. Chrissy sets her own working days, hours, breaks and time off
 from a private dashboard — and the client calendar updates the moment she saves.
 
-> **This is a draft.** Prices, reviews, photography and contact details are
-> placeholders pending Chrissy's confirmation. See [CLIENT-NOTES.md](CLIENT-NOTES.md).
+> **This is a draft.** Her bio, methods, strapline and maintenance guidance are
+> taken from her actual profile. Prices, reviews, photography and contact
+> details are still placeholders pending her confirmation — see
+> [CLIENT-NOTES.md](CLIENT-NOTES.md).
 
 ---
 
