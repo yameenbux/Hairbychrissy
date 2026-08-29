@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hair by Chrissy — Hair Extension Specialist, London</title>
+<meta name="description" content="Nano rings, micro rings, tapes, LA weave and invisi-weft extensions fitted by hand in a private London studio. Book a live slot online.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><rect x='6' y='5' width='4' height='22' fill='%23e8d5b7'/><rect x='12' y='5' width='4' height='22' fill='%23c9a227'/><rect x='18' y='5' width='4' height='22' fill='%23b76e79'/></svg>">
+</head>
+<body>
+
+<div class="stripe"></div>
+
+<header class="topnav">
+  <div class="shell topnav-inner">
+    <a class="wordmark" href="/">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="name">Hair by Chrissy</span>
+    </a>
+    <nav class="navlinks" id="navlinks">
+      <a href="#services">Services</a>
+      <a href="#work">Work</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#faq">FAQ</a>
+      <a href="#book">Book</a>
+    </nav>
+    <button class="icon-btn nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">☰</button>
+  </div>
+</header>
+
+<!-- ============================================================ HERO -->
+<section class="hero">
+  <div class="hero-photo photo-fallback" id="heroPhoto" aria-hidden="true"></div>
+  <div class="shell">
+    <div class="hero-kicker">
+      <span class="stripe stripe-short" aria-hidden="true"></span>
+      <span class="label label-muted" id="heroLocation">London, UK</span>
+    </div>
+    <h1 class="display-xl">Hair<br>Extension<br>Specialist.</h1>
+    <p class="lede" id="heroIntro">Nano rings, micro rings, tapes, weaves and invisi-wefts, fitted by hand in a private London studio.</p>
+    <div class="hero-actions">
+      <a class="btn btn-solid" href="#book">Book a slot</a>
+      <a class="btn" href="#services">View price list</a>
+    </div>
+    <div class="method-strip" id="methodStrip"></div>
+  </div>
+</section>
+
+<!-- ==================================================== BY THE NUMBERS -->
+<section class="band-tight">
+  <div class="shell">
+    <div class="spec-grid">
+      <div class="spec-cell"><div class="value" id="statMethods">5</div><span class="key">Fitting methods</span></div>
+      <div class="spec-cell"><div class="value" id="statOpen">4</div><span class="key">Days open weekly</span></div>
+      <div class="spec-cell"><div class="value">1:1</div><span class="key">Private studio</span></div>
+      <div class="spec-cell"><div class="value">£0</div><span class="key">Consultation</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== SERVICES -->
+<section class="band band-soft" id="services">
+  <div class="shell">
+    <div class="section-head">
+      <span class="label">01 — Price list</span>
+      <h2 class="display-lg">What I do.</h2>
+      <p class="lede" style="margin-top:var(--md)">Prices are for fitting. The hair itself is quoted separately at your consultation, once we know the length, weight and colour you need.</p>
+    </div>
+    <div id="serviceList"></div>
+    <p class="caption" style="margin-top:var(--lg)">All prices in GBP. A deposit secures your slot when paying by card; cash clients settle in full on the day.</p>
+  </div>
+</section>
+
+<!-- ============================================================ WORK -->
+<section class="band" id="work">
+  <div class="shell">
+    <div class="section-head spread">
+      <div>
+        <span class="label">02 — Recent work</span>
+        <h2 class="display-lg">The portfolio.</h2>
+      </div>
+      <a class="textlink" id="igLink" href="https://www.instagram.com/hairbychrissy_x" target="_blank" rel="noopener">See more on Instagram</a>
+    </div>
+    <div class="grid grid-3" id="galleryGrid"></div>
+  </div>
+</section>
+
+<!-- ============================================================ BOOK -->
+<section class="band band-soft" id="book">
+  <div class="shell">
+    <div class="section-head">
+      <span class="label">03 — Booking</span>
+      <div class="spread">
+        <h2 class="display-lg">Book your slot.</h2>
+        <span class="live-dot" id="liveDot" data-state="connecting">Live availability</span>
+      </div>
+      <p class="lede" style="margin-top:var(--md)">Pick a service, choose a day, take a time. Slots update the moment another client books — nothing here is a request, it is a confirmed appointment.</p>
+    </div>
+
+    <div class="steps" role="tablist" aria-label="Booking steps">
+      <button class="step-tab" role="tab" id="tab-1" data-step="1" aria-selected="true">1 — Service</button>
+      <button class="step-tab" role="tab" id="tab-2" data-step="2" aria-selected="false" disabled>2 — Date &amp; time</button>
+      <button class="step-tab" role="tab" id="tab-3" data-step="3" aria-selected="false" disabled>3 — Your details</button>
+      <button class="step-tab" role="tab" id="tab-4" data-step="4" aria-selected="false" disabled>4 — Payment</button>
+    </div>
+
+    <div class="booking">
+      <div>
+        <!-- STEP 1 -->
+        <div class="step-panel" data-panel="1">
+          <div class="grid" style="gap:var(--xs)" id="servicePicker"></div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-panel" data-panel="2" hidden>
+          <div class="cal-head">
+            <button class="icon-btn" id="prevMonth" aria-label="Previous month">‹</button>
+            <span class="cal-month" id="calMonth">—</span>
+            <button class="icon-btn" id="nextMonth" aria-label="Next month">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid" role="grid" aria-label="Available dates"></div>
+          <div class="cal-legend">
+            <span><i class="swatch swatch-free" aria-hidden="true"></i> Slots free</span>
+            <span><i class="swatch swatch-none" aria-hidden="true"></i> Fully booked or closed</span>
+            <span><i class="swatch swatch-today" aria-hidden="true"></i> Selected</span>
+          </div>
+
+          <div style="margin-top:var(--xl)">
+            <div class="spread" style="margin-bottom:var(--md)">
+              <span class="label" id="slotHeading">Choose a date</span>
+              <span class="caption" id="slotCount"></span>
+            </div>
+            <div class="slots" id="slotGrid"></div>
+            <div id="slotEmpty" class="empty" hidden>Select a date on the calendar above.</div>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-panel" data-panel="3" hidden>
+          <form id="detailsForm" novalidate>
+            <div class="grid grid-2" style="gap:var(--md)">
+              <div class="field">
+                <label for="fName">Full name</label>
+                <input class="input" id="fName" name="name" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="fPhone">Mobile number</label>
+                <input class="input" id="fPhone" name="phone" type="tel" autocomplete="tel" placeholder="07…" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="fEmail">Email</label>
+              <input class="input" id="fEmail" name="email" type="email" autocomplete="email" required>
+              <div class="hint">Your confirmation and the studio address are sent here.</div>
+            </div>
+            <div class="field">
+              <label for="fNotes">Anything I should know? (optional)</label>
+              <textarea class="textarea" id="fNotes" name="notes" placeholder="Current length and colour, previous extensions, allergies, what you're going for…"></textarea>
+            </div>
+            <div class="row" style="margin-top:var(--lg)">
+              <button type="button" class="btn btn-ghost" data-goto="2">Back</button>
+              <button type="submit" class="btn btn-solid">Continue to payment</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step-panel" data-panel="4" hidden>
+          <span class="label" style="display:block;margin-bottom:var(--md)">How would you like to pay?</span>
+          <div class="pay-options">
+            <label class="pay-option">
+              <input type="radio" name="payment" value="cash" checked>
+              <span class="t">Cash — pay in studio</span>
+              <span class="s" id="cashCopy">Nothing taken now. Your slot is held and you pay the full amount on the day.</span>
+            </label>
+            <label class="pay-option">
+              <input type="radio" name="payment" value="card">
+              <span class="t">Card — pay deposit now</span>
+              <span class="s" id="cardCopy">A deposit secures your slot online. The balance is paid on the day.</span>
+            </label>
+          </div>
+
+          <div class="notice" id="payNote" style="margin-top:var(--lg)"></div>
+
+          <div id="bookError" class="notice notice-error" style="margin-top:var(--md)" hidden></div>
+
+          <div class="row" style="margin-top:var(--lg)">
+            <button type="button" class="btn btn-ghost" data-goto="3">Back</button>
+            <button type="button" class="btn btn-solid" id="confirmBtn">Confirm booking</button>
+          </div>
+          <p class="caption" style="margin-top:var(--md)" id="cancelPolicy"></p>
+        </div>
+      </div>
+
+      <!-- SUMMARY RAIL -->
+      <aside class="summary">
+        <div class="stripe" aria-hidden="true"></div>
+        <div class="inner">
+          <h3>Your appointment</h3>
+          <dl>
+            <dt>Service</dt><dd id="sumService">—</dd>
+            <dt>Date</dt><dd id="sumDate">—</dd>
+            <dt>Time</dt><dd id="sumTime">—</dd>
+            <dt>Duration</dt><dd id="sumDuration">—</dd>
+          </dl>
+          <div class="total">
+            <dl>
+              <dt>Total</dt><dd class="amount" id="sumTotal">—</dd>
+            </dl>
+            <dl style="margin-top:var(--xs)">
+              <dt>Due now</dt><dd id="sumDueNow">£0</dd>
+              <dt>Due on the day</dt><dd id="sumDueLater">—</dd>
+            </dl>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= REVIEWS -->
+<section class="band" id="reviews">
+  <div class="shell">
+    <div class="section-head">
+      <span class="label">04 — Clients</span>
+      <h2 class="display-lg">What they say.</h2>
+    </div>
+    <div class="grid grid-3" id="reviewGrid"></div>
+  </div>
+</section>
+
+<!-- ============================================================= FAQ -->
+<section class="band band-soft" id="faq">
+  <div class="shell">
+    <div class="section-head">
+      <span class="label">05 — Questions</span>
+      <h2 class="display-lg">Before you book.</h2>
+    </div>
+    <div class="faq" id="faqList"></div>
+  </div>
+</section>
+
+<!-- ========================================================== FOOTER -->
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-cols">
+      <div>
+        <a class="wordmark" href="/" style="margin-bottom:var(--md)">
+          <span class="mark" aria-hidden="true"></span>
+          <span class="name">Hair by Chrissy</span>
+        </a>
+        <p class="body-sm" id="footNotice"></p>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul id="footServices"></ul>
+      </div>
+      <div>
+        <h4>Studio</h4>
+        <ul id="footStudio"></ul>
+      </div>
+      <div>
+        <h4>Opening hours</h4>
+        <ul id="footHours"></ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="caption" id="footCopy"></span>
+      <span class="caption"><a href="/admin">Stylist login</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js" type="module"></script>
+</body>
+</html>
