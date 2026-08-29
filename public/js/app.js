@@ -175,8 +175,20 @@ function goto(step) {
   $$('.step-tab').forEach((t) => t.setAttribute('aria-selected', String(Number(t.dataset.step) === step)));
   $$('.step-panel').forEach((p) => { p.hidden = Number(p.dataset.panel) !== step; });
   unlockTabs();
-  const anchor = document.getElementById('book');
-  if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Lets the stylesheet react to which step is open — on a phone the full
+  // summary rail only earns its space at the payment step.
+  document.body.dataset.step = String(step);
+
+  // Scroll to the step tabs, not the section heading. On a phone the heading
+  // and intro fill the screen, so landing there means the client still has to
+  // scroll to find the controls they just asked for.
+  const anchor = document.querySelector('.steps') || document.getElementById('book');
+  if (anchor) anchor.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' });
+}
+
+/** Respect the OS "reduce motion" setting for every scripted scroll. */
+function motionOK() {
+  return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function unlockTabs() {
@@ -360,6 +372,15 @@ function renderSlots(slots) {
   }
 
   empty.hidden = true;
+
+  // A phone shows the calendar full-height, so the times that just appeared
+  // are below the fold. Bring them up rather than leaving the client to guess.
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    requestAnimationFrame(() => {
+      $('#slotHeading')?.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' });
+    });
+  }
+
   grid.innerHTML = slots
     .map(
       (s) => `
@@ -521,6 +542,35 @@ function updateSummary() {
   $('#sumDueNow').textContent = deposit ? money(deposit) : 'Nothing now';
   const later = s ? s.price - deposit : null;
   $('#sumDueLater').textContent = s ? (later ? money(later) : 'Nothing') : '—';
+
+  updateMobileSummary(deposit);
+}
+
+/**
+ * The pinned running total on phones. The summary rail sits after the form in
+ * the source, so on a narrow screen a client would otherwise scroll past every
+ * control before seeing what they are about to pay.
+ */
+function updateMobileSummary(deposit) {
+  const bar = $('#mobileSummary');
+  const s = state.service;
+  if (!bar) return;
+
+  const show = Boolean(s);
+  bar.dataset.shown = String(show);
+  // Reserve the space only while the bar is up, so it never covers a control.
+  document.body.dataset.summary = String(show);
+  if (!show) return;
+
+  $('#msService').textContent = s.name;
+  $('#msWhen').textContent = state.slot && state.date
+    ? `${prettyDate(state.date)} · ${state.slot.start}`
+    : state.date
+      ? `${prettyDate(state.date)} · pick a time`
+      : 'Choose a date and time';
+
+  $('#msTotal').firstChild.nodeValue = money(s.price);
+  $('#msDue').textContent = deposit ? `${money(deposit)} deposit now` : 'nothing to pay now';
 }
 
 /* ------------------------------------------------------------ live feed */

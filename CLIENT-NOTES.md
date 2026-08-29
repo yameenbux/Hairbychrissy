@@ -91,7 +91,39 @@ single block of settings and takes minutes to change.
 
 ---
 
-## 6. Photography
+## 6. On phones
+
+You mentioned most clients book from their phone, so that's now the main target
+rather than an afterthought. Checked on iPhone SE, 13 mini, 15 Pro, 15 Pro Max,
+a Pixel and a narrow Android — the booking flow works on all of them.
+
+What changed for your clients:
+
+- Everything is big enough to tap properly. A lot of things weren't.
+- The calendar goes edge to edge, so the days are comfortable to hit even on a
+  small phone.
+- A bar stays at the bottom of the screen showing what they've picked and what
+  it costs, so they never lose track of the price while scrolling.
+- After they pick a day, the times scroll into view by themselves — before, they
+  appeared further down and it looked like nothing had happened.
+- The right keyboard comes up for each box (number pad for the phone number,
+  email keyboard for the email).
+- The form no longer makes iPhones zoom in when a client taps a box, which used
+  to leave them stuck sideways halfway through booking.
+
+**And one thing that was properly broken:** on a phone, your dashboard menu was
+invisible with no way to open it. You could sign in and then reach nothing — not
+your hours, not your prices, not the Alerts page. That's fixed; there's a menu
+button in the corner now.
+
+**Worth doing:** open the site on your phone and add it to your Home Screen
+(Share → Add to Home Screen). It then behaves like a proper app, with your logo
+as the icon — and on an iPhone that's the only way notifications are allowed to
+work at all.
+
+---
+
+## 7. Photography
 
 Every photo slot is currently a styled placeholder. Send me:
 
@@ -103,7 +135,7 @@ placeholders sit there without breaking anything.
 
 ---
 
-## 7. Contact and location
+## 8. Contact and location
 
 Currently showing:
 
@@ -116,7 +148,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 8. Cancellation policy
+## 9. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -124,7 +156,7 @@ want the wording different.
 
 ---
 
-## 9. Card payments
+## 10. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -141,7 +173,7 @@ everyone, or from nobody, say so — it's a small change.
 
 ---
 
-## 10. Getting told about bookings
+## 11. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -185,7 +217,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 11. Not built yet
+## 12. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -201,7 +233,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 12. Your dashboard
+## 13. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.

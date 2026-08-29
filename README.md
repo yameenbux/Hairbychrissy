@@ -168,6 +168,58 @@ Saving hours or time off pushes straight to any client with the page open.
 
 ---
 
+## Mobile
+
+Most of Chrissy's clients book from a phone, so the phone is the primary target
+rather than an adaptation. Everything below is enforced by
+`tools/mobile-audit.js`, which walks the whole booking flow and the dashboard on
+six real handset sizes — iPhone SE through 15 Pro Max, Pixel 7 and a 360px
+Galaxy S8 — and exits non-zero on any finding:
+
+```bash
+npm start &
+npm run audit:mobile
+```
+
+It checks three things that actually break a booking on a handset:
+
+- **Tap targets under 44×44.** Apple's HIG minimum. Sizing is applied by
+  `@media (pointer: coarse)` rather than screen width, so a touch tablet gets it
+  too.
+- **Inputs under 16px.** Below that, iOS Safari zooms the page the moment a
+  field is focused and leaves the client scrolled sideways mid-form.
+- **Horizontal overflow**, page-level and per element.
+
+### What the phone gets
+
+- **The calendar runs edge to edge.** Boxed inside the normal gutter, a 360px
+  handset gave 43px cells — under the minimum. Full bleed gives ~50px.
+- **A pinned running total.** The summary rail sits after the form in the
+  source, so on a narrow screen a client would scroll past every control before
+  seeing the price. The bar appears the moment a service is chosen; the full
+  rail is suppressed until the payment step, where its deposit breakdown earns
+  the space.
+- **Times scroll themselves into view** once a date is picked — otherwise they
+  appear below the fold and the tap looks like it did nothing.
+- **Step navigation scrolls to the tabs, not the section heading**, which on a
+  phone fills the screen with an intro the client has already read.
+- **No stuck hover states.** A phone has no hover but does leave `:hover`
+  applied after a tap — on a slot or calendar cell that reads as a selection the
+  client never made. Every hover-only rule is gated behind
+  `(hover: hover) and (pointer: fine)`.
+- **Correct keyboards**, via `inputmode` and `autocomplete` rather than `type`
+  alone, which Android does not always honour.
+- **Safe areas.** `viewport-fit=cover` plus `env(safe-area-inset-*)` on the
+  gutters, footer and pinned bar, so nothing hides under a notch or the home
+  indicator. The hero uses `dvh` so the iOS URL bar collapsing does not crop it.
+
+### Home screen
+
+The site ships a web app manifest and Apple touch icons taken from Chrissy's own
+logo, so it installs to the Home Screen as a standalone app. That is worth
+having on its own — and on iOS it is also the **precondition for push
+notifications**, which Safari only permits for an installed site.
+
 ## Design
 
 The structure follows the supplied BMW M design analysis; the colours come from
@@ -265,9 +317,11 @@ public/
   js/app.js            booking flow
   js/admin.js          dashboard
   sw.js                service worker (push notifications)
+  manifest.webmanifest home-screen install (and the iOS push precondition)
   images/logo.jpg      the profile mark the palette is sampled from
 tools/
   contrast-audit.js    WCAG AA check across every page and state
+  mobile-audit.js      tap targets, iOS zoom traps and overflow, six handsets
 data/db.json           created on first run; gitignored
 ```
 

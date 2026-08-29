@@ -61,12 +61,43 @@ function showLogin() {
   $('#loginView').hidden = false;
   $('#app').hidden = true;
   $('#adminNav').hidden = true;
+  $('#adminNavToggle').hidden = true;
+  closeNav();
 }
+
+/* ------------------------------------------------------------ mobile nav */
+
+/**
+ * The dashboard nav collapses to a sheet on narrow screens. Without this it
+ * was simply unreachable on a phone — no hours, no services, no alerts, no way
+ * to sign out.
+ */
+function closeNav() {
+  $('#adminNav').classList.remove('open');
+  $('#adminNavToggle').setAttribute('aria-expanded', 'false');
+}
+
+$('#adminNavToggle').addEventListener('click', () => {
+  const open = $('#adminNav').classList.toggle('open');
+  $('#adminNavToggle').setAttribute('aria-expanded', String(open));
+});
+
+// Tapping a section closes the sheet, so the content is visible immediately.
+$$('#adminNav a').forEach((a) => a.addEventListener('click', closeNav));
+
+// Escape closes it, and so does growing past the breakpoint.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeNav();
+});
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) closeNav();
+});
 
 async function showApp() {
   $('#loginView').hidden = true;
   $('#app').hidden = false;
   $('#adminNav').hidden = false;
+  $('#adminNavToggle').hidden = false;
   await refresh();
   await loadAlerts().catch(() => {});
   setView(state.view);

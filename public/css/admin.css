@@ -107,7 +107,9 @@
   border: 1px solid var(--hairline); background: transparent; color: var(--danger);
   cursor: pointer; font-size: 18px; font-family: var(--font);
 }
-.svc-remove:hover { border-color: var(--danger); }
+@media (hover: hover) and (pointer: fine) {
+  .svc-remove:hover { border-color: var(--danger); }
+}
 
 @media (max-width: 900px) {
   .hours-row { grid-template-columns: 1fr 1fr; }
@@ -163,4 +165,37 @@
 
 @media (max-width: 768px) {
   .alert-banner .alert-inner { flex-direction: column; align-items: flex-start; }
+}
+
+
+/* ======================================================= TOUCH DEVICES
+   Chrissy runs this from her phone between clients, so the dashboard gets the
+   same 44px treatment as the client site.
+   ==================================================================== */
+
+@media (pointer: coarse), (max-width: 900px) {
+  /* These sat at 40px and 15px respectively. */
+  .appt .actions .btn-sm { min-height: 44px; }
+  .hours-row input[type='time'],
+  .svc-row .input { font-size: 16px; min-height: 48px; }
+  .blocked-row .btn-sm,
+  .channel-row .btn-sm,
+  .device-row .btn-sm { min-height: 44px; }
+  .svc-remove { min-height: 48px; }
+  /* The label is the tap target, not the hidden checkbox — the padding that
+     aligns it with the time fields left it 2px short. */
+  .toggle { min-height: 44px; align-items: center; padding-bottom: 0; }
+  .hours-row .dayname { padding-bottom: 0; }
+  .toggle .track { width: 52px; height: 30px; }
+  .toggle .track::after { width: 24px; height: 24px; }
+  .toggle input:checked + .track::after { transform: translateX(22px); }
+}
+
+@media (max-width: 768px) {
+  /* Actions stack under the appointment rather than squeezing beside it. */
+  .appt .actions { width: 100%; }
+  .appt .actions .btn-sm { flex: 1 1 0; }
+  .alert-banner { padding-bottom: var(--xs); }
+  .alert-banner .alert-inner { padding: var(--sm) var(--md); }
+  .view { padding-bottom: max(var(--xl), env(safe-area-inset-bottom)); }
 }

@@ -9,7 +9,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "reset": "rm -f data/db.json && echo 'database reset'",
-    "audit:contrast": "node tools/contrast-audit.js"
+    "audit:contrast": "node tools/contrast-audit.js",
+    "audit:mobile": "node tools/mobile-audit.js"
   },
   "dependencies": {}
 }

@@ -42,7 +42,7 @@ self.addEventListener('push', (event) => {
       await self.registration.showNotification(detail.title, {
         body: detail.body,
         icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        badge: '/badge-96.png',
         tag: 'hbc-booking',
         renotify: true,
         requireInteraction: true,

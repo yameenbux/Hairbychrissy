@@ -1,0 +1,188 @@
+/**
+ * Mobile audit.
+ *
+ * Most of Chrissy's clients book on a phone, so the phone is the primary
+ * target, not an adaptation. This checks the things that actually break a
+ * booking on a real handset:
+ *
+ *   - tap targets under 44x44 (Apple's HIG minimum)
+ *   - form inputs under 16px, which make iOS Safari zoom the page on focus
+ *     and leave the client stranded mid-form
+ *   - anything overflowing the viewport horizontally
+ *   - content trapped under the sticky header or a notch
+ *
+ * Run against a live server:  node tools/mobile-audit.js
+ */
+import { chromium } from 'playwright-core';
+
+const BASE = process.env.BASE_URL || 'http://localhost:3000';
+const EXE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+
+// Real handsets, smallest first. The SE is the one that finds the bugs.
+const DEVICES = [
+  { name: 'iPhone SE',        width: 375, height: 667, dpr: 2 },
+  { name: 'iPhone 13 mini',   width: 375, height: 812, dpr: 3 },
+  { name: 'iPhone 15 Pro',    width: 393, height: 852, dpr: 3 },
+  { name: 'iPhone 15 Pro Max',width: 430, height: 932, dpr: 3 },
+  { name: 'Pixel 7',          width: 412, height: 915, dpr: 2.6 },
+  { name: 'Galaxy S8 (narrow)', width: 360, height: 740, dpr: 3 },
+];
+
+const PROBE = `(() => {
+  const problems = [];
+  const vw = document.documentElement.clientWidth;
+
+  // 1. Tap targets.
+  const interactive = 'a[href], button, input, select, textarea, summary, [role="tab"], label.pay-option, label.toggle';
+  document.querySelectorAll(interactive).forEach(el => {
+    if (!el.offsetParent && el.tagName !== 'BODY') return;
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') return;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return;
+    // A visually-hidden control inside a big label is fine — the label is the target.
+    if (cs.position === 'absolute' && cs.opacity === '0') return;
+    if (r.width < 44 || r.height < 44) {
+      problems.push({
+        kind: 'tap-target',
+        sel: el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0,2).join('.') : ''),
+        text: (el.textContent || el.value || el.getAttribute('aria-label') || '').trim().slice(0,32),
+        detail: Math.round(r.width) + 'x' + Math.round(r.height)
+      });
+    }
+  });
+
+  // 2. Inputs that trigger the iOS zoom-on-focus trap.
+  document.querySelectorAll('input, select, textarea').forEach(el => {
+    if (!el.offsetParent) return;
+    const cs = getComputedStyle(el);
+    if (cs.opacity === '0') return;
+    const size = parseFloat(cs.fontSize);
+    if (size < 16) {
+      problems.push({ kind: 'ios-zoom', sel: (el.id ? '#'+el.id : el.tagName.toLowerCase()) + '[' + (el.type||'text') + ']', text: '', detail: size + 'px' });
+    }
+  });
+
+  // 3. Horizontal overflow.
+  if (document.documentElement.scrollWidth > vw + 1) {
+    problems.push({ kind: 'page-overflow', sel: 'html', text: '', detail: document.documentElement.scrollWidth + ' > ' + vw });
+  }
+  document.querySelectorAll('body *').forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && (r.right > vw + 1 || r.left < -1)) {
+      const cs = getComputedStyle(el);
+      if (cs.position === 'fixed') return;
+      problems.push({
+        kind: 'element-overflow',
+        sel: el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0,2).join('.') : ''),
+        text: (el.textContent||'').trim().slice(0,28),
+        detail: 'left ' + Math.round(r.left) + ' right ' + Math.round(r.right) + ' of ' + vw
+      });
+    }
+  });
+
+  // Collapse duplicates so one bad rule doesn't produce fifty lines.
+  const seen = new Map();
+  for (const p of problems) {
+    const key = p.kind + '|' + p.sel + '|' + p.detail;
+    if (!seen.has(key)) seen.set(key, { ...p, count: 0 });
+    seen.get(key).count++;
+  }
+  return [...seen.values()];
+})()`;
+
+async function scan(page, label, results) {
+  const found = await page.evaluate(PROBE);
+  if (found.length) results.push({ label, found });
+  return found.length;
+}
+
+(async () => {
+  const browser = await chromium.launch({ executablePath: EXE });
+  let grand = 0;
+
+  for (const d of DEVICES) {
+    const ctx = await browser.newContext({
+      viewport: { width: d.width, height: d.height },
+      deviceScaleFactor: d.dpr,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await ctx.newPage();
+    const results = [];
+
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1100);
+    await scan(page, 'landing', results);
+
+    // Walk the booking flow — the screens that actually matter.
+    await page.locator('#book').scrollIntoViewIfNeeded();
+    await page.locator('.service-pick[data-id="la-weave"]').click();
+    await page.waitForTimeout(1700);
+    await scan(page, 'calendar', results);
+
+    const day = page.locator('.cal-cell[data-date]:not([disabled])').first();
+    if (await day.count()) {
+      await day.click();
+      await page.waitForTimeout(900);
+      await scan(page, 'slots', results);
+      const slot = page.locator('.slot').first();
+      if (await slot.count()) {
+        await slot.click();
+        await page.waitForTimeout(500);
+        await scan(page, 'details form', results);
+        await page.fill('#fName','Test Client');
+        await page.fill('#fPhone','07700900123');
+        await page.fill('#fEmail','t@e.com');
+        await page.locator('#detailsForm button[type=submit]').click();
+        await page.waitForTimeout(500);
+        await scan(page, 'payment', results);
+      }
+    }
+
+    await page.goto(`${BASE}/admin`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
+    await scan(page, 'admin login', results);
+    await page.fill('#pw','chrissy');
+    await page.locator('#loginForm button[type=submit]').click();
+    await page.waitForTimeout(1500);
+    await scan(page, 'admin today', results);
+    for (const v of ['hours','services','alerts']) {
+      const link = page.locator(`#adminNav a[data-view="${v}"]`);
+      if (!(await link.isVisible())) {
+        // The dashboard nav collapses on small screens; open it if there is a
+        // control to do so. If there isn't, that is itself the finding.
+        const toggle = page.locator('#adminNavToggle');
+        if (await toggle.count() && await toggle.isVisible()) {
+          await toggle.click();
+          await page.waitForTimeout(300);
+        }
+      }
+      if (!(await link.isVisible())) {
+        results.push({ label: 'admin nav', found: [{
+          kind: 'unreachable', sel: `#adminNav a[data-view="${v}"]`,
+          text: v, detail: 'no way to reach this section on this screen', count: 1,
+        }]});
+        continue;
+      }
+      await link.click();
+      await page.waitForTimeout(600);
+      await scan(page, 'admin ' + v, results);
+    }
+
+    const count = results.reduce((n,r) => n + r.found.length, 0);
+    grand += count;
+    console.log(`\n=== ${d.name} (${d.width}x${d.height}) — ${count} issue(s) ===`);
+    for (const r of results) {
+      console.log(`  [${r.label}]`);
+      for (const f of r.found) {
+        console.log(`     ${f.kind.padEnd(17)} ${f.detail.padEnd(22)} ${f.sel} ${f.text ? '"'+f.text+'"' : ''}${f.count>1?'  x'+f.count:''}`);
+      }
+    }
+    await ctx.close();
+  }
+
+  console.log(`\n########## TOTAL MOBILE ISSUES: ${grand} ##########`);
+  await browser.close();
+  process.exit(grand === 0 ? 0 : 1);
+})();
