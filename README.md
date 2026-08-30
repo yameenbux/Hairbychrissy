@@ -50,8 +50,13 @@ to an enquiry rather than pretending to hold a slot it cannot.
 
 ### Configuring Pages — one setting
 
-`.github/workflows/pages.yml` publishes `public/` on every push. It needs one
-change, once:
+`.github/workflows/pages.yml` publishes `public/` on every push **to `main`**.
+One publisher only: it used to fire on a feature branch too, and both deploy to
+the same Pages site, so whichever pushed last was the site you got. To preview
+a branch before merging, run the workflow by hand from the Actions tab and pick
+it there.
+
+It needs one change, once:
 
 > **Settings → Pages → Build and deployment → Source: `GitHub Actions`**
 

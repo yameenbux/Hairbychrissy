@@ -933,7 +933,10 @@ async function submitBooking() {
       window.location.href = result.checkoutUrl;
       return;
     }
-    window.location.href = `./confirmed?ref=${encodeURIComponent(result.booking.ref)}`;
+    // .html on purpose. The extensionless form only resolves under Node, and
+    // the client site is published as flat files — so a real client would have
+    // booked successfully and landed on a 404.
+    window.location.href = `./confirmed.html?ref=${encodeURIComponent(result.booking.ref)}`;
   } catch (err) {
     errBox.textContent = err.message;
     errBox.hidden = false;

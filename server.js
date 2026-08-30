@@ -573,7 +573,10 @@ async function createBooking(req, res) {
   return json(res, 201, {
     booking: publicBooking(booking),
     next: 'checkout',
-    checkoutUrl: `/pay-demo?ref=${booking.ref}`,
+    // Relative and with the extension, so it resolves on a static host as
+    // well as under Node. Root-absolute sent the client to the SITE origin's
+    // /pay-demo, which does not exist once the two are split across hosts.
+    checkoutUrl: `./pay-demo.html?ref=${booking.ref}`,
     demo: true,
     uploadToken: booking.uploadToken,
   });

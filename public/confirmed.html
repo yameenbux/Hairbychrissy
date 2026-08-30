@@ -35,6 +35,21 @@
 </section>
 
 <script>
+/*
+ * Where the API lives. Identical rule to js/app.js, because this page is
+ * standalone and does not load it.
+ *
+ * It was a root-absolute "/api/..." until now, which is only correct when the
+ * site and the API share an origin. Published to GitHub Pages with the API on
+ * another host, it asked the STATIC SITE for the booking — and got a 404. The
+ * client had booked; the page that tells them so could not say it.
+ */
+const API = (() => {
+  const meta = document.querySelector('meta[name="hbc-api"]');
+  if (meta?.content) return meta.content.replace(/\/$/, '');
+  return new URL('.', location.href).href.replace(/\/$/, '');
+})();
+
 const params = new URLSearchParams(location.search);
 const ref = (params.get('ref') || sessionStorage.getItem('hbc_last_ref') || '').toUpperCase();
 const out = document.getElementById('out');
@@ -44,7 +59,7 @@ const money = (n) => n === 0 ? 'Nothing to pay' : '£' + Number(n).toLocaleStrin
 if (!ref) {
   out.innerHTML = '<div class="notice notice-error">No booking reference supplied. <a class="link-underline" href="./">Back to booking</a></div>';
 } else {
-  fetch('/api/bookings/' + encodeURIComponent(ref))
+  fetch(API + '/api/bookings/' + encodeURIComponent(ref))
     .then(r => r.json().then(d => { if (!r.ok) throw new Error(d.error || 'Not found'); return d; }))
     .then(render)
     .catch(err => {

@@ -28,10 +28,18 @@
 
 name: Deploy site to GitHub Pages
 
+# ONE publisher, on purpose.
+#
+# This used to fire on a feature branch as well as main, and both deploy to the
+# same Pages site — so whichever pushed last was the site you got, and a
+# refresh could flip between two different versions. Combined with the Jekyll
+# branch build, that is what served the README instead of the home page.
+#
+# Work on a branch, merge it, and main publishes. To preview a branch before
+# merging, run this workflow by hand from the Actions tab and pick it there.
 on:
   push:
     branches:
-      - claude/beauty-booking-platform-ppwhet
       - main
   workflow_dispatch:
 
@@ -44,6 +52,21 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
+
+# Where the published pages send their booking requests.
+#
+# A committed default rather than a required setting, because a site that
+# silently cannot take a booking is the worst of the available outcomes and
+# that is what an unset variable produced. The HBC_API repository variable
+# still wins if it is set, so moving the API to another host is a settings
+# change and not a commit.
+#
+# Safe to have in a public repository: it is an address, and every visitor's
+# browser sends requests to it in the clear. It deliberately does NOT live in
+# the HTML in the repo — the tag is injected at build time only, so `npm start`
+# on a laptop keeps talking to its own local server rather than to production.
+env:
+  HBC_API: ${{ vars.HBC_API || 'https://hairbychrissy-api.onrender.com' }}
 
 jobs:
   build:
@@ -64,7 +87,7 @@ jobs:
       # calendar works from Pages. Set the HBC_API repository variable to the
       # API's base URL. Without it the page runs in enquiry mode.
       - name: Point at hosted booking API
-        if: ${{ vars.HBC_API != '' }}
+        if: env.HBC_API != ''
         run: |
           python3 - <<'PY'
           import os, pathlib
@@ -73,18 +96,50 @@ jobs:
           # book.html matters most of the three: it carries the calendar.
           # Leaving it out would point the home page at the live API while the
           # booking page itself stayed in enquiry mode.
-          for name in ('index.html', 'book.html', 'confirmed.html'):
+          # Every page that talks to the API. confirmed.html and pay-demo.html
+          # look up a booking, so they need the base too — they were missed
+          # while their fetches were still root-absolute.
+          for name in ('index.html', 'book.html', 'confirmed.html', 'pay-demo.html'):
               p = pathlib.Path('public') / name
               if not p.exists():
                   continue
               html = p.read_text()
-              if 'name="hbc-api"' not in html:
+              # The OPENING TAG, not just the attribute. confirmed.html and
+              # pay-demo.html contain meta[name="hbc-api"] in their own lookup
+              # code, so a looser test reads them as already tagged and skips
+              # them - which is the page a client lands on after booking.
+              if '<meta name="hbc-api"' not in html:
                   html = html.replace('</head>', f'{tag}\n</head>', 1)
                   p.write_text(html)
                   print(f'{name}: pointed at {api}')
           PY
-        env:
-          HBC_API: ${{ vars.HBC_API }}
+
+      # Say which of the two sites was just built.
+      #
+      # Without this the difference is invisible: the API step is skipped when
+      # HBC_API is unset, every other step succeeds, and a green tick publishes
+      # a site that cannot take a booking. That is how the calendar stayed in
+      # enquiry mode with nothing anywhere reporting a problem.
+      - name: Report what was published
+        run: |
+          if [ -n "${HBC_API}" ]; then
+            missing=""
+            for f in index.html book.html confirmed.html pay-demo.html; do
+              grep -q '<meta name="hbc-api"' "public/$f" || missing="$missing $f"
+            done
+            if [ -n "$missing" ]; then
+              echo "::error::HBC_API is set but the tag did not reach:$missing"
+              exit 1
+            fi
+            echo "### Published with LIVE BOOKING" >> "$GITHUB_STEP_SUMMARY"
+            echo "Calendar talks to \`${HBC_API}\`." >> "$GITHUB_STEP_SUMMARY"
+            echo "==> LIVE BOOKING against ${HBC_API}"
+          else
+            echo "### Published in ENQUIRY MODE" >> "$GITHUB_STEP_SUMMARY"
+            echo "No booking API is configured, so the calendar is not shown and visitors are asked to message instead." >> "$GITHUB_STEP_SUMMARY"
+            echo "To switch it on: **Settings -> Secrets and variables -> Actions -> Variables**, add \`HBC_API\` with the API's base URL, then re-run this workflow." >> "$GITHUB_STEP_SUMMARY"
+            echo "==> ENQUIRY MODE — no HBC_API variable set, so the site cannot take bookings"
+          fi
 
       # Jekyll would otherwise skip files and folders beginning with an
       # underscore.
