@@ -1184,7 +1184,27 @@ via Google Fonts.
 6. Have Chrissy open `/admin` on her phone and turn on alerts.
 7. Back up `data/db.json` (it holds bookings, hours and the push keys).
 
-Confirmation **emails to the client are not wired up** in this draft — bookings
-are recorded, Chrissy is alerted, and everything is visible in the dashboard, but
-the client themselves gets no email yet. That is the first thing to add once the
-content is signed off; the email plumbing already exists in `lib/notify.js`.
+### The client's own confirmation
+
+A client who books now gets their own email — service, date, time, what to pay,
+their reference, and the notice period. Before this they had a confirmation
+page and nothing they could keep, so three weeks later there was no reference
+to check and no time to re-read, and they messaged her to ask: the work the
+booking system exists to remove.
+
+Three rules it follows:
+
+- **Only for a booking that is actually confirmed.** A card booking waiting on
+  payment is not, and telling someone they are booked when the slot may still
+  lapse is worse than telling them nothing.
+- **It can never cost a booking.** Sent after the slot is theirs and never
+  awaited, so a mail outage cannot delay or fail a booking. Verified: with the
+  mail host unreachable the booking still succeeded and the failure was logged
+  against the reference.
+- **It invents nothing.** The studio address is deliberately not public and
+  this app has never been given it, so the email says she will send it rather
+  than guessing at one. It carries no dashboard link either — that is hers.
+
+It needs `RESEND_API_KEY`, and `NOTIFY_EMAIL_FROM` on a domain verified in
+Resend. Set `NOTIFY_REPLY_TO` as well, so a client hitting reply reaches a
+person rather than the void.
