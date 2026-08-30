@@ -639,11 +639,11 @@ async function handleAdminApi(req, res, url) {
     if (!checkPassword(password)) {
       return json(res, 401, { error: 'Incorrect password.' });
     }
-    return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(makeToken()) });
+    return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(makeToken(), req) });
   }
 
   if (p === '/api/admin/logout' && req.method === 'POST') {
-    return json(res, 200, { ok: true }, { 'Set-Cookie': clearCookie() });
+    return json(res, 200, { ok: true }, { 'Set-Cookie': clearCookie(req) });
   }
 
   if (p === '/api/admin/session' && req.method === 'GET') {
