@@ -3,8 +3,23 @@
 # ONE SETTING IS REQUIRED, once:
 #   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
 #
-# With that set, every push to the branch below republishes the site. Nothing
-# else is needed — no gh-pages branch, no /docs folder.
+# THIS IS NOT OPTIONAL, and getting it wrong has a confusing symptom. With the
+# source set to "Deploy from a branch", GitHub ALSO runs its own Jekyll build
+# ("pages-build-deployment") over the REPOSITORY ROOT. The root has no
+# index.html, and Jekyll falls back to rendering README.md as the home page —
+# so visitors intermittently get a technical document instead of the site,
+# depending on which of the two publishers deployed last.
+#
+# If that happens, check Actions for runs of "pages-build-deployment". Any at
+# all means the source is still set to a branch.
+#
+# With it set correctly, every push to the branch below republishes the site.
+# Nothing else is needed — no gh-pages branch, no /docs folder.
+#
+# The custom domain lives at public/CNAME, because this workflow publishes
+# public/ and nothing outside it. The CNAME at the repository root is only
+# read by the Jekyll build above, so relying on that one would drop the domain
+# on every deploy from here.
 #
 # What gets published is public/ — the same files the Node app serves, so the
 # two never drift. The booking API cannot run on Pages, so the published page

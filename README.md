@@ -1,12 +1,12 @@
 # H A I R • B Y • C H R I S S Y — booking platform
 
-[![View the live site](https://img.shields.io/badge/View_the_live_site-33261c?style=for-the-badge)](https://yameenbux.github.io/Hairbychrissy/)
+[![View the live site](https://img.shields.io/badge/View_the_live_site-33261c?style=for-the-badge)](https://hairbychrissy.ysbdesigns.uk/)
 &nbsp;
-[![Book a slot](https://img.shields.io/badge/Book_a_slot-a98744?style=for-the-badge)](https://yameenbux.github.io/Hairbychrissy/book.html)
+[![Book a slot](https://img.shields.io/badge/Book_a_slot-a98744?style=for-the-badge)](https://hairbychrissy.ysbdesigns.uk/book.html)
 
-[![The Hair by Chrissy home page](docs/preview-home.jpg)](https://yameenbux.github.io/Hairbychrissy/)
+[![The Hair by Chrissy home page](docs/preview-home.jpg)](https://hairbychrissy.ysbdesigns.uk/)
 
-**Live at [yameenbux.github.io/Hairbychrissy](https://yameenbux.github.io/Hairbychrissy/)** — no install, no sign-in.
+**Live at [hairbychrissy.ysbdesigns.uk](https://hairbychrissy.ysbdesigns.uk/)** — no install, no sign-in.
 
 A live-calendar booking site for [@hairbychrissy_x](https://www.instagram.com/hairbychrissy_x),
 hair extension specialist, London.
@@ -40,7 +40,7 @@ There are two deployments, and they are not interchangeable:
 
 | | What it serves | Where |
 |---|---|---|
-| **GitHub Pages** | the site as flat files | [yameenbux.github.io/Hairbychrissy](https://yameenbux.github.io/Hairbychrissy/) |
+| **GitHub Pages** | the site as flat files | [hairbychrissy.ysbdesigns.uk](https://hairbychrissy.ysbdesigns.uk/) |
 | **Node** | the same site **plus the booking API** | any host that runs Node |
 
 **GitHub Pages cannot run the booking engine.** Live availability, the event
@@ -59,6 +59,42 @@ No `gh-pages` branch and no `/docs` folder — the workflow uploads the same
 `public/` the Node app serves, so the two cannot drift. It regenerates
 `public/data/site.json` on every deploy, so the published content always matches
 `lib/seed.js`.
+
+#### If the site sometimes shows the README
+
+That one setting is the cause, and the symptom is intermittent, which makes it
+hard to place. With the source set to **"Deploy from a branch"**, GitHub also
+runs its own Jekyll build — `pages-build-deployment` — over the **repository
+root**. The root has no `index.html`, and Jekyll falls back to rendering
+`README.md` as the home page.
+
+So two publishers are writing to one site:
+
+| Publisher | Builds | Result |
+|---|---|---|
+| `pages.yml` (this workflow) | `public/` | the real site |
+| `pages-build-deployment` (Jekyll) | the repo root | **README.md as the home page** |
+
+Whichever deployed last is what a visitor gets, so a refresh can flip between
+them. **To check:** open the Actions tab and look for runs of
+`pages-build-deployment`. Any at all mean the source is still a branch. Setting
+it to `GitHub Actions` stops that workflow running and the flipping with it.
+
+A root `index.html` is committed as a safety net — it is not part of the site
+and is never served under GitHub Actions, but if a Jekyll build ever wins the
+race it redirects to the real site instead of showing the README.
+
+#### The custom domain
+
+`public/CNAME` holds `hairbychrissy.ysbdesigns.uk`, and it has to live there
+rather than only at the repository root. This workflow publishes `public/` and
+nothing outside it, so a root-only CNAME is invisible to it — every deploy from
+here would drop the custom domain. The root copy is still read by the Jekyll
+build, so both are kept and both say the same thing.
+
+Because the site is served from a domain root rather than `/Hairbychrissy/`,
+every asset path being relative — decided when this was first published to
+Pages — is what lets the same files work under both.
 
 ### Making the published page book for real
 
@@ -237,7 +273,7 @@ bookings stay put and make it look as though nothing went wrong.
 ADMIN_PASSWORD=<something long>      # the dashboard warns while "chrissy" is in use
 SESSION_SECRET=<32+ random chars>    # openssl rand -base64 32
 PUBLIC_URL=https://api.yourhost.com  # this app's own public URL
-ALLOWED_ORIGINS=https://yameenbux.github.io
+ALLOWED_ORIGINS=https://hairbychrissy.ysbdesigns.uk
 ```
 
 `ALLOWED_ORIGINS` is an explicit allowlist and must **never** be `*`: the admin
@@ -261,7 +297,7 @@ Push anything, and the deploy injects that into `index.html`, `book.html` and
 `confirmed.html`. Verify with:
 
 ```bash
-curl -s https://yameenbux.github.io/Hairbychrissy/book.html | grep hbc-api
+curl -s https://hairbychrissy.ysbdesigns.uk/book.html | grep hbc-api
 ```
 
 ### Backups
