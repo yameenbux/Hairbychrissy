@@ -5,6 +5,8 @@
  * with the booking page open sees the change without refreshing.
  */
 
+import { resolveApiBase } from './api-base.js';
+
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -36,12 +38,19 @@ function duration(mins) {
   return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`;
 }
 
-/**
- * Site root, derived from this script's own URL rather than assumed to be "/".
- * Keeps the dashboard working when the app is mounted at a subpath — behind a
- * reverse proxy, or on a project-scoped host.
+/*
+ * Where the API is. NOT "wherever this script came from" — that was the bug.
+ *
+ * This dashboard is published to Pages alongside the client site, but the API
+ * it talks to runs on Render. Deriving the base from the script's own URL sent
+ * every request to the static host instead, which has no /api at all, so the
+ * sign-in POST returned a 404 that surfaced as "the password does not work".
+ * The password was never sent anywhere that could check it.
+ *
+ * resolveApiBase() is the same resolution the client site uses — injected meta
+ * tag, then a known-host table, then same-origin for local development.
  */
-const BASE = new URL('../', import.meta.url).href.replace(/\/$/, '');
+const BASE = resolveApiBase();
 
 async function api(path, options = {}) {
   /*

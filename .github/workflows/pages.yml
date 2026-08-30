@@ -99,7 +99,11 @@ jobs:
           # Every page that talks to the API. confirmed.html and pay-demo.html
           # look up a booking, so they need the base too — they were missed
           # while their fetches were still root-absolute.
-          for name in ('index.html', 'book.html', 'confirmed.html', 'pay-demo.html'):
+          # admin.html was missing from this list, and unlike the others it
+          # has no visible symptom: the dashboard fell back to same-origin and
+          # posted the sign-in to the STATIC host, which has no /api, so a
+          # correct password came back 404 and read as "wrong password".
+          for name in ('index.html', 'book.html', 'confirmed.html', 'pay-demo.html', 'admin.html'):
               p = pathlib.Path('public') / name
               if not p.exists():
                   continue
@@ -124,7 +128,7 @@ jobs:
         run: |
           if [ -n "${HBC_API}" ]; then
             missing=""
-            for f in index.html book.html confirmed.html pay-demo.html; do
+            for f in index.html book.html confirmed.html pay-demo.html admin.html; do
               grep -q '<meta name="hbc-api"' "public/$f" || missing="$missing $f"
             done
             if [ -n "$missing" ]; then
