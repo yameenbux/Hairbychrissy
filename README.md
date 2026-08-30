@@ -238,7 +238,10 @@ exactly what is wanted.
 
 Two things to get right:
 
-- **The branch must contain the Supabase backend.** If it does not, the app
+- **The branch must contain the Supabase backend.** Render's Blueprint form
+  asks which branch holds `render.yaml`, and the service then follows that
+  same branch — no branch is pinned inside the file, so the two cannot
+  disagree. Point it at a branch without the Supabase backend and the app
   still starts, falls back to a local file, and Render erases that on every
   deploy — bookings disappear with no error anywhere. The startup log is the
   check: it must read `bookings     Supabase — N loaded`, never

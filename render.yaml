@@ -19,13 +19,17 @@ services:
     runtime: node
     plan: free
     region: frankfurt          # closest of Render's regions to London
-    # IMPORTANT: main must actually contain the Supabase backend before you
-    # deploy this. If it does not, the app runs — and quietly falls back to a
-    # local file, which Render erases on every deploy, so bookings vanish with
-    # no error anywhere. Merge the feature branch first, or point this at that
-    # branch instead. The startup log settles it: it must say
-    # "bookings  Supabase", not "bookings  local file".
-    branch: main
+    # No branch is pinned here on purpose. The service follows whichever branch
+    # the Blueprint itself was created from, so the two can never disagree.
+    #
+    # Pinning it was a trap: with "branch: main" in this file, pointing the
+    # Blueprint at a feature branch would read the config from there and then
+    # deploy main's code anyway. Main does not yet contain the Supabase
+    # backend, so the app would have started, fallen back to a local file, and
+    # lost every booking on each deploy with no error anywhere.
+    #
+    # Whatever branch you choose, the startup log settles whether it worked:
+    # it must read "bookings  Supabase — N loaded", never "bookings  local file".
     # Zero runtime dependencies, so there is genuinely nothing to build.
     # npm ci would fail without a lockfile, and there is no lockfile because
     # there is nothing to lock.
