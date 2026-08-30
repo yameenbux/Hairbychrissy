@@ -13,6 +13,8 @@
  * to index.html, or setting window.HBC_API before this script runs.
  */
 
+import { resolveApiBase } from './api-base.js';
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -76,21 +78,6 @@ const motionOK = () => !window.matchMedia('(prefers-reduced-motion: reduce)').ma
  * Keyed by host so a laptop is never caught by it: localhost has no entry, so
  * `npm start` still talks to its own server rather than to production.
  */
-const KNOWN_HOSTS = {
-  'hairbychrissy.ysbdesigns.uk': 'https://hairbychrissy-api.onrender.com',
-  'yameenbux.github.io': 'https://hairbychrissy-api.onrender.com',
-};
-
-function resolveApiBase() {
-  if (window.HBC_API) return String(window.HBC_API).replace(/\/$/, '');
-  const meta = document.querySelector('meta[name="hbc-api"]');
-  if (meta?.content) return meta.content.replace(/\/$/, '');
-  const known = KNOWN_HOSTS[location.hostname];
-  if (known) return known;
-  // Same origin. Derived from this script's own URL rather than assumed to be
-  // "/", so it is correct whether the app sits at a domain root or a subpath.
-  return new URL('../', import.meta.url).href.replace(/\/$/, '');
-}
 
 async function api(path, options) {
   const res = await fetch(`${state.apiBase}${path}`, {
