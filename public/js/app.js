@@ -166,16 +166,29 @@ function renderStatic() {
 
   renderServiceCards('#serviceGrid', false);
 
-  put('#reviewGrid', 'innerHTML', reviews
-    .map(
-      (r) => `
+  /*
+   * No reviews means no reviews section — not a heading with nothing under it.
+   * The same rule the portfolio follows: a page with a section missing reads
+   * as finished, a page with an empty section reads as broken. They come back
+   * the moment real ones are added to lib/seed.js.
+   */
+  const reviewGrid = $('#reviewGrid');
+  if (reviewGrid) {
+    if (!reviews.length) {
+      reviewGrid.closest('section')?.remove();
+    } else {
+      reviewGrid.innerHTML = reviews
+        .map(
+          (r) => `
       <blockquote class="review reveal">
         <span class="mark" aria-hidden="true">”</span>
         <p>${esc(r.text)}</p>
         <footer>${esc(r.name)} — ${esc(r.service)}</footer>
       </blockquote>`,
-    )
-    .join(''));
+        )
+        .join('');
+    }
+  }
 
   put('#faqList', 'innerHTML', faqs
     .map((f) => `<details><summary>${esc(f.q)}</summary><div class="answer"><p>${esc(f.a)}</p></div></details>`)

@@ -48,7 +48,7 @@
       "London",
       "Exact address sent on booking"
     ],
-    "email": "hello@hairbychrissy.co.uk",
+    "email": "",
     "phone": "",
     "notice": "WE DO NOT USE FACEBOOK.",
     "intro": "Nano rings, tapes, micro, weave and invisi, fitted by hand in a private London studio. Every set is colour-matched, cut and blended to you.",
@@ -156,44 +156,7 @@
       "caption": "Platinum, start to finish"
     }
   ],
-  "reviews": [
-    {
-      "name": "Sophie R.",
-      "service": "Nano Rings — Full Head",
-      "text": "Third set with Chrissy and I still get asked whose hair it is. The colour match is unreal.",
-      "rating": 5
-    },
-    {
-      "name": "Amira K.",
-      "service": "Invisi-Weft",
-      "text": "Completely flat, completely invisible. I can wear my hair up again without a second thought.",
-      "rating": 5
-    },
-    {
-      "name": "Leah M.",
-      "service": "Maintenance / Refit",
-      "text": "Been going every ten weeks for over a year. My own hair underneath is in better condition than when I started.",
-      "rating": 5
-    },
-    {
-      "name": "Danielle P.",
-      "service": "LA Weave",
-      "text": "Booked a consultation first and I am glad I did. She talked me out of the length I wanted and she was right.",
-      "rating": 5
-    },
-    {
-      "name": "Nicole T.",
-      "service": "Tape-In Extensions",
-      "text": "Two hours, in and out, and it looks like I have twice the hair. Studio is lovely and calm too.",
-      "rating": 5
-    },
-    {
-      "name": "Georgia W.",
-      "service": "Nano Rings — Half Head",
-      "text": "Fine hair and I was nervous about damage. Six months in, zero breakage.",
-      "rating": 5
-    }
-  ],
+  "reviews": [],
   "gallery": [
     {
       "file": "work-blonde.jpg",
@@ -370,6 +333,6 @@
   },
   "today": "2026-08-30",
   "cardMode": "static",
-  "generatedAt": "2026-08-30T16:55:00.567Z",
+  "generatedAt": "2026-08-30T17:21:41.555Z",
   "static": true
 }
