@@ -22,6 +22,7 @@ import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDef
 import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
 import { verifyPhoto, savePhotos, readPhoto, MAX_PHOTOS } from './lib/photos.js';
 import { DATA_DIR, DATA_DIR_IS_DEFAULT } from './lib/paths.js';
+import { diagnose as supabaseDiagnosis } from './lib/supabase.js';
 import {
   notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
   saveSubscription, removeSubscription, listSubscriptions, channelStatus,
@@ -1281,10 +1282,10 @@ try {
   console.error('  Could not load the bookings database. Refusing to start.');
   console.error(`  ${err.message}`);
   console.error('');
+  console.error(supabaseDiagnosis());
+  console.error('');
   console.error('  Starting on an empty database would overwrite real bookings,');
-  console.error('  so this is deliberate. Check SUPABASE_URL and');
-  console.error('  SUPABASE_SERVICE_KEY, and that the schema in');
-  console.error('  supabase/schema.sql has been run.');
+  console.error('  so this is deliberate. Nothing has been changed in Supabase.');
   console.error('');
   process.exit(1);
 }
