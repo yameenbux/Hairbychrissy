@@ -251,18 +251,34 @@ function notifyNewBooking(booking) {
   const service = getService(booking.serviceId);
   const withDate = { ...booking, dateLong: longDate(booking.date) };
 
-  notify(bookingMessage(withDate, service))
-    .then(() => broadcast('notification', {}))
-    .catch((err) => console.error('[notify]', err.message));
+  /*
+   * One after the other, not both at once.
+   *
+   * A booking sends two emails through the same provider, and the free tier
+   * allows two requests a second. Fired simultaneously they raced, and the
+   * loser came back rate-limited — which produced the worst possible pairing
+   * in production: the CLIENT was told they were booked and CHRISSY was not
+   * told at all. Hers goes first, because a booking she does not know about
+   * is the failure this whole application exists to prevent.
+   */
+  (async () => {
+    try {
+      await notify(bookingMessage(withDate, service));
+      broadcast('notification', {});
+    } catch (err) {
+      console.error('[notify]', err.message);
+    }
 
-  sendClientConfirmation(withDate, service)
-    .then((r) => {
+    try {
+      const r = await sendClientConfirmation(withDate, service);
       if (r?.skipped) console.log(`[client-email] not sent — ${r.skipped}`);
       else console.log(`[client-email] sent to ${r.detail}`);
-    })
-    // Logged loudly rather than swallowed: the client has a slot either way,
-    // but Chrissy should know they were not told about it.
-    .catch((err) => console.error(`[client-email] FAILED for ${booking.ref}:`, err.message));
+    } catch (err) {
+      // Logged loudly rather than swallowed: the client has a slot either way,
+      // but Chrissy should know they were not told about it.
+      console.error(`[client-email] FAILED for ${booking.ref}:`, err.message);
+    }
+  })();
 }
 
 /** Photographs actually present, so the page never probes for missing files. */
