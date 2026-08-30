@@ -28,10 +28,18 @@
 
 name: Deploy site to GitHub Pages
 
+# ONE publisher, on purpose.
+#
+# This used to fire on a feature branch as well as main, and both deploy to the
+# same Pages site — so whichever pushed last was the site you got, and a
+# refresh could flip between two different versions. Combined with the Jekyll
+# branch build, that is what served the README instead of the home page.
+#
+# Work on a branch, merge it, and main publishes. To preview a branch before
+# merging, run this workflow by hand from the Actions tab and pick it there.
 on:
   push:
     branches:
-      - claude/beauty-booking-platform-ppwhet
       - main
   workflow_dispatch:
 
