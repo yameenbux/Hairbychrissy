@@ -176,7 +176,7 @@ Six steps, none of which involve a disk.
   small, read constantly, changed rarely.
 
 It also enables row-level security with no policies. The app uses the
-`service_role` key, which bypasses RLS — so that is not what protects this data
+secret key, which bypasses RLS — so that is not what protects this data
 day to day. It is there so that a leaked **anon** key, the one that is safe to
 publish and therefore the one most likely to end up somewhere public, cannot
 read a single client's phone number.
@@ -190,10 +190,13 @@ reachable by URL alone.
 
 ```bash
 SUPABASE_URL=https://<project>.supabase.co
-SUPABASE_SERVICE_KEY=<the service_role key>
+SUPABASE_SERVICE_KEY=<the secret key — sb_secret_...>
 ```
 
-> The **service_role** key, not the anon key. It is full access: server only,
+> The **secret** key — `sb_secret_...` in the current dashboard, `service_role`
+> in the older one. **Not** the publishable key (`sb_publishable_...`,
+> previously `anon`): RLS is on with no policies, so a publishable key can read
+> and write nothing and the app fails on its first query. It is full access: server only,
 > never in a browser, never committed. It cannot reach a browser here — the
 > booking page talks to this app's API and never to Supabase directly.
 

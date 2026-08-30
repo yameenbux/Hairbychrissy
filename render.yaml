@@ -44,7 +44,9 @@ services:
       # --- Supabase. Set these and the app stores bookings in Postgres and
       # client photos in Storage. Without them it falls back to a local file,
       # which on Render is erased on every deploy — so these are not optional
-      # here. The service_role key is full access: server side only.
+      # here. SUPABASE_SERVICE_KEY is the SECRET key ("sb_secret_...", or
+      # "service_role" in the older dashboard) — full access, server side
+      # only. Not the publishable/anon key, which RLS gives nothing to.
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
