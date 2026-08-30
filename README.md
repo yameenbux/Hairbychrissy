@@ -1178,11 +1178,35 @@ via Google Fonts.
 
 1. Set `ADMIN_PASSWORD` — the dashboard warns while the default is in use.
 2. Set `SESSION_SECRET` to a long random string.
-3. Add `STRIPE_SECRET_KEY` and `PUBLIC_URL` to switch card payments on.
-4. Confirm everything in [CLIENT-NOTES.md](CLIENT-NOTES.md).
-5. Serve over HTTPS — **push notifications will not work without it**.
-6. Have Chrissy open `/admin` on her phone and turn on alerts.
-7. Back up `data/db.json` (it holds bookings, hours and the push keys).
+3. **Point `NOTIFY_EMAIL_TO` at Chrissy.** It sits on the developer's own
+   address during testing, which is right — she should not be woken by test
+   bookings. It is also the single easiest thing to forget, and forgetting it
+   means she is never told about a real one.
+4. **Verify a sending domain in Resend and set `NOTIFY_EMAIL_FROM` to it.**
+   Not optional once clients are booking: see below.
+5. Add `STRIPE_SECRET_KEY` and `PUBLIC_URL` to switch card payments on.
+6. Confirm everything in [CLIENT-NOTES.md](CLIENT-NOTES.md).
+7. Serve over HTTPS — **push notifications will not work without it**.
+8. Have Chrissy open `/admin` on her phone and turn on alerts.
+9. Back up the database — `npm run backup`, on a schedule.
+
+### Testing on your own inbox first
+
+Pointing `NOTIFY_EMAIL_TO` at yourself is the right way to try this, but it
+hides one failure completely.
+
+With Resend's shared sender (`onboarding@resend.dev`), Resend delivers **only
+to the address that owns the Resend account**. So while testing:
+
+| | goes to | with the shared sender |
+|---|---|---|
+| Chrissy's alert | your own inbox | **arrives** — it is the account address |
+| The client's confirmation | whatever the booker typed | **silently rejected** |
+
+Everything therefore looks like it works, and the half that reaches a real
+client is the half that does not. Book once with a **different** email address
+in the client field and check that address, not just your own — or verify a
+domain now and skip the trap entirely.
 
 ### The client's own confirmation
 
