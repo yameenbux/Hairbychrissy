@@ -64,10 +64,29 @@ function prettyDate(dateStr) {
 
 const motionOK = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/*
+ * Where the API lives when the page was published without a build step.
+ *
+ * The tag below is normally injected by .github/workflows/pages.yml. It is not
+ * there if GitHub's own Jekyll builder published the site instead, which
+ * happens whenever the Pages source is set to a branch rather than to GitHub
+ * Actions — and that has silently been the case, which is why the calendar sat
+ * in enquiry mode with every check green.
+ *
+ * Keyed by host so a laptop is never caught by it: localhost has no entry, so
+ * `npm start` still talks to its own server rather than to production.
+ */
+const KNOWN_HOSTS = {
+  'hairbychrissy.ysbdesigns.uk': 'https://hairbychrissy-api.onrender.com',
+  'yameenbux.github.io': 'https://hairbychrissy-api.onrender.com',
+};
+
 function resolveApiBase() {
   if (window.HBC_API) return String(window.HBC_API).replace(/\/$/, '');
   const meta = document.querySelector('meta[name="hbc-api"]');
   if (meta?.content) return meta.content.replace(/\/$/, '');
+  const known = KNOWN_HOSTS[location.hostname];
+  if (known) return known;
   // Same origin. Derived from this script's own URL rather than assumed to be
   // "/", so it is correct whether the app sits at a domain root or a subpath.
   return new URL('../', import.meta.url).href.replace(/\/$/, '');

@@ -74,6 +74,14 @@
 const API = (() => {
   const meta = document.querySelector('meta[name="hbc-api"]');
   if (meta?.content) return meta.content.replace(/\/$/, '');
+  // Published without the build step (Pages source set to a branch rather than
+  // to GitHub Actions) means no injected tag. Keyed by host, so localhost is
+  // never caught by it and local development stays local.
+  const known = {
+    'hairbychrissy.ysbdesigns.uk': 'https://hairbychrissy-api.onrender.com',
+    'yameenbux.github.io': 'https://hairbychrissy-api.onrender.com',
+  }[location.hostname];
+  if (known) return known;
   return new URL('.', location.href).href.replace(/\/$/, '');
 })();
 const ref = (new URLSearchParams(location.search).get('ref') || '').toUpperCase();
