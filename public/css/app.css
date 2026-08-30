@@ -449,7 +449,10 @@ a { color: inherit; text-decoration: none; }
   min-height: calc(100dvh - var(--header-h));
   display: flex;
   align-items: flex-end;
-  padding: var(--band-tight) 0 clamp(48px, 9vh, 104px);
+  /* Padding measured against the window, not a fixed floor. At 320px of
+     viewport height the old values spent 120px — 37% of the screen — on
+     nothing. */
+  padding: clamp(28px, 8vh, 128px) 0 clamp(24px, 7vh, 104px);
   /* The imagery band's own ground. Cream here would leave the white hero type
      unreadable in the moment before a photograph loads, or if one is missing —
      "use a scrim, not hope" applies to the fallback as well as the photo. */
@@ -478,6 +481,52 @@ a { color: inherit; text-decoration: none; }
   );
 }
 .hero .shell { position: relative; z-index: 1; width: 100%; }
+
+/*
+ * The hero has to fit in one window, because the CTA inside it is the only
+ * thing this page is for.
+ *
+ * The heading was sized from viewport WIDTH alone — clamp(…, 11vw, …) — and a
+ * landscape tablet has width to spare and very little height. So the type
+ * grew to its 95px cap and stayed there while the window got shorter, and the
+ * whole stack stayed ~680px tall: on anything under about 700px of viewport
+ * height the "Book your slot" button started below the fold. Sizing on the
+ * tighter of the two axes is the fix; tools/hero-audit.js holds it.
+ */
+.hero .display { font-size: clamp(var(--t-2xl), min(10vw, 11.5vh), var(--t-4xl)); }
+.hero .lede { font-size: clamp(var(--t-sm), 2.4vh, var(--t-md)); }
+
+/*
+ * A phone held sideways: ~850px of width and ~320px of height. Stacking
+ * label, heading, lede and button down that is hopeless — the button ends up
+ * 350px below the fold — and the usual answers (shrink everything, or hide
+ * the lede) either make it unreadable or throw away the copy.
+ *
+ * So use the axis that has room. The heading takes a tall left column and the
+ * lede and the CTA sit beside it, which is the same editorial split used
+ * further down the page and reads deliberately rather than squeezed.
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .hero .shell {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    column-gap: clamp(24px, 4vw, 64px);
+    align-items: end;
+  }
+  .hero .label   { grid-area: 1 / 1 / 2 / 2; }
+  .hero .display { grid-area: 2 / 1 / 4 / 2; margin: var(--s-1) 0 0; }
+  .hero .lede    { grid-area: 2 / 2 / 3 / 3; margin-bottom: var(--s-2); max-width: 34ch; }
+  .hero-actions  { grid-area: 3 / 2 / 4 / 3; }
+  .hero .display { font-size: clamp(var(--t-xl), 11.5vh, var(--t-3xl)); }
+  /* At 330px of window the padding is the difference between fitting and
+     not, so it comes off the scale here and is measured instead. */
+  .hero { padding: clamp(20px, 5vh, 48px) 0 clamp(18px, 5vh, 48px); }
+  /* The right column is not wide enough to hold the button and the secondary
+     link on one line, so the link wrapped under it and off the bottom of the
+     screen. It goes here: it points at the price list, and "Services" is in
+     the menu two centimetres above it. The one action stays. */
+  .hero-secondary { display: none; }
+}
 .hero .label, .hero .display, .hero .lede { color: var(--paper); }
 .hero .label::before { background: var(--paper); }
 .hero .display { margin: 18px 0 22px; }
@@ -570,6 +619,46 @@ a { color: inherit; text-decoration: none; }
    numerals are deliberately absent — they are already doing work twice on
    this page, and a fourth run would make them wallpaper. */
 
+/* ------------------------------------------------- maintenance essentials */
+/*
+ * Replaces the poster she sent. A framed card, because that content was a
+ * framed card on her graphic and it reads as a reference panel beside the
+ * prose — not as more prose. Hairline and paper on the cream band, so it lifts
+ * without needing a shadow, which the system does not use.
+ */
+.care {
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  padding: clamp(24px, 3.5vw, 40px);
+}
+.care-intro {
+  color: var(--espresso-70);
+  margin-bottom: var(--s-4);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.care-list { list-style: none; margin: 0; padding: 0; }
+.care-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: var(--s-3);
+  align-items: start;
+}
+.care-item + .care-item {
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline-soft);
+}
+/* The one place clay appears here — as a marker, never on the copy. */
+.care-mark { color: var(--clay); flex: none; margin-top: 2px; }
+.care-item h3 {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  margin-bottom: var(--s-1);
+}
+.care-item p { color: var(--espresso-70); font-size: var(--t-sm); }
+
 .benefits { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--stack) clamp(32px, 5vw, 96px); }
 .benefit { position: relative; padding-top: 26px; border-top: 1px solid var(--hairline-soft); }
 .benefit::before { content: ''; position: absolute; top: -1px; left: 0; width: 42px; height: 1px; background: var(--clay); }
@@ -639,6 +728,78 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: var(--ls-caps);
 }
 
+/* --------------------------------------------------- booking page bits */
+
+/* What you just picked, confirmed back to you before you commit to a day. */
+.svc-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--hairline-soft);
+}
+.svc-preview-name {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--espresso);
+}
+.svc-preview-meta { font-size: var(--t-xs); color: var(--espresso-70); }
+
+/* The photo picker. The native control is hidden and the label is the target,
+   because a file input cannot be styled and its default reads as a form from
+   1998 sitting in the middle of an otherwise considered page. */
+.filedrop {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  border: 1px dashed var(--hairline);
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+.filedrop input[type='file'] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.filedrop-mark { width: 22px; height: 1px; background: var(--clay); }
+.filedrop-text {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--espresso);
+}
+.filedrop-hint { font-size: var(--t-xs); color: var(--espresso-70); }
+.filedrop:focus-within { outline: 2px solid var(--clay-deep); outline-offset: 3px; }
+
+.thumbs { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-2); }
+.thumbs:empty { margin-top: 0; }
+.thumb { position: relative; margin: 0; width: 84px; height: 84px; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+/*
+ * The button is 44x44 and invisible; the small chip inside it is what you see.
+ * Removing a photo you picked by mistake is a one-handed, thumb-on-glass tap,
+ * so the target has to be a thumb's width even though a 44px mark would sit
+ * heavily on an 84px thumbnail.
+ */
+.thumb-x {
+  position: absolute; top: -16px; right: -16px;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: 0; padding: 0; background: none;
+  color: var(--espresso);
+  cursor: pointer;
+}
+.thumb-x span {
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-size: var(--t-sm);
+  line-height: 1;
+  transition: background var(--ease-dur) var(--ease), border-color var(--ease-dur) var(--ease);
+}
+
 /* -------------------------------------------------------------- motion */
 /*
  * Two jobs only: bring a section in as it is reached, and answer a pointer.
@@ -698,6 +859,8 @@ a { color: inherit; text-decoration: none; }
   .slot:not([disabled]):hover { border-color: var(--espresso); }
 
   .site-footer a:hover { color: var(--espresso); }
+  .filedrop:hover { border-color: var(--clay); background: var(--cream); }
+  .thumb-x:hover span { border-color: var(--danger); color: var(--danger); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -819,6 +982,13 @@ a { color: inherit; text-decoration: none; }
   .reviews { grid-template-columns: 1fr; }
   .split { grid-template-columns: 1fr; }
   .split-flip > .split-visual { order: 0; }
+  /*
+   * ...except the maintenance card. When that column held a poster, showing it
+   * first was right — a photograph introduces the section. It holds five
+   * paragraphs of detail now, and detail before its own heading reads as a
+   * list that fell out of the section above it.
+   */
+  #maintenance .split-flip > .split-visual { order: 2; }
 }
 
 @media (max-width: 1100px) {
@@ -872,6 +1042,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 640px) {
+  .filedrop { width: 100%; }
+  .thumb { width: 72px; height: 72px; }
+
   /* Below this the wordmark is wide enough, and the button close enough to
      it, that the two collide — measured, not guessed. Above it there is a
      clear 150px between them and the one action stays on screen. */

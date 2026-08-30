@@ -9,16 +9,19 @@
  *   /api/stream  server-sent events — pushes slot changes to every open browser
  */
 import http from 'node:http';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { read, write, nextRef, flush } from './lib/store.js';
-import { brand, reviews, gallery, faqs, offers, benefits, transformations, reels } from './lib/seed.js';
+import { read, write, nextRef, flush, commit, init as initStore, backend } from './lib/store.js';
+import { brand, reviews, gallery, faqs, offers, benefits, maintenance, transformations, reels } from './lib/seed.js';
 import { slotsFor, monthSummary, validateSlot, validateAdminSlot, clashesWith, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
 import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
+import { verifyPhoto, savePhotos, readPhoto, MAX_PHOTOS } from './lib/photos.js';
+import { DATA_DIR, DATA_DIR_IS_DEFAULT } from './lib/paths.js';
 import {
   notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
   saveSubscription, removeSubscription, listSubscriptions, channelStatus,
@@ -260,6 +263,7 @@ function siteConfig() {
     brand,
     offers,
     benefits,
+    maintenance,
     transformations,
     reels,
     reviews,
@@ -361,6 +365,59 @@ async function handlePublicApi(req, res, url) {
     return json(res, 200, publicBooking(booking));
   }
 
+  /**
+   * Inspiration photos, attached to a booking that was just made.
+   *
+   * Guarded by a one-time token handed back by the booking itself, NOT by the
+   * reference number. References are sequential — HBC-1001, 1002 — so anyone
+   * could guess a live one and attach pictures to a stranger's appointment.
+   * The token is random, used once, and cleared the moment it is spent.
+   */
+  if (/^\/api\/bookings\/[^/]+\/photos$/.test(p) && req.method === 'POST') {
+    let body;
+    try {
+      // Photos arrive base64 in JSON, so the limit here is much larger than
+      // the 64KB the rest of the API allows. It is still a hard cap.
+      body = JSON.parse(await readBody(req, (MAX_PHOTOS + 1) * 6 * 1024 * 1024) || '{}');
+    } catch (err) {
+      return json(res, 400, { error: 'Those photos could not be read.' });
+    }
+
+    const ref = clean(decodeURIComponent(p.split('/')[3]), 24).toUpperCase();
+    const booking = read().bookings.find((b) => b.ref === ref);
+    if (!booking) return json(res, 404, { error: 'No booking found with that reference.' });
+
+    const token = clean(body.token, 64);
+    if (!booking.uploadToken || !token || token !== booking.uploadToken) {
+      return json(res, 403, { error: 'That upload link is no longer valid.' });
+    }
+
+    const list = Array.isArray(body.photos) ? body.photos.slice(0, MAX_PHOTOS) : [];
+    if (!list.length) return json(res, 400, { error: 'No photos were sent.' });
+
+    const verified = [];
+    for (const item of list) {
+      const check = verifyPhoto(typeof item === 'string' ? item : item?.data);
+      if (!check.ok) return json(res, 400, { error: check.error });
+      verified.push(check);
+    }
+
+    let saved;
+    try {
+      saved = await savePhotos(booking.id, verified);
+    } catch (err) {
+      console.error('[photos]', err.message);
+      return json(res, 500, { error: 'Those photos could not be saved.' });
+    }
+
+    write(() => {
+      booking.photos = saved;
+      // Spent. One booking, one upload.
+      delete booking.uploadToken;
+    });
+    return json(res, 200, { count: saved.length });
+  }
+
   return json(res, 404, { error: 'Unknown endpoint.' });
 }
 
@@ -381,6 +438,15 @@ async function createBooking(req, res) {
   const email = clean(payload.email, 120).toLowerCase();
   const phone = clean(payload.phone, 20);
   const notes = clean(payload.notes, 600);
+  /**
+   * How many inspiration photos are about to follow. Only a hint: the photos
+   * upload after the booking exists, which is deliberate — a failed photo must
+   * never cost someone their slot — but that timing would otherwise send the
+   * "new booking" email with no sign that pictures are on their way.
+   * Unverified by design; the worst a wrong number does is have her glance at
+   * a booking and find nothing attached.
+   */
+  const photosToFollow = Math.min(Math.max(Number(payload.photoCount) || 0, 0), MAX_PHOTOS);
 
   if (name.length < 2) return json(res, 400, { error: 'Please enter your full name.' });
   if (!isEmail(email)) return json(res, 400, { error: 'Please enter a valid email address.' });
@@ -423,6 +489,7 @@ async function createBooking(req, res) {
     endMin,
     duration: service.duration,
     client: { name, email, phone, notes },
+    photosToFollow,
     total,
     priceOnRequest: quoted,
     depositDue,
@@ -432,14 +499,45 @@ async function createBooking(req, res) {
     paymentStatus: effectivePayment === 'cash' ? (quoted ? 'to-be-quoted' : 'due-in-studio') : 'awaiting-deposit',
     status: effectivePayment === 'cash' ? 'confirmed' : 'pending-payment',
     createdAt: new Date().toISOString(),
+    /**
+     * One-time permission to attach inspiration photos to THIS booking.
+     * Handed back once, in the response to the person who just booked, and
+     * deleted the moment it is used. Booking references are sequential and
+     * therefore guessable; this is not.
+     */
+    uploadToken: crypto.randomBytes(24).toString('base64url'),
   };
 
   write((db) => db.bookings.push(booking));
+
+  /*
+   * Do not tell anyone they are booked until the booking is actually stored.
+   *
+   * write() schedules the persist rather than awaiting it, which is right for
+   * a setting or an admin note. It is wrong here. If the database is
+   * unreachable, a fire-and-forget write would return a cheerful 201, the
+   * client would screenshot their confirmation, and Chrissy would have no
+   * record of them — the single failure this whole application exists to
+   * prevent. So the slot is given up and the client told the truth instead.
+   */
+  try {
+    await commit();
+  } catch (err) {
+    console.error('[booking] could not be saved:', err.message);
+    write((db) => {
+      const i = db.bookings.indexOf(booking);
+      if (i !== -1) db.bookings.splice(i, 1);
+    });
+    return json(res, 503, {
+      error: 'We could not save your booking just now. Nothing has been taken — please try again in a moment.',
+    });
+  }
+
   broadcast('bookings-changed', { date });
 
   if (effectivePayment === 'cash') {
     notifyNewBooking(booking);
-    return json(res, 201, { booking: publicBooking(booking), next: 'confirmed' });
+    return json(res, 201, { booking: publicBooking(booking), next: 'confirmed', uploadToken: booking.uploadToken });
   }
 
   // Card: hand back a checkout URL — real Stripe if configured, demo page if not.
@@ -449,7 +547,7 @@ async function createBooking(req, res) {
       write(() => {
         booking.stripeSessionId = session.sessionId;
       });
-      return json(res, 201, { booking: publicBooking(booking), next: 'checkout', checkoutUrl: session.url });
+      return json(res, 201, { booking: publicBooking(booking), next: 'checkout', checkoutUrl: session.url, uploadToken: booking.uploadToken });
     } catch (err) {
       console.error('[stripe]', err.message);
       // Don't strand the client — hold the slot and let them pay in studio.
@@ -476,6 +574,7 @@ async function createBooking(req, res) {
     next: 'checkout',
     checkoutUrl: `/pay-demo?ref=${booking.ref}`,
     demo: true,
+    uploadToken: booking.uploadToken,
   });
 }
 
@@ -525,6 +624,9 @@ async function handleAdminApi(req, res, url) {
         completedAt: b.completedAt || null,
         noShowAt: b.noShowAt || null,
         rescheduledFrom: b.rescheduledFrom || null,
+        // Names only. The bytes come back through the authenticated route
+        // below, never through this payload and never from public/.
+        photos: (b.photos || []).map((ph) => ph.file),
       })),
       today,
       cardMode: isLiveStripe() ? 'live' : 'demo',
@@ -852,6 +954,37 @@ async function handleAdminApi(req, res, url) {
     });
   }
 
+  /**
+   * One inspiration photo, for the dashboard.
+   *
+   * This is the only way the bytes ever leave the server. They live in
+   * data/uploads, outside public/, so nothing serves them by accident, and
+   * this route sits behind the same session check as the rest of the
+   * dashboard — the client sent them to Chrissy, not to the internet.
+   */
+  if (/^\/api\/admin\/bookings\/[^/]+\/photos\/[^/]+$/.test(p) && req.method === 'GET') {
+    const [, , , , id, , file] = p.split('/');
+    const booking = db.bookings.find((b) => b.id === id);
+    if (!booking) return json(res, 404, { error: 'Booking not found.' });
+
+    const record = (booking.photos || []).find((ph) => ph.file === file);
+    if (!record) return json(res, 404, { error: 'No such photo.' });
+
+    const buf = await readPhoto(booking.id, record.file);
+    if (!buf) return json(res, 404, { error: 'That photo could not be found.' });
+
+    return send(res, 200, buf, {
+      'Content-Type': record.mime,
+      'Content-Length': buf.length,
+      // Belt and braces: even though the type was verified by reading the
+      // file, the browser is told not to second-guess it.
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; img-src 'self'",
+      'Cache-Control': 'private, max-age=300',
+      ...(res._cors || {}),
+    });
+  }
+
   if (p.startsWith('/api/admin/bookings/') && req.method === 'POST') {
     const [, , , , id, action] = p.split('/');
     const booking = db.bookings.find((b) => b.id === id);
@@ -1099,6 +1232,7 @@ const server = http.createServer(async (req, res) => {
      * root-absolute. The page moves to the same depth as every other page
      * instead, and the old URL redirects so any link already sent still lands.
      */
+    if (p === '/book' || p === '/book.html') return servePage(res, 'book.html');
     if (p === '/pay-demo') return servePage(res, 'pay-demo.html');
     if (p === '/pay/demo') {
       return send(res, 301, '', { Location: `/pay-demo${url.search}` });
@@ -1113,6 +1247,27 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+/*
+ * Load the data BEFORE accepting a request, and refuse to start if it cannot
+ * be loaded. An app that comes up healthy on an empty database is worse than
+ * one that does not come up: the first write would overwrite every real
+ * booking with nothing, and the only symptom until then is a quiet diary.
+ */
+try {
+  await initStore();
+} catch (err) {
+  console.error('');
+  console.error('  Could not load the bookings database. Refusing to start.');
+  console.error(`  ${err.message}`);
+  console.error('');
+  console.error('  Starting on an empty database would overwrite real bookings,');
+  console.error('  so this is deliberate. Check SUPABASE_URL and');
+  console.error('  SUPABASE_SERVICE_KEY, and that the schema in');
+  console.error('  supabase/schema.sql has been run.');
+  console.error('');
+  process.exit(1);
+}
+
 server.listen(PORT, () => {
   console.log('');
   console.log('  H A I R  B Y  C H R I S S Y — booking platform');
@@ -1126,16 +1281,40 @@ server.listen(PORT, () => {
   console.log(`  run-down     ${Number.isInteger(dayHour) && dayHour >= 0 && dayHour <= 23
     ? `each morning around ${String(dayHour).padStart(2, '0')}:00`
     : 'off (set DAY_AHEAD_HOUR)'}`);
+  /*
+   * Where the bookings are written. Printed because the way this goes wrong
+   * in production is silent: the app runs, takes bookings, answers every
+   * request correctly, and loses the lot on the next deploy because DATA_DIR
+   * was never pointed at a mounted disk. A line at startup is the difference
+   * between noticing on day one and noticing when a client turns up.
+   */
+  console.log(`  bookings     ${backend() === 'supabase'
+    ? `Supabase — ${read().bookings.length} loaded`
+    : `local file — ${DATA_DIR}${DATA_DIR_IS_DEFAULT ? '  (default — set DATA_DIR to a persistent disk, or configure Supabase)' : ''}`}`);
   if (usingDefaultPassword()) {
     console.log('  admin password: "chrissy"  — set ADMIN_PASSWORD before going live');
   }
   console.log('');
 });
 
+/*
+ * A deploy is a SIGTERM. Persisting is now a network call rather than a file
+ * write, so the last booking is only safe if we WAIT for it — the old
+ * fire-and-forget flush would have raced the process exit and lost it.
+ *
+ * The grace window is generous enough for a round trip and short enough that
+ * a hung database cannot stop the process going away. flush() falls back to
+ * writing a local copy if the network call fails.
+ */
+let shuttingDown = false;
 for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, () => {
-    flush();
-    server.close(() => process.exit(0));
-    setTimeout(() => process.exit(0), 500).unref();
+  process.on(sig, async () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    server.close();
+    const escape = setTimeout(() => process.exit(0), 8000).unref();
+    await flush();
+    clearTimeout(escape);
+    process.exit(0);
   });
 }

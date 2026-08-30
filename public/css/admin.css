@@ -46,6 +46,15 @@
    the client's words and which is her own. */
 .appt .note-private { border-left: 2px solid var(--clay); padding-left: 12px; border-top-color: var(--hairline-soft); }
 
+/* What the client is actually asking for, next to what they booked. These
+   arrive through the authenticated route only — they are never in public/. */
+.appt-photos .shots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.appt-photos .shot { display: block; width: 72px; height: 72px; border: 1px solid var(--hairline-soft); }
+.appt-photos .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (hover: hover) and (pointer: fine) {
+  .appt-photos .shot:hover { border-color: var(--clay); }
+}
+
 .appt-panel { grid-column: 1 / -1; border-top: 1px solid var(--hairline-soft); padding-top: 16px; margin-top: 4px; }
 .panel-form .field { margin-bottom: 12px; }
 .panel-form .field label { font-size: var(--t-xs); letter-spacing: var(--ls-label); }

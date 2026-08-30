@@ -6,7 +6,100 @@ it is all content you or I can change in minutes.
 
 ---
 
-## 1. Latest round — the look, tightened
+## 1. Latest round — booking has its own page now
+
+**Book your slot** used to scroll you down the home page to a booking form
+wedged between your photographs. It now opens its own page, and that page does
+four things in order.
+
+**1. What you're having done.** A dropdown of your real service list — Hair Ups,
+Pinned Curls, Hollywood Waves, Extensions, Removals, all of it. The price and
+roughly how long it takes appear the moment they choose. This has to come first
+because your Saturday morning fits a blow dry and does not fit a full install,
+so the calendar can only be drawn once it knows what they want.
+
+**2. A day.** A month calendar. Days you cannot take them are greyed out.
+
+**3. A time.** Only the times that actually fit that service on that day.
+
+**4. Them.** Name, phone, email — and two new things you asked for.
+
+### The note box
+
+A free-text box: *"anything I should know before the day."* Whatever they write
+lands on the booking in your dashboard under **They asked for:**, and it is in
+the email you get.
+
+### Photographs of what they want
+
+They can attach **up to five pictures** — the screenshot of the look they've
+saved from your grid, or from someone else's. They show up on the booking in
+your dashboard; tap one to see it full size.
+
+This is the part I think saves you the most time. At the moment a client sends
+you a picture on Instagram and books separately, and you are left matching a
+photo in your DMs to a name in your diary. Now they arrive together.
+
+Three things I did deliberately, in case you ever wonder why:
+
+- **The booking is made first, then the photos upload.** If someone's photo
+  fails to send — bad signal on the bus, a picture that's too big — they still
+  have their slot. A photo problem must never cost you a booking.
+- **The pictures are private.** They are not on the website and not in the
+  public files anywhere. They can only be opened from inside your dashboard,
+  logged in as you.
+- **Your email tells you they're coming.** The photos land a second after the
+  booking, so the alert says *"2 reference photos — open the booking in your
+  dashboard to see them."*
+
+### Your hours are now the real ones
+
+| Day | Hours |
+|---|---|
+| Monday – Friday | 10:00 – 19:00 |
+| Saturday | 09:00 – 12:00 |
+| Sunday | 11:00 – 15:00 |
+
+Open seven days, as you said. I had previously invented a 1pm lunch break —
+**I have taken it out.** Blocking an hour in the middle of your five busiest
+days is an hour of bookings you never see, and if you do want lunch you can
+block it yourself in the dashboard, on the days you actually want it.
+
+These are still just the starting values. Change any of them in dashboard →
+**My hours** and the calendar follows straight away.
+
+---
+
+## 2. The top of the page now fits the screen
+
+You spotted it: on your iPad the **Book your slot** button was cut off at the
+bottom of the first screen. Fixed, and it was a worse problem than it looked.
+
+The big heading was being sized off the **width** of the screen. An iPad held
+sideways is wide but not tall, so the heading grew to its maximum and stayed
+there while the screen got shorter — which pushed the button off the bottom.
+It was doing the same on an ordinary laptop, cutting the button off by about
+28 pixels there too. So anyone landing on the site on a laptop or a sideways
+tablet saw a beautiful page with no way to book on it until they scrolled.
+
+The heading now takes its size from whichever direction is tighter, so a short
+screen gets slightly smaller type instead of the same type falling off the end.
+Everything — heading, text and button — is inside the first screen now.
+
+**A phone held sideways** was the hardest case: about 850 wide and only 330
+tall. Nothing stacks into that. Rather than shrink it all to nothing or throw
+the words away, the heading now takes the left half and the text and button sit
+beside it on the right — using the space that screen actually has.
+
+I have added an automatic check (nine screen sizes, from an iPhone SE up to a
+1920 desktop) that fails if the button, the heading or the text ever falls
+below the first screen again. It caught a second one while I was fixing this:
+the small *See the price list* link had wrapped underneath the button and off
+the edge on a sideways phone.
+
+---
+
+## 3. The look, tightened
 
 A design pass. Nothing about how the booking works changed; this is all about
 how it reads.
@@ -47,7 +140,7 @@ would fix it properly**.
 
 ---
 
-## 2. Previous round — your dashboard, and email
+## 4. Previous round — your dashboard, and email
 
 Two things you asked for.
 
@@ -121,7 +214,7 @@ hours you could sell, but only if you find out before Thursday.
 
 ---
 
-## 3. Your "4 Benefits" graphic
+## 5. Your "4 Benefits" graphic
 
 Your four benefits are now a section on the page, under **Why extensions**,
 sitting just after "Hair that is maintained, not fixed" and before the prices.
@@ -146,7 +239,7 @@ them and they stood out. Easy to put back if you want the warmth.
 
 ---
 
-## 4. Previous round
+## 6. Previous round
 
 Your three photos and two reels are all in:
 
@@ -168,7 +261,7 @@ bottom. I cropped them out rather than letting the page squash around them.
 
 ---
 
-## 5. Earlier round
+## 7. Earlier round
 
 - **Your logo is now in the header**, beside the "Hair by Chrissy" wordmark,
   masked to a circle so it reads as a mark rather than a photo tile.
@@ -180,7 +273,7 @@ bottom. I cropped them out rather than letting the page squash around them.
 
 ---
 
-## 6. Your real prices are now in — thank you
+## 8. Your real prices are now in — thank you
 
 The price list and services graphics you sent replaced the biggest guess in the
 whole project. **Everything below is now yours, not my estimate:**
@@ -219,7 +312,7 @@ instead, say the amount and I will set it.
 
 ---
 
-## 7. Your video is now the top of the page
+## 9. Your video is now the top of the page
 
 The transformation reel you sent is the moving image at the top of the site —
 her before, then the finished hair. It is the strongest thing on the page: it
@@ -246,7 +339,7 @@ three graphics you sent before, and they are all already in.
 
 ---
 
-## 8. Your photos are on the site
+## 10. Your photos are on the site
 
 The two you sent are now doing real work:
 
@@ -263,17 +356,17 @@ afters — and every card has its own.
 
 ---
 
-## 9. Your hours — currently a guess
+## 11. Your hours — now the ones you gave me
 
-Set as Tuesday–Saturday, 9–6 (Thursday to 8pm), Saturday 9–5, with a 1:00–1:45
-lunch. Sunday and Monday closed.
+Monday to Friday 10–7, Saturday 9–12, Sunday 11–3. No invented lunch break.
+See section 1 for the detail.
 
 **Change these yourself:** dashboard → **My hours**. Toggle any day on or off,
 set your times, save. Clients see it immediately.
 
 ---
 
-## 10. Reviews are placeholder text
+## 12. Reviews are placeholder text
 
 The six testimonials on the site are **written by me, not by real clients**.
 They must be replaced before this goes public.
@@ -283,7 +376,7 @@ and I'll put the genuine ones in with their first name and initial.
 
 ---
 
-## 11. The look, and where the site lives
+## 13. The look, and where the site lives
 
 The site has been rebuilt in a quieter, more editorial style — lots of white
 space, cream and white sections alternating, one gold accent used sparingly, and
@@ -313,7 +406,7 @@ you should know:
 
 ---
 
-## 12. Colours
+## 14. Colours
 
 The site now takes its colours straight from your Instagram profile picture. I
 sampled them from the image rather than guessing: the taupe background, the
@@ -337,7 +430,7 @@ single block of settings and takes minutes to change.
 
 ---
 
-## 13. On phones
+## 15. On phones
 
 You mentioned most clients book from their phone, so that's now the main target
 rather than an afterthought. Checked on iPhone SE, 13 mini, 15 Pro, 15 Pro Max,
@@ -369,7 +462,7 @@ work at all.
 
 ---
 
-## 14. Contact and location
+## 16. Contact and location
 
 Currently showing:
 
@@ -382,7 +475,7 @@ the address you're comfortable showing before someone has booked.
 
 ---
 
-## 15. Cancellation policy
+## 17. Cancellation policy
 
 Currently: **free to move or cancel up to 48 hours before**, deposit retained
 inside that window. Change the hours in dashboard → **Settings**; tell me if you
@@ -390,7 +483,7 @@ want the wording different.
 
 ---
 
-## 16. Card payments
+## 18. Card payments
 
 Card is fully built but running in **draft mode** — clients can choose it and go
 through a simulated checkout, but no real money moves, and the page says so.
@@ -408,7 +501,7 @@ tell me the amount.
 
 ---
 
-## 17. Getting told about bookings
+## 19. Getting told about bookings
 
 You will not miss one. Alerts are already built in:
 
@@ -452,7 +545,7 @@ any that failed, so you can always see it's working.
 
 ---
 
-## 18. Not built yet
+## 20. Not built yet
 
 Deliberately left out of the draft, easy to add once you've seen it:
 
@@ -470,7 +563,7 @@ Deliberately left out of the draft, easy to add once you've seen it:
 
 ---
 
-## 19. Your dashboard
+## 21. Your dashboard
 
 Go to **/admin**, password **`chrissy`** for now — I'll change it to something
 only you know before anything goes public.
@@ -490,16 +583,15 @@ notifications.
 Prices are done. What is left:
 
 1. **How long each service takes** — the last real guess in the booking system
-2. Your actual working hours
-3. Real reviews (with permission) — your Reviews highlight is the place
-4. A few more photographs, one per service
-5. How much location detail to show, and whether you want a **public** contact
+2. Real reviews (with permission) — your Reviews highlight is the place
+3. A few more photographs, one per service
+4. How much location detail to show, and whether you want a **public** contact
    address on the site. Your own address is now set up to receive the booking
    alerts privately — that is a separate thing from putting one on the page,
    and you may not want one there at all if Instagram DMs suit you
-6. A yes/no on setting up Stripe, and whether you want deposits
-7. What time you want the morning run-down, if you want it
-8. A domain, if you have one, so the alert emails come from you rather than a
+5. A yes/no on setting up Stripe, and whether you want deposits
+6. What time you want the morning run-down, if you want it
+7. A domain, if you have one, so the alert emails come from you rather than a
    shared address — it keeps them out of spam
 
 Everything on your side of the email setup is done. What's outstanding is on

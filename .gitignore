@@ -1,5 +1,19 @@
 node_modules/
 data/db.json
+
+# Inspiration photos clients attach to their bookings. Private by definition:
+# someone else's picture, sent to Chrissy for one appointment. They live
+# outside public/ and are served only to a logged-in admin — committing them
+# to a public repo would undo all of that in one push.
+data/uploads/
+
+# Backup archives. Same reasoning as data/ itself, only more so: one of these
+# is the entire client list, their phone numbers, and their photos, in a single
+# file that is easy to move somewhere it should not go.
+backups/
+*.tar.gz
+
+
 .env
 .DS_Store
 *.log

@@ -1,11 +1,31 @@
 # H A I R • B Y • C H R I S S Y — booking platform
 
+[![View the live site](https://img.shields.io/badge/View_the_live_site-33261c?style=for-the-badge)](https://hairbychrissy.ysbdesigns.uk/)
+&nbsp;
+[![Book a slot](https://img.shields.io/badge/Book_a_slot-a98744?style=for-the-badge)](https://hairbychrissy.ysbdesigns.uk/book.html)
+
+[![The Hair by Chrissy home page](docs/preview-home.jpg)](https://hairbychrissy.ysbdesigns.uk/)
+
+**Live at [hairbychrissy.ysbdesigns.uk](https://hairbychrissy.ysbdesigns.uk/)** — no install, no sign-in.
+
 A live-calendar booking site for [@hairbychrissy_x](https://www.instagram.com/hairbychrissy_x),
 hair extension specialist, London.
 
 Clients pick a service, see genuine live availability, choose a slot and pay by
 **cash or card**. Chrissy sets her own working days, hours, breaks and time off
 from a private dashboard — and the client calendar updates the moment she saves.
+
+| | |
+|---|---|
+| ![The booking page](docs/preview-booking.png) | ![The dashboard](docs/preview-dashboard.png) |
+| **The booking page** — pick a service, a day, a time | **Her dashboard** — the day as a run sheet, gaps included |
+
+> **The published link above runs in enquiry mode.** GitHub Pages serves static
+> files, so it cannot run the booking engine — the live calendar, the event
+> stream and the dashboard all need a Node host. Rather than show a calendar
+> that looks live and is not, the published page falls back to the real price
+> list and routes bookings to an enquiry. [Running it](#running-it) below gets
+> the whole thing working locally in one command.
 
 > **Draft.** Prices, services, copy and photography are now hers — taken from
 > her price list, services and maintenance graphics. Still outstanding: service
@@ -20,7 +40,7 @@ There are two deployments, and they are not interchangeable:
 
 | | What it serves | Where |
 |---|---|---|
-| **GitHub Pages** | the site as flat files | `https://<user>.github.io/Hairbychrissy/` |
+| **GitHub Pages** | the site as flat files | [hairbychrissy.ysbdesigns.uk](https://hairbychrissy.ysbdesigns.uk/) |
 | **Node** | the same site **plus the booking API** | any host that runs Node |
 
 **GitHub Pages cannot run the booking engine.** Live availability, the event
@@ -39,6 +59,42 @@ No `gh-pages` branch and no `/docs` folder — the workflow uploads the same
 `public/` the Node app serves, so the two cannot drift. It regenerates
 `public/data/site.json` on every deploy, so the published content always matches
 `lib/seed.js`.
+
+#### If the site sometimes shows the README
+
+That one setting is the cause, and the symptom is intermittent, which makes it
+hard to place. With the source set to **"Deploy from a branch"**, GitHub also
+runs its own Jekyll build — `pages-build-deployment` — over the **repository
+root**. The root has no `index.html`, and Jekyll falls back to rendering
+`README.md` as the home page.
+
+So two publishers are writing to one site:
+
+| Publisher | Builds | Result |
+|---|---|---|
+| `pages.yml` (this workflow) | `public/` | the real site |
+| `pages-build-deployment` (Jekyll) | the repo root | **README.md as the home page** |
+
+Whichever deployed last is what a visitor gets, so a refresh can flip between
+them. **To check:** open the Actions tab and look for runs of
+`pages-build-deployment`. Any at all mean the source is still a branch. Setting
+it to `GitHub Actions` stops that workflow running and the flipping with it.
+
+A root `index.html` is committed as a safety net — it is not part of the site
+and is never served under GitHub Actions, but if a Jekyll build ever wins the
+race it redirects to the real site instead of showing the README.
+
+#### The custom domain
+
+`public/CNAME` holds `hairbychrissy.ysbdesigns.uk`, and it has to live there
+rather than only at the repository root. This workflow publishes `public/` and
+nothing outside it, so a root-only CNAME is invisible to it — every deploy from
+here would drop the custom domain. The root copy is still read by the Jekyll
+build, so both are kept and both say the same thing.
+
+Because the site is served from a domain root rather than `/Hairbychrissy/`,
+every asset path being relative — decided when this was first published to
+Pages — is what lets the same files work under both.
 
 ### Making the published page book for real
 
@@ -68,13 +124,286 @@ No `npm install` needed — the app has **zero runtime dependencies**, just Node
 
 | URL | What it is |
 |---|---|
-| `/` | Client site + booking calendar |
+| `/` | Client site — her work, prices, and the invitation to book |
+| `/book` | The booking page: service, calendar, time, details |
 | `/admin` | Chrissy's dashboard (default password `chrissy`) |
 | `/confirmed?ref=…` | Booking confirmation |
 | `/pay-demo?ref=…` | Simulated card checkout (draft mode only) |
 
 Configuration is via environment variables — copy `.env.example` to `.env`.
 Everything has a working default, so nothing must be set to try it out.
+
+---
+
+## The database — hooking up real bookings
+
+Two backends, one interface. Which one runs is decided entirely by whether
+`SUPABASE_URL` and `SUPABASE_SERVICE_KEY` are set.
+
+| | Where the data lives | Use it when |
+|---|---|---|
+| **Supabase** | Postgres + Storage | **Production.** No disk to attach, survives every redeploy, bookings readable in the Supabase table editor |
+| **JSON file** | `$DATA_DIR/` | Local development, the audit suite, or a host where a volume is simpler than a database |
+
+Either way the working copy is **in memory**. The availability engine reads the
+whole dataset many times per request — once per candidate slot — so putting a
+network round trip behind each of those would make the calendar slow for no
+benefit at this size. Reads are instant; `write()` persists.
+
+```
+db.json / hbc_state       services, hours, rules, blocked dates, counter
+bookings / hbc_bookings   one record per appointment
+uploads/<booking>/<n>     the photos that client attached
+```
+
+**It already works locally.** `npm start` and book something — it saves to
+`./data`. Everything below is about making that survive being on the internet.
+
+---
+
+### Supabase — the recommended path
+
+Six steps, none of which involve a disk.
+
+**1. Run the schema.** Supabase dashboard → **SQL Editor** → New query → paste
+[`supabase/schema.sql`](supabase/schema.sql) → Run. It creates two tables:
+
+- `hbc_bookings` — one row per appointment, with `date`, `status`, `ref` and
+  `client_name` promoted into real columns so the table is sortable and
+  readable in the dashboard, plus the complete record as `jsonb`.
+- `hbc_state` — a single row holding services, hours, rules, blocked dates,
+  the reference counter, the alert log and the push keys. All configuration:
+  small, read constantly, changed rarely.
+
+It also enables row-level security with no policies. The app uses the
+`service_role` key, which bypasses RLS — so that is not what protects this data
+day to day. It is there so that a leaked **anon** key, the one that is safe to
+publish and therefore the one most likely to end up somewhere public, cannot
+read a single client's phone number.
+
+**2. Create the bucket.** Storage → **New bucket** → name `booking-photos`,
+**Public OFF**. These are clients' private photographs. The app serves the
+bytes itself through the authenticated admin route, so nothing is ever
+reachable by URL alone.
+
+**3. Set two environment variables** (Settings → API):
+
+```bash
+SUPABASE_URL=https://<project>.supabase.co
+SUPABASE_SERVICE_KEY=<the service_role key>
+```
+
+> The **service_role** key, not the anon key. It is full access: server only,
+> never in a browser, never committed. It cannot reach a browser here — the
+> booking page talks to this app's API and never to Supabase directly.
+
+**4. Move any existing bookings.**
+
+```bash
+node tools/supabase-migrate.js            # dry run — shows what would move
+node tools/supabase-migrate.js --apply    # bookings, settings and photos
+```
+
+Safe to re-run; every write is an upsert keyed on the booking id, so a run that
+fails halfway can just be run again. It never deletes your local files, and it
+reads the row count back from Supabase at the end rather than trusting its own
+writes.
+
+**5. Restart, and check the banner.**
+
+```
+bookings     Supabase — 19 loaded
+```
+
+If it says `local file` instead, the two variables are not reaching the
+process.
+
+**6. Back it up.** See [Backups](#backups) below — it reads from Supabase once
+configured, not from the stale local copy.
+
+#### What happens when Supabase is unreachable
+
+Two deliberate behaviours, because the failure this app exists to prevent is a
+client holding a confirmation for a booking the stylist never received.
+
+- **At boot it refuses to start.** Coming up healthy on an empty database is
+  worse than not coming up: the first write would overwrite every real booking
+  with nothing, and the only symptom until then is a quiet diary.
+- **Mid-booking it returns 503, not 201.** The `POST /api/bookings` response is
+  not sent until the row is actually stored. If the write fails the slot is
+  released and the client is told plainly to try again — rather than being
+  handed a confirmation for an appointment that does not exist.
+
+Verified by forcing an outage: 503 returned, no row written, and the slot
+bookable again immediately afterwards.
+
+---
+
+### The JSON file — the alternative
+
+If you would rather not use Supabase, the file backend needs a persistent disk,
+and there is exactly one way it goes wrong.
+
+`DATA_DIR` defaults to `./data`, inside the checkout. On most hosts the
+container filesystem is **rebuilt on every deploy**, so that default means the
+site runs perfectly, takes real bookings, and loses all of them the next time
+you push. Nothing errors. You find out when a client turns up. The startup
+banner flags it:
+
+```
+bookings     local file — /app/data  (default — set DATA_DIR to a persistent disk, or configure Supabase)
+```
+
+| Host | Create the disk | Then set |
+|---|---|---|
+| **Fly.io** | `fly volumes create hbc_data --size 1` and a `[mounts]` block for `/data` | `DATA_DIR=/data` |
+| **Render** | Add a **Disk**, mount path `/var/data` | `DATA_DIR=/var/data` |
+| **Railway** | Add a **Volume**, mount path `/data` | `DATA_DIR=/data` |
+| **A VPS** | Any directory you include in backups | `DATA_DIR=/srv/hbc-data` |
+
+`DATA_DIR` is one variable rather than two on purpose: the database and the
+photos must move together, or the pictures orphan on the next restart while the
+bookings stay put and make it look as though nothing went wrong.
+
+---
+
+### The rest of the environment
+
+```bash
+ADMIN_PASSWORD=<something long>      # the dashboard warns while "chrissy" is in use
+SESSION_SECRET=<32+ random chars>    # openssl rand -base64 32
+PUBLIC_URL=https://api.yourhost.com  # this app's own public URL
+ALLOWED_ORIGINS=https://hairbychrissy.ysbdesigns.uk
+```
+
+`ALLOWED_ORIGINS` is an explicit allowlist and must **never** be `*`: the admin
+routes share this origin and carry a session cookie.
+
+> **One process only.** The working copy is in memory, so two instances would
+> each hold their own and overwrite each other. Set the replica count to **1**.
+> This is the real ceiling of the design — see
+> [When to outgrow this](#when-to-outgrow-this) — and Supabase does not lift it
+> on its own.
+
+### Pointing the published site at it
+
+The GitHub Pages site is static and defaults to enquiry mode. To switch it to
+the real calendar:
+
+> **Settings → Secrets and variables → Actions → Variables → New variable**
+> `HBC_API` = `https://api.yourhost.com`
+
+Push anything, and the deploy injects that into `index.html`, `book.html` and
+`confirmed.html`. Verify with:
+
+```bash
+curl -s https://hairbychrissy.ysbdesigns.uk/book.html | grep hbc-api
+```
+
+### Backups
+
+```bash
+npm run backup                 # -> backups/hbc-2026-08-29T2130.tar.gz
+npm run backup /mnt/elsewhere  # or write it somewhere else
+```
+
+Reads from **whichever backend is configured** and says which. With Supabase
+set it pulls from Postgres and Storage, not from the local files — archiving a
+stale local copy while the real data lives elsewhere is worse than having no
+backup, because it looks like one.
+
+The archive has the same shape either way, so a Supabase backup restores into a
+local checkout and vice versa. Restoring is deliberately a plain `tar`, not a
+format of ours:
+
+```bash
+tar -xzf hbc-2026-08-29T2130.tar.gz -C "$DATA_DIR"
+```
+
+Nightly is ample for a diary:
+
+```cron
+0 3 * * *  cd /srv/hbc && npm run backup /srv/backups
+```
+
+**Archives are gitignored** (`backups/`, `*.tar.gz`). One of them is the entire
+client list, their phone numbers and their photos in a single portable file.
+
+### Check it survived
+
+The only test that matters is a restart, because that is what a deploy is:
+
+```bash
+curl -s $PUBLIC_URL/api/bookings/HBC-1001   # book something first
+# restart / redeploy
+curl -s $PUBLIC_URL/api/bookings/HBC-1001   # must still be there
+```
+
+If the reference comes back and the next booking continues the numbering rather
+than resetting to `HBC-1001`, it is wired up correctly.
+
+### When to outgrow this
+
+| Signal | Why it breaks | Move to |
+|---|---|---|
+| A second stylist, or 2+ app instances | Each process holds its own in-memory copy and they overwrite each other | Query Postgres directly instead of caching the whole dataset |
+| Tens of thousands of bookings | The whole set is loaded on boot | Paginate, and query by date range |
+| You need history — who changed what, when | There is one current state and no log | A Postgres audit table, or Supabase's own logs |
+
+`read()` and `write()` in `lib/store.js` are the only ways anything touches the
+data, which is what made adding a second backend a change to one file rather
+than a change everywhere.
+
+---
+
+## The booking page
+
+Every "Book your slot" on the site lands on `/book`, which walks four steps:
+
+1. **What you're having done** — a dropdown of her real service list, with the
+   price and rough duration shown the moment you choose. Availability is
+   computed per service, so this has to come first: a 4-hour install and a
+   1-hour blow dry fit her day differently.
+2. **A day** — a month calendar, with days she cannot take you greyed out.
+3. **A time** — the slots that actually fit that service on that day.
+4. **You** — name, phone, email, a free-text note, and optional photos.
+
+### Her week
+
+| Day | Hours |
+|---|---|
+| Monday – Friday | 10:00 – 19:00 |
+| Saturday | 09:00 – 12:00 |
+| Sunday | 11:00 – 15:00 |
+
+These are the seed defaults. Chrissy changes them in the dashboard at any time
+without touching code, and the calendar follows immediately.
+
+### Inspiration photos
+
+Clients already send her a screenshot of the look they want — over Instagram,
+separately from the booking — leaving her to match a picture to an appointment
+from memory. The details step takes up to **five photos**, and they arrive
+attached to the booking in her dashboard.
+
+Three decisions worth knowing:
+
+- **Photos upload after the booking exists.** A photo that fails to send must
+  never cost someone their slot, so the appointment is made first and the
+  pictures follow. If they fail, the booking still stands and both parties are
+  told.
+- **The upload is behind a one-time token.** Booking references are sequential
+  and therefore guessable; the token is 24 random bytes, handed back once to
+  the person who just booked and deleted the moment it is used.
+- **The files never touch the public tree.** They are written to
+  `data/uploads/`, outside `public/`, and served only through an
+  authenticated admin route with `nosniff` and a `default-src 'none'` CSP.
+  Type is decided by reading the file's magic bytes, never by trusting its
+  extension or declared MIME — so an SVG, a script, or an HTML file dressed up
+  as a `.jpg` is rejected.
+
+Since the photos land a moment after the booking, her "new booking" email
+carries the count the client declared, so she knows to go and look.
 
 ---
 
@@ -602,6 +931,7 @@ tools/
   header-audit.js      wordmark centring and collisions, 11 widths
   scrim-audit.js       white hero type vs the lightest pixel of the photo
   banlist-audit.js     the ban list, the type and rhythm scales, the motion band
+  hero-audit.js        the hero CTA is inside the first window, 9 viewports
   shot-375.js          every page and state captured and measured at 375px
   contact-sheet.py     those captures laid out side by side on one sheet
   build-static-data.js writes the content snapshot the flat-file build reads
@@ -611,6 +941,39 @@ data/db.json           created on first run; gitignored
 Data lives in a single JSON file. For one stylist that is genuinely enough, and
 it keeps the whole thing deployable anywhere Node runs. If the business grows
 past it, `lib/store.js` is the only file that changes.
+
+---
+
+## The hero fits in one window
+
+The whole page has one job, so the button that does it cannot start below the
+fold. It did.
+
+The heading was sized from viewport **width** alone — `clamp(…, 11vw, …)` — and
+a landscape tablet has width to spare and very little height. The type grew to
+its 95px cap and stayed there as the window got shorter, so the hero content
+stayed about 680px tall whatever the screen: on anything under roughly 700px of
+viewport height the CTA started off-screen. That was a landscape iPad, and also
+a perfectly ordinary 1280x800 laptop, which was cut by 28px.
+
+Two changes:
+
+- **The heading answers to whichever axis is tighter**, `min(10vw, 11.5vh)`, so
+  a short window gets smaller type instead of the same type pushed off the end.
+  The lede scales on height too, and the hero's padding is measured against the
+  window rather than sitting on a fixed floor — at 320px of viewport height the
+  old values spent 120px, over a third of the screen, on nothing.
+- **A phone held sideways gets a two-column hero.** At roughly 850x330 there is
+  no stacking order that fits label, heading, lede and button, and the usual
+  answers — shrink everything, or hide the lede — either make it unreadable or
+  throw the copy away. So the axis with room does the work: the heading takes a
+  tall left column and the lede and CTA sit beside it, the same editorial split
+  used further down the page.
+
+`tools/hero-audit.js` (`npm run audit:hero`) holds it, at nine viewports chosen
+for short landscape sizes rather than the portrait phones that were never the
+problem. It asserts the CTA, the heading and the lede are all inside the first
+window, and that the hero does not overflow the window it is meant to fill.
 
 ---
 
@@ -651,6 +1014,113 @@ past 7,300px of photographs to read six prices. Two columns and a square crop
 took the page to 20,524px and put four services on screen at once.
 
 Everything is at zero now, across all eighteen screens.
+
+---
+
+## Tech and skills
+
+Built with **zero runtime dependencies** — `package.json` has an empty
+`dependencies` block, and `npm install` is never needed to run it. Everything
+below is either the Node standard library or hand-written. That was a
+deliberate constraint: a one-person business should not inherit a supply chain
+it cannot audit, and a site that still runs in five years is worth more here
+than one built on this year's framework.
+
+### Stack
+
+| Area | What was used |
+|---|---|
+| **Runtime** | Node 18+, ES modules, `node:http`, `node:crypto`, `node:fs` |
+| **Server** | Hand-rolled HTTP router, JSON body parsing, static file serving with correct MIME and cache headers |
+| **Storage** | Two backends behind one interface — Supabase Postgres + Storage, or a JSON file with atomic writes (write-temp-then-rename) and a debounced persist |
+| **Supabase** | PostgREST and Storage over plain `fetch` — no SDK, so the zero-dependency property survives. Upserts diffed so a booking writes one row, not the whole table |
+| **Real time** | Server-Sent Events — every open browser repaints when anyone books or Chrissy changes her hours |
+| **Notifications** | Self-hosted Web Push (VAPID, ES256, JWT signing) + transactional email with an HTML and plain-text part |
+| **Auth** | HMAC-signed session cookie, `SameSite=Lax`, constant-time password comparison |
+| **Payments** | Stripe Checkout, with a simulated checkout for draft mode |
+| **Uploads** | Base64-in-JSON, magic-byte file type sniffing, one-time upload tokens |
+| **Front end** | Vanilla JavaScript, no build step; CSS custom properties, Grid, Flexbox, `IntersectionObserver` |
+| **CI/CD** | GitHub Actions publishing to GitHub Pages, regenerating the content snapshot on every deploy |
+| **Testing** | Playwright driving eight custom audit tools; Pillow for the contact sheets |
+| **Media** | ffmpeg — her reels trimmed, `cropdetect`-cropped, audio stripped, encoded to mp4 + webm (3.6MB down to 435KB); Pillow for image resizing and progressive JPEG |
+
+### Exposure gained
+
+Most of the interesting work was not in the features. It was in the places
+where a thing that looked finished was not:
+
+- **Concurrency and trust boundaries.** The client's slot list is always
+  seconds out of date, so it is never trusted — the server re-validates at the
+  moment of booking. Chrissy may override her own business rules (hours,
+  notice, blocked days) but the server refuses a double booking no matter what
+  the form sends, because two clients in one chair is a mistake, not a
+  decision.
+- **Designing for failure, not just success.** Photos upload *after* the
+  booking exists so a failed photo can never cost someone their slot. The
+  day-ahead email writes its sent-flag *before* the send, so an email service
+  that is down cannot become an email a minute for the rest of the day. The
+  booking response is withheld until the row is actually stored, so a database
+  outage returns 503 rather than handing someone a confirmation for an
+  appointment nobody has; and the server refuses to boot on an unreachable
+  database rather than come up empty and overwrite the real one.
+- **Web security in the small.** Magic-byte type sniffing rather than trusting
+  an extension; path traversal blocked in both directions; one-time tokens
+  because booking references are sequential and guessable; CORS as an explicit
+  allowlist, never `*`, because the admin routes share that origin and carry a
+  session cookie; a personal email address kept out of a public repository
+  entirely.
+- **Accessibility as a measurement, not an intention.** WCAG contrast is
+  computed against real rendered pixels — including sampling six frames of the
+  hero *video*, because a video hero shows a different frame every moment and
+  measuring one frame measures luck.
+- **Mobile reality.** 90% of her clients book on a phone. Sub-44px tap targets
+  and sub-16px inputs (which make iOS zoom the page) are treated as bugs and
+  fail the build. A photo picker that replaced the first batch instead of
+  adding to it was only found by testing the way people actually attach photos
+  on iOS: one at a time.
+- **Progressive enhancement under a real constraint.** The same `public/`
+  directory serves both a full Node app and a static host that cannot run any
+  of it — so the site detects which it is on and degrades honestly to an
+  enquiry rather than faking a calendar it cannot honour.
+- **Writing tools that can fail.** Eight audits gate every commit, and several
+  caught bugs *in themselves* — a hero audit that passed while measuring the
+  wrong element, a contrast probe silently disarmed by a change to the seed
+  data. A check that cannot fail is not a check.
+
+### The audits
+
+```
+npm run audit:contrast   WCAG AA on real rendered pixels, 18 states
+npm run audit:mobile     6 handsets — tap targets, iOS zoom, overflow
+npm run audit:header     wordmark centring and overlap, 11 widths
+npm run audit:hero       the CTA must be above the fold, 9 viewports
+npm run audit:scrim      hero contrast across 6 video frames
+npm run audit:sticky     anchors clear the sticky header; nav parity
+npm run audit:banlist    the design ban list, as a rule rather than a memo
+npm run shots            every page and state at 375px, overflow measured
+```
+
+---
+
+## Credits
+
+**Design and build — YSB Designs.**
+Identity, art direction, front end, booking engine and dashboard.
+
+Credited in the site footer too, driven from `lib/seed.js` rather than
+hard-coded into markup — so a web address can be added in one line and appears
+everywhere:
+
+```js
+credit: { name: 'YSB Designs', url: '' },   // add a URL and the footer links it
+```
+
+Photography, video, prices, services and copy are **Chrissy's own**, taken from
+her Instagram and her price list, and used with her permission. Her Instagram
+is [@hairbychrissy_x](https://www.instagram.com/hairbychrissy_x).
+
+Typefaces are Cormorant Garamond (display) and Inter (body and interface), both
+via Google Fonts.
 
 ---
 

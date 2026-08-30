@@ -19,7 +19,9 @@
     "audit:header": "node tools/header-audit.js",
     "shots": "node tools/shot-375.js",
     "audit:banlist": "node tools/banlist-audit.js",
-    "sheet": "python3 tools/contact-sheet.py"
+    "sheet": "python3 tools/contact-sheet.py",
+    "audit:hero": "node tools/hero-audit.js",
+    "backup": "node tools/backup.js"
   },
   "dependencies": {}
 }
