@@ -27,6 +27,7 @@ import {
   notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
   saveSubscription, removeSubscription, listSubscriptions, channelStatus,
   recentNotifications, latestNotification,
+  sendClientConfirmation,
 } from './lib/notify.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -236,16 +237,32 @@ function publicBooking(b) {
 }
 
 /**
- * Tell Chrissy about a booking. Deliberately fire-and-forget: a slow webhook
- * or an unreachable push service must never delay or fail a client's
- * confirmation, so nothing here is awaited.
+ * Tell Chrissy about a booking, and send the client their own copy.
+ *
+ * Deliberately fire-and-forget: a slow webhook or an unreachable mail service
+ * must never delay or fail a booking that is already saved. By the time this
+ * runs the slot is the client's — nothing here can take it away.
+ *
+ * Both live in one function on purpose. Every path that alerts her about a new
+ * booking is a path where the client should be told too, and there are four of
+ * them; splitting the calls would eventually leave one behind.
  */
 function notifyNewBooking(booking) {
   const service = getService(booking.serviceId);
-  const message = bookingMessage({ ...booking, dateLong: longDate(booking.date) }, service);
-  notify(message)
+  const withDate = { ...booking, dateLong: longDate(booking.date) };
+
+  notify(bookingMessage(withDate, service))
     .then(() => broadcast('notification', {}))
     .catch((err) => console.error('[notify]', err.message));
+
+  sendClientConfirmation(withDate, service)
+    .then((r) => {
+      if (r?.skipped) console.log(`[client-email] not sent — ${r.skipped}`);
+      else console.log(`[client-email] sent to ${r.detail}`);
+    })
+    // Logged loudly rather than swallowed: the client has a slot either way,
+    // but Chrissy should know they were not told about it.
+    .catch((err) => console.error(`[client-email] FAILED for ${booking.ref}:`, err.message));
 }
 
 /** Photographs actually present, so the page never probes for missing files. */
