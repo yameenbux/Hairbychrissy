@@ -44,7 +44,19 @@ function duration(mins) {
 const BASE = new URL('../', import.meta.url).href.replace(/\/$/, '');
 
 async function api(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...options });
+  /*
+   * credentials:'include' is not optional here. fetch defaults to
+   * 'same-origin', and this dashboard is NOT same-origin with the API — it is
+   * served from Pages and talks to Render. Without this the browser refuses
+   * both to store the session cookie the login hands back and to send it on
+   * anything afterwards, so every call after a SUCCESSFUL sign-in returns 401
+   * and the login screen comes straight back.
+   */
+  const res = await fetch(`${BASE}${path}`, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && !path.endsWith('/login')) {
     showLogin();

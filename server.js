@@ -251,18 +251,48 @@ function notifyNewBooking(booking) {
   const service = getService(booking.serviceId);
   const withDate = { ...booking, dateLong: longDate(booking.date) };
 
-  notify(bookingMessage(withDate, service))
-    .then(() => broadcast('notification', {}))
-    .catch((err) => console.error('[notify]', err.message));
+  /*
+   * One after the other, not both at once.
+   *
+   * A booking sends two emails through the same provider, and the free tier
+   * allows two requests a second. Fired simultaneously they raced, and the
+   * loser came back rate-limited — which produced the worst possible pairing
+   * in production: the CLIENT was told they were booked and CHRISSY was not
+   * told at all. Hers goes first, because a booking she does not know about
+   * is the failure this whole application exists to prevent.
+   */
+  (async () => {
+    try {
+      const entry = await notify(bookingMessage(withDate, service));
+      /*
+       * Say out loud what happened to HER alert. A channel that is not
+       * configured resolves as 'skipped' and writes nothing anywhere, so the
+       * exact failure a stylist reports — "the client got an email, I got
+       * nothing" — used to leave no trace at all in the log. Now the reason
+       * is printed next to the booking that triggered it.
+       */
+      for (const ch of entry?.channels || []) {
+        if (ch.status === 'sent') console.log(`[stylist-alert] ${ch.name} sent — ${ch.detail}`);
+        else console.warn(`[stylist-alert] ${ch.name} ${ch.status} — ${ch.detail}`);
+      }
+      if (!(entry?.channels || []).some((ch) => ch.status === 'sent')) {
+        console.error(`[stylist-alert] NOBODY WAS TOLD about ${booking.ref} — no notification channel is working.`);
+      }
+      broadcast('notification', {});
+    } catch (err) {
+      console.error('[notify]', err.message);
+    }
 
-  sendClientConfirmation(withDate, service)
-    .then((r) => {
+    try {
+      const r = await sendClientConfirmation(withDate, service);
       if (r?.skipped) console.log(`[client-email] not sent — ${r.skipped}`);
       else console.log(`[client-email] sent to ${r.detail}`);
-    })
-    // Logged loudly rather than swallowed: the client has a slot either way,
-    // but Chrissy should know they were not told about it.
-    .catch((err) => console.error(`[client-email] FAILED for ${booking.ref}:`, err.message));
+    } catch (err) {
+      // Logged loudly rather than swallowed: the client has a slot either way,
+      // but Chrissy should know they were not told about it.
+      console.error(`[client-email] FAILED for ${booking.ref}:`, err.message);
+    }
+  })();
 }
 
 /** Photographs actually present, so the page never probes for missing files. */
@@ -609,11 +639,11 @@ async function handleAdminApi(req, res, url) {
     if (!checkPassword(password)) {
       return json(res, 401, { error: 'Incorrect password.' });
     }
-    return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(makeToken()) });
+    return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(makeToken(), req) });
   }
 
   if (p === '/api/admin/logout' && req.method === 'POST') {
-    return json(res, 200, { ok: true }, { 'Set-Cookie': clearCookie() });
+    return json(res, 200, { ok: true }, { 'Set-Cookie': clearCookie(req) });
   }
 
   if (p === '/api/admin/session' && req.method === 'GET') {
@@ -1319,7 +1349,11 @@ server.listen(PORT, () => {
   // Whether she gets told about a booking is not something to leave implicit.
   const emailOn = Boolean(process.env.RESEND_API_KEY && process.env.NOTIFY_EMAIL_TO);
   const dayHour = Number(process.env.DAY_AHEAD_HOUR);
-  console.log(`  email        ${emailOn ? `on — ${process.env.NOTIFY_EMAIL_TO}` : 'off (set RESEND_API_KEY and NOTIFY_EMAIL_TO)'}`);
+  console.log(`  email        ${emailOn
+    ? `on — ${process.env.NOTIFY_EMAIL_TO}`
+    : `OFF — she will NOT be told about bookings (${!process.env.RESEND_API_KEY && !process.env.NOTIFY_EMAIL_TO
+        ? 'set RESEND_API_KEY and NOTIFY_EMAIL_TO'
+        : !process.env.RESEND_API_KEY ? 'set RESEND_API_KEY' : 'set NOTIFY_EMAIL_TO'})`}`);
   console.log(`  run-down     ${Number.isInteger(dayHour) && dayHour >= 0 && dayHour <= 23
     ? `each morning around ${String(dayHour).padStart(2, '0')}:00`
     : 'off (set DAY_AHEAD_HOUR)'}`);
