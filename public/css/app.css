@@ -461,9 +461,14 @@ a { color: inherit; text-decoration: none; }
 }
 .hero-media { position: absolute; inset: 0; z-index: 0; }
 .hero-media img, .hero-media video { width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
-/* The video is a vertical reel; on a wide screen it crops to the subject
-   rather than letterboxing. */
-@media (min-width: 861px) { .hero-media video { object-position: center 22%; } }
+/*
+ * The hero video is 16:9 now, not the vertical reel this offset was tuned for.
+ * On a phone a wide video is scaled to fill the height and cropped left and
+ * right, so the vertical position has almost nothing to act on; on a wide
+ * screen the ratios nearly match and there is little to crop either way.
+ * Centred is therefore the honest value, and the work stays in frame.
+ */
+@media (min-width: 861px) { .hero-media video { object-position: center center; } }
 /* A scrim, not hope — the spec's words. */
 .hero-media::after {
   content: '';
