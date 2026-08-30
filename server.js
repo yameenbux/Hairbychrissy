@@ -263,7 +263,21 @@ function notifyNewBooking(booking) {
    */
   (async () => {
     try {
-      await notify(bookingMessage(withDate, service));
+      const entry = await notify(bookingMessage(withDate, service));
+      /*
+       * Say out loud what happened to HER alert. A channel that is not
+       * configured resolves as 'skipped' and writes nothing anywhere, so the
+       * exact failure a stylist reports — "the client got an email, I got
+       * nothing" — used to leave no trace at all in the log. Now the reason
+       * is printed next to the booking that triggered it.
+       */
+      for (const ch of entry?.channels || []) {
+        if (ch.status === 'sent') console.log(`[stylist-alert] ${ch.name} sent — ${ch.detail}`);
+        else console.warn(`[stylist-alert] ${ch.name} ${ch.status} — ${ch.detail}`);
+      }
+      if (!(entry?.channels || []).some((ch) => ch.status === 'sent')) {
+        console.error(`[stylist-alert] NOBODY WAS TOLD about ${booking.ref} — no notification channel is working.`);
+      }
       broadcast('notification', {});
     } catch (err) {
       console.error('[notify]', err.message);
@@ -1335,7 +1349,11 @@ server.listen(PORT, () => {
   // Whether she gets told about a booking is not something to leave implicit.
   const emailOn = Boolean(process.env.RESEND_API_KEY && process.env.NOTIFY_EMAIL_TO);
   const dayHour = Number(process.env.DAY_AHEAD_HOUR);
-  console.log(`  email        ${emailOn ? `on — ${process.env.NOTIFY_EMAIL_TO}` : 'off (set RESEND_API_KEY and NOTIFY_EMAIL_TO)'}`);
+  console.log(`  email        ${emailOn
+    ? `on — ${process.env.NOTIFY_EMAIL_TO}`
+    : `OFF — she will NOT be told about bookings (${!process.env.RESEND_API_KEY && !process.env.NOTIFY_EMAIL_TO
+        ? 'set RESEND_API_KEY and NOTIFY_EMAIL_TO'
+        : !process.env.RESEND_API_KEY ? 'set RESEND_API_KEY' : 'set NOTIFY_EMAIL_TO'})`}`);
   console.log(`  run-down     ${Number.isInteger(dayHour) && dayHour >= 0 && dayHour <= 23
     ? `each morning around ${String(dayHour).padStart(2, '0')}:00`
     : 'off (set DAY_AHEAD_HOUR)'}`);
