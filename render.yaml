@@ -1,0 +1,89 @@
+# Render blueprint for the booking API.
+#
+# Render serves server.js — the live calendar, the booking endpoint, the
+# dashboard and the photo routes. The client site itself is published
+# separately to GitHub Pages, so this is the API behind it, not the website.
+#
+# To use: Render dashboard -> New -> Blueprint -> pick this repository.
+# Render reads this file, creates the service, and asks for the values marked
+# sync:false below. Nothing secret is in this file, which is why it can live
+# in a public repository.
+#
+# No disk is attached on purpose. Supabase holds the bookings and the client
+# photos, so the container filesystem can be thrown away on every deploy —
+# which is exactly what Render does.
+
+services:
+  - type: web
+    name: hairbychrissy-api
+    runtime: node
+    plan: free
+    region: frankfurt          # closest of Render's regions to London
+    # IMPORTANT: main must actually contain the Supabase backend before you
+    # deploy this. If it does not, the app runs — and quietly falls back to a
+    # local file, which Render erases on every deploy, so bookings vanish with
+    # no error anywhere. Merge the feature branch first, or point this at that
+    # branch instead. The startup log settles it: it must say
+    # "bookings  Supabase", not "bookings  local file".
+    branch: main
+    # Zero runtime dependencies, so there is genuinely nothing to build.
+    # npm ci would fail without a lockfile, and there is no lockfile because
+    # there is nothing to lock.
+    buildCommand: ''
+    startCommand: node server.js
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_VERSION
+        value: '22'
+
+      # --- Supabase. Set these and the app stores bookings in Postgres and
+      # client photos in Storage. Without them it falls back to a local file,
+      # which on Render is erased on every deploy — so these are not optional
+      # here. The service_role key is full access: server side only.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+
+      # --- Chrissy's dashboard login. The dashboard warns on screen while the
+      # default "chrissy" is still in use.
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Signs the admin session cookie. Render generates a long random value.
+      - key: SESSION_SECRET
+        generateValue: true
+
+      # --- Who may call this API from a browser. An explicit allowlist and
+      # never "*", because the admin routes share this origin and carry a
+      # session cookie.
+      - key: ALLOWED_ORIGINS
+        value: https://hairbychrissy.ysbdesigns.uk
+
+      # --- This service's own public URL, used to build Stripe's success and
+      # cancel redirects. Set it by hand AFTER the first deploy, once Render
+      # has assigned the address: https://hairbychrissy-api.onrender.com
+      #
+      # Not wired to fromService on purpose — Render's service properties give
+      # a bare host or host:port with no scheme, and payments.js uses this
+      # value as a URL prefix, so that would produce a malformed redirect.
+      - key: PUBLIC_URL
+        sync: false
+
+      # --- Email alerts. Her address is deliberately NOT in this file: it is
+      # a personal address and this repository is public. Set it in the Render
+      # dashboard.
+      - key: NOTIFY_EMAIL_TO
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NOTIFY_EMAIL_FROM
+        sync: false
+      # Hour of the morning run-down, 0-23. Leave unset to switch it off.
+      - key: DAY_AHEAD_HOUR
+        sync: false
+
+      # --- Card payments. Unset means the simulated checkout, which is
+      # clickable end to end and takes no money.
+      - key: STRIPE_SECRET_KEY
+        sync: false
