@@ -58,6 +58,23 @@ console.log(`  settings  ${Object.keys(state).length} keys${state.vapid ? ' (inc
 console.log('');
 
 if (!APPLY) {
+  /*
+   * Name the people you are about to copy into a live database.
+   *
+   * A local database is very often full of test bookings — this one was, at
+   * the point this was written: "Amara Okafor", "Probe", "Photo Tester". A
+   * count alone does not tell you that, and the first place it shows up is
+   * the stylist's own dashboard on her phone.
+   */
+  const names = [...new Set(bookings.map((b) => b.client?.name).filter(Boolean))];
+  if (names.length) {
+    console.log('  clients you are about to copy across:');
+    console.log(`    ${names.slice(0, 12).join(', ')}${names.length > 12 ? `, and ${names.length - 12} more` : ''}`);
+    console.log('');
+    console.log('  If those are test names, do NOT run this. A fresh database seeds');
+    console.log('  its services, hours and rules from lib/seed.js on first boot.');
+    console.log('');
+  }
   console.log('  Dry run. Re-run with --apply to migrate.');
   console.log('');
   process.exit(0);

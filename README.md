@@ -176,7 +176,7 @@ Six steps, none of which involve a disk.
   small, read constantly, changed rarely.
 
 It also enables row-level security with no policies. The app uses the
-`service_role` key, which bypasses RLS — so that is not what protects this data
+secret key, which bypasses RLS — so that is not what protects this data
 day to day. It is there so that a leaked **anon** key, the one that is safe to
 publish and therefore the one most likely to end up somewhere public, cannot
 read a single client's phone number.
@@ -190,10 +190,13 @@ reachable by URL alone.
 
 ```bash
 SUPABASE_URL=https://<project>.supabase.co
-SUPABASE_SERVICE_KEY=<the service_role key>
+SUPABASE_SERVICE_KEY=<the secret key — sb_secret_...>
 ```
 
-> The **service_role** key, not the anon key. It is full access: server only,
+> The **secret** key — `sb_secret_...` in the current dashboard, `service_role`
+> in the older one. **Not** the publishable key (`sb_publishable_...`,
+> previously `anon`): RLS is on with no policies, so a publishable key can read
+> and write nothing and the app fails on its first query. It is full access: server only,
 > never in a browser, never committed. It cannot reach a browser here — the
 > booking page talks to this app's API and never to Supabase directly.
 
@@ -220,6 +223,48 @@ process.
 
 **6. Back it up.** See [Backups](#backups) below — it reads from Supabase once
 configured, not from the stale local copy.
+
+#### Supabase is the disk, not the server
+
+Worth being explicit, because it is the step people skip: Supabase holds the
+data, but something still has to run `server.js`. The GitHub Pages site is
+static — it cannot reach Postgres, and should not (that would put a
+full-access key in the browser). Until the API is hosted somewhere, the
+booking page stays in enquiry mode and the Supabase tables stay empty.
+
+[`render.yaml`](render.yaml) is a blueprint for that: **Render → New →
+Blueprint → this repository**. It creates the service, generates
+`SESSION_SECRET`, and prompts for the values it must not store in a public
+repo. No disk is attached, on purpose — Supabase holds the bookings and the
+photos, so a container filesystem that is thrown away on every deploy is
+exactly what is wanted.
+
+Two things to get right:
+
+- **The branch must contain the Supabase backend.** Render's Blueprint form
+  asks which branch holds `render.yaml`, and the service then follows that
+  same branch — no branch is pinned inside the file, so the two cannot
+  disagree. Point it at a branch without the Supabase backend and the app
+  still starts, falls back to a local file, and Render erases that on every
+  deploy — bookings disappear with no error anywhere. The startup log is the
+  check: it must read `bookings     Supabase — N loaded`, never
+  `bookings     local file`.
+- **`PUBLIC_URL` is set by hand after the first deploy**, once Render has
+  assigned the address. It is not wired to a service property because those
+  give a bare host with no scheme, and it is used as a URL prefix for Stripe's
+  redirects.
+
+`GET /health` reports the storage backend, the booking count and the card
+mode, so a misconfiguration is visible in one request rather than inferred
+from a quiet diary:
+
+```json
+{ "ok": true, "storage": "supabase", "bookings": 0, "cardMode": "demo", "uptime": 4 }
+```
+
+On Render's free plan the service sleeps after inactivity and the first
+request wakes it, which takes a few seconds — fine for a draft, worth paying
+to remove before real clients are booking.
 
 #### What happens when Supabase is unreachable
 

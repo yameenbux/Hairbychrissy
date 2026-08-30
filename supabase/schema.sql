@@ -51,7 +51,8 @@ create table if not exists hbc_state (
 
 -- --------------------------------------------------------------------- RLS
 --
--- The app connects with the service_role key, which bypasses row-level
+-- The app connects with the SECRET key (sb_secret_..., or service_role in the
+-- older dashboard), which bypasses row-level
 -- security entirely — so RLS is not what protects this data day to day; the
 -- key living only on the server is.
 --

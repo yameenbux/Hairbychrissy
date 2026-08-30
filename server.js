@@ -22,6 +22,7 @@ import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDef
 import { isLiveStripe, createCheckoutSession, retrieveCheckoutSession, publicUrl } from './lib/payments.js';
 import { verifyPhoto, savePhotos, readPhoto, MAX_PHOTOS } from './lib/photos.js';
 import { DATA_DIR, DATA_DIR_IS_DEFAULT } from './lib/paths.js';
+import { diagnose as supabaseDiagnosis } from './lib/supabase.js';
 import {
   notify, bookingMessage, cancellationMessage, dayAheadMessage, getVapid,
   saveSubscription, removeSubscription, listSubscriptions, channelStatus,
@@ -1211,6 +1212,27 @@ const server = http.createServer(async (req, res) => {
       return send(res, 204, '', res._cors);
     }
 
+    /*
+     * Health check, for whatever is watching the process — Render, an uptime
+     * monitor, a load balancer. Above the /api/ dispatch because it is not a
+     * client API and should not answer to the CORS allowlist.
+     *
+     * It reports the storage backend and the booking count, because "the
+     * process is listening" is the least interesting thing that could be
+     * wrong. The app refuses to boot on an unreachable database, so a 200
+     * here means the data genuinely loaded. It says nothing about who is
+     * booked — this endpoint is public.
+     */
+    if (p === '/health' && req.method === 'GET') {
+      return json(res, 200, {
+        ok: true,
+        storage: backend(),
+        bookings: read().bookings.length,
+        cardMode: isLiveStripe() ? 'live' : 'demo',
+        uptime: Math.round(process.uptime()),
+      });
+    }
+
     if (p === '/api/stream') return handleStream(req, res);
     if (p.startsWith('/api/admin/')) return await handleAdminApi(req, res, url);
     if (p.startsWith('/api/')) return await handlePublicApi(req, res, url);
@@ -1260,10 +1282,10 @@ try {
   console.error('  Could not load the bookings database. Refusing to start.');
   console.error(`  ${err.message}`);
   console.error('');
+  console.error(supabaseDiagnosis());
+  console.error('');
   console.error('  Starting on an empty database would overwrite real bookings,');
-  console.error('  so this is deliberate. Check SUPABASE_URL and');
-  console.error('  SUPABASE_SERVICE_KEY, and that the schema in');
-  console.error('  supabase/schema.sql has been run.');
+  console.error('  so this is deliberate. Nothing has been changed in Supabase.');
   console.error('');
   process.exit(1);
 }
