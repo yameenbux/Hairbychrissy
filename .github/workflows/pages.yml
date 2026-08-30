@@ -89,6 +89,35 @@ jobs:
         env:
           HBC_API: ${{ vars.HBC_API }}
 
+      # Say which of the two sites was just built.
+      #
+      # Without this the difference is invisible: the API step is skipped when
+      # HBC_API is unset, every other step succeeds, and a green tick publishes
+      # a site that cannot take a booking. That is how the calendar stayed in
+      # enquiry mode with nothing anywhere reporting a problem.
+      - name: Report what was published
+        run: |
+          if [ -n "${HBC_API}" ]; then
+            missing=""
+            for f in index.html book.html confirmed.html pay-demo.html; do
+              grep -q 'name="hbc-api"' "public/$f" || missing="$missing $f"
+            done
+            if [ -n "$missing" ]; then
+              echo "::error::HBC_API is set but the tag did not reach:$missing"
+              exit 1
+            fi
+            echo "### Published with LIVE BOOKING" >> "$GITHUB_STEP_SUMMARY"
+            echo "Calendar talks to \`${HBC_API}\`." >> "$GITHUB_STEP_SUMMARY"
+            echo "==> LIVE BOOKING against ${HBC_API}"
+          else
+            echo "### Published in ENQUIRY MODE" >> "$GITHUB_STEP_SUMMARY"
+            echo "No booking API is configured, so the calendar is not shown and visitors are asked to message instead." >> "$GITHUB_STEP_SUMMARY"
+            echo "To switch it on: **Settings -> Secrets and variables -> Actions -> Variables**, add \`HBC_API\` with the API's base URL, then re-run this workflow." >> "$GITHUB_STEP_SUMMARY"
+            echo "==> ENQUIRY MODE — no HBC_API variable set, so the site cannot take bookings"
+          fi
+        env:
+          HBC_API: ${{ vars.HBC_API }}
+
       # Jekyll would otherwise skip files and folders beginning with an
       # underscore.
       - name: Disable Jekyll processing
