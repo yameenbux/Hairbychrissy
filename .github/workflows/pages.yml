@@ -53,6 +53,21 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# Where the published pages send their booking requests.
+#
+# A committed default rather than a required setting, because a site that
+# silently cannot take a booking is the worst of the available outcomes and
+# that is what an unset variable produced. The HBC_API repository variable
+# still wins if it is set, so moving the API to another host is a settings
+# change and not a commit.
+#
+# Safe to have in a public repository: it is an address, and every visitor's
+# browser sends requests to it in the clear. It deliberately does NOT live in
+# the HTML in the repo — the tag is injected at build time only, so `npm start`
+# on a laptop keeps talking to its own local server rather than to production.
+env:
+  HBC_API: ${{ vars.HBC_API || 'https://hairbychrissy-api.onrender.com' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -72,7 +87,7 @@ jobs:
       # calendar works from Pages. Set the HBC_API repository variable to the
       # API's base URL. Without it the page runs in enquiry mode.
       - name: Point at hosted booking API
-        if: ${{ vars.HBC_API != '' }}
+        if: env.HBC_API != ''
         run: |
           python3 - <<'PY'
           import os, pathlib
@@ -89,13 +104,15 @@ jobs:
               if not p.exists():
                   continue
               html = p.read_text()
-              if 'name="hbc-api"' not in html:
+              # The OPENING TAG, not just the attribute. confirmed.html and
+              # pay-demo.html contain meta[name="hbc-api"] in their own lookup
+              # code, so a looser test reads them as already tagged and skips
+              # them - which is the page a client lands on after booking.
+              if '<meta name="hbc-api"' not in html:
                   html = html.replace('</head>', f'{tag}\n</head>', 1)
                   p.write_text(html)
                   print(f'{name}: pointed at {api}')
           PY
-        env:
-          HBC_API: ${{ vars.HBC_API }}
 
       # Say which of the two sites was just built.
       #
@@ -108,7 +125,7 @@ jobs:
           if [ -n "${HBC_API}" ]; then
             missing=""
             for f in index.html book.html confirmed.html pay-demo.html; do
-              grep -q 'name="hbc-api"' "public/$f" || missing="$missing $f"
+              grep -q '<meta name="hbc-api"' "public/$f" || missing="$missing $f"
             done
             if [ -n "$missing" ]; then
               echo "::error::HBC_API is set but the tag did not reach:$missing"
@@ -123,8 +140,6 @@ jobs:
             echo "To switch it on: **Settings -> Secrets and variables -> Actions -> Variables**, add \`HBC_API\` with the API's base URL, then re-run this workflow." >> "$GITHUB_STEP_SUMMARY"
             echo "==> ENQUIRY MODE — no HBC_API variable set, so the site cannot take bookings"
           fi
-        env:
-          HBC_API: ${{ vars.HBC_API }}
 
       # Jekyll would otherwise skip files and folders beginning with an
       # underscore.
