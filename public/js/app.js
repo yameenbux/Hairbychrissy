@@ -64,10 +64,29 @@ function prettyDate(dateStr) {
 
 const motionOK = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/*
+ * Where the API lives when the page was published without a build step.
+ *
+ * The tag below is normally injected by .github/workflows/pages.yml. It is not
+ * there if GitHub's own Jekyll builder published the site instead, which
+ * happens whenever the Pages source is set to a branch rather than to GitHub
+ * Actions — and that has silently been the case, which is why the calendar sat
+ * in enquiry mode with every check green.
+ *
+ * Keyed by host so a laptop is never caught by it: localhost has no entry, so
+ * `npm start` still talks to its own server rather than to production.
+ */
+const KNOWN_HOSTS = {
+  'hairbychrissy.ysbdesigns.uk': 'https://hairbychrissy-api.onrender.com',
+  'yameenbux.github.io': 'https://hairbychrissy-api.onrender.com',
+};
+
 function resolveApiBase() {
   if (window.HBC_API) return String(window.HBC_API).replace(/\/$/, '');
   const meta = document.querySelector('meta[name="hbc-api"]');
   if (meta?.content) return meta.content.replace(/\/$/, '');
+  const known = KNOWN_HOSTS[location.hostname];
+  if (known) return known;
   // Same origin. Derived from this script's own URL rather than assumed to be
   // "/", so it is correct whether the app sits at a domain root or a subpath.
   return new URL('../', import.meta.url).href.replace(/\/$/, '');
@@ -1110,12 +1129,60 @@ function renderOpeningHours() {
 
 /* ------------------------------------------------------------------ init */
 
+/**
+ * Say something while the booking service wakes up.
+ *
+ * A free hosting tier stops the API after a spell with no traffic and starts
+ * it again on the next request, which takes the better part of a minute. For
+ * that minute the booking area is hidden and the page is a heading and
+ * nothing else — so the first client of the day gets a blank screen and
+ * leaves, and nothing anywhere records that it happened.
+ *
+ * Four seconds is long enough not to flash on a warm service, short enough to
+ * arrive before anyone concludes the page is broken.
+ */
+function wakingNotice() {
+  const box = $('#bookingStatic');
+  const dot = $('#liveDot');
+  const dotWas = dot?.textContent;
+  let touchedDot = false;
+
+  const timer = setTimeout(() => {
+    if (dot) { dot.textContent = 'Waking up'; touchedDot = true; }
+    if (!box) return;
+    box.hidden = false;
+    box.innerHTML = '<strong>Just a moment.</strong> The booking service is starting up — '
+      + 'the calendar will appear shortly. This only happens on the first visit for a while.';
+  }, 4000);
+
+  return () => {
+    clearTimeout(timer);
+    if (box) { box.hidden = true; box.innerHTML = ''; }
+    // Put the label back rather than leaving "Waking up" sitting there. The
+    // live feed relabels it to "Live availability" when the stream connects,
+    // and if that never happens this must not be the last word on screen.
+    if (touchedDot && dot) dot.textContent = dotWas;
+  };
+}
+
+/** Never leave the page waiting forever on a host that is not answering. */
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('The booking service did not respond.')), ms)),
+  ]);
+}
+
 async function init() {
   state.apiBase = resolveApiBase();
+  const doneWaking = wakingNotice();
 
   // Try the live API first; fall back to the bundled snapshot on a static host.
   try {
-    state.site = await api('/api/site');
+    // Generous, because a sleeping free-tier instance genuinely takes this
+    // long to start. Shorter and a cold start would be misread as an outage
+    // and drop a perfectly good service into enquiry mode.
+    state.site = await withTimeout(api('/api/site'), 60000);
     state.live = true;
   } catch {
     try {
@@ -1123,11 +1190,13 @@ async function init() {
       state.site = await res.json();
       state.live = false;
     } catch {
+      doneWaking();
       document.body.insertAdjacentHTML('afterbegin',
         '<div class="notice notice-error" style="margin:24px">Could not load the site content. Please refresh.</div>');
       return;
     }
   }
+  doneWaking();
 
   renderStatic();
   bindChrome();
