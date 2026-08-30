@@ -1110,12 +1110,60 @@ function renderOpeningHours() {
 
 /* ------------------------------------------------------------------ init */
 
+/**
+ * Say something while the booking service wakes up.
+ *
+ * A free hosting tier stops the API after a spell with no traffic and starts
+ * it again on the next request, which takes the better part of a minute. For
+ * that minute the booking area is hidden and the page is a heading and
+ * nothing else — so the first client of the day gets a blank screen and
+ * leaves, and nothing anywhere records that it happened.
+ *
+ * Four seconds is long enough not to flash on a warm service, short enough to
+ * arrive before anyone concludes the page is broken.
+ */
+function wakingNotice() {
+  const box = $('#bookingStatic');
+  const dot = $('#liveDot');
+  const dotWas = dot?.textContent;
+  let touchedDot = false;
+
+  const timer = setTimeout(() => {
+    if (dot) { dot.textContent = 'Waking up'; touchedDot = true; }
+    if (!box) return;
+    box.hidden = false;
+    box.innerHTML = '<strong>Just a moment.</strong> The booking service is starting up — '
+      + 'the calendar will appear shortly. This only happens on the first visit for a while.';
+  }, 4000);
+
+  return () => {
+    clearTimeout(timer);
+    if (box) { box.hidden = true; box.innerHTML = ''; }
+    // Put the label back rather than leaving "Waking up" sitting there. The
+    // live feed relabels it to "Live availability" when the stream connects,
+    // and if that never happens this must not be the last word on screen.
+    if (touchedDot && dot) dot.textContent = dotWas;
+  };
+}
+
+/** Never leave the page waiting forever on a host that is not answering. */
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('The booking service did not respond.')), ms)),
+  ]);
+}
+
 async function init() {
   state.apiBase = resolveApiBase();
+  const doneWaking = wakingNotice();
 
   // Try the live API first; fall back to the bundled snapshot on a static host.
   try {
-    state.site = await api('/api/site');
+    // Generous, because a sleeping free-tier instance genuinely takes this
+    // long to start. Shorter and a cold start would be misread as an outage
+    // and drop a perfectly good service into enquiry mode.
+    state.site = await withTimeout(api('/api/site'), 60000);
     state.live = true;
   } catch {
     try {
@@ -1123,11 +1171,13 @@ async function init() {
       state.site = await res.json();
       state.live = false;
     } catch {
+      doneWaking();
       document.body.insertAdjacentHTML('afterbegin',
         '<div class="notice notice-error" style="margin:24px">Could not load the site content. Please refresh.</div>');
       return;
     }
   }
+  doneWaking();
 
   renderStatic();
   bindChrome();
