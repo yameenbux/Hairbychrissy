@@ -62,13 +62,27 @@
 </section>
 
 <script>
+/*
+ * Where the API lives. Identical rule to js/app.js, because this page is
+ * standalone and does not load it.
+ *
+ * It was a root-absolute "/api/..." until now, which is only correct when the
+ * site and the API share an origin. Published to GitHub Pages with the API on
+ * another host, it asked the STATIC SITE for the booking — and got a 404. The
+ * client had booked; the page that tells them so could not say it.
+ */
+const API = (() => {
+  const meta = document.querySelector('meta[name="hbc-api"]');
+  if (meta?.content) return meta.content.replace(/\/$/, '');
+  return new URL('.', location.href).href.replace(/\/$/, '');
+})();
 const ref = (new URLSearchParams(location.search).get('ref') || '').toUpperCase();
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = (n) => '£' + Number(n).toLocaleString('en-GB');
 const detail = document.getElementById('detail');
 let booking = null;
 
-fetch('/api/bookings/' + encodeURIComponent(ref))
+fetch(API + '/api/bookings/' + encodeURIComponent(ref))
   .then(r => r.json().then(d => { if (!r.ok) throw new Error(d.error || 'Not found'); return d; }))
   .then(b => {
     booking = b;
@@ -96,7 +110,7 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
   btn.disabled = true;
   btn.textContent = 'Processing…';
   try {
-    const res = await fetch('/api/pay/demo/complete', {
+    const res = await fetch(API + '/api/pay/demo/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ref })

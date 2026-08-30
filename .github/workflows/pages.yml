@@ -73,7 +73,10 @@ jobs:
           # book.html matters most of the three: it carries the calendar.
           # Leaving it out would point the home page at the live API while the
           # booking page itself stayed in enquiry mode.
-          for name in ('index.html', 'book.html', 'confirmed.html'):
+          # Every page that talks to the API. confirmed.html and pay-demo.html
+          # look up a booking, so they need the base too — they were missed
+          # while their fetches were still root-absolute.
+          for name in ('index.html', 'book.html', 'confirmed.html', 'pay-demo.html'):
               p = pathlib.Path('public') / name
               if not p.exists():
                   continue
