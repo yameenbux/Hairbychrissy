@@ -137,6 +137,8 @@ function renderStatic() {
       .join('');
   }
 
+  renderCare();
+
   if (brand.signoff) put('#signoff', 'textContent', brand.signoff);
 
   renderTransformations();
@@ -255,6 +257,56 @@ function renderReels() {
     { threshold: 0.35 },
   );
   $$('#reelGrid video').forEach((v) => io.observe(v));
+}
+
+/*
+ * Her maintenance essentials.
+ *
+ * The marks are drawn rather than typed. Her poster used icons in hairline
+ * circles, and the site has no icon set — but a glyph or an emoji would render
+ * at a different weight and baseline on every platform, which is why the ban
+ * list rules them out. These are five paths in the same hairline stroke as the
+ * rest of the page, in a circle the same width as the rule above each row.
+ *
+ * currentColor throughout, so they inherit rather than hard-code a value and
+ * cannot drift out of the palette.
+ */
+const CARE_MARKS = {
+  calendar: '<rect x="7" y="8" width="14" height="12" rx="1"/><path d="M7 12h14M11 6v4M17 6v4"/>',
+  head: '<path d="M16.9 19.7v-1.8a4.5 4.5 0 0 0-1-6.5 4.5 4.5 0 0 0-7.2 2.8l-1 1.7 1.4.5v1.6a1.6 1.6 0 0 0 1.6 1.7z"/>',
+  sparkle: '<path d="M14 6.5l1.6 4.4 4.4 1.6-4.4 1.6L14 18.5l-1.6-4.4L8 12.5l4.4-1.6z"/><path d="M19.5 17.5l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
+  clock: '<circle cx="14" cy="14" r="7"/><path d="M14 10v4.3l2.8 1.7"/>',
+  heart: '<path d="M14 20.5S7.5 16.6 7.5 12.3A3.6 3.6 0 0 1 14 10.2a3.6 3.6 0 0 1 6.5 2.1c0 4.3-6.5 8.2-6.5 8.2z"/>',
+};
+
+const careMark = (name) => `
+  <svg class="care-mark" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"
+       fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="14" cy="14" r="13.5" stroke-width="1"/>
+    ${CARE_MARKS[name] || ''}
+  </svg>`;
+
+function renderCare() {
+  const box = $('#careList');
+  const care = state.site.maintenance;
+  if (!box || !care?.points?.length) return;
+
+  box.innerHTML = `
+    <p class="care-intro">${esc(care.intro)}</p>
+    <ul class="care-list">
+      ${care.points
+        .map(
+          (c) => `
+        <li class="care-item">
+          ${careMark(c.mark)}
+          <div>
+            <h3>${esc(c.title)}</h3>
+            <p>${esc(c.text)}</p>
+          </div>
+        </li>`,
+        )
+        .join('')}
+    </ul>`;
 }
 
 function renderPortfolio() {

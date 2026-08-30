@@ -95,6 +95,36 @@
       "text": "Extensions tailored to your hair goals are the ultimate confidence boost, from the moment you wake up."
     }
   ],
+  "maintenance": {
+    "intro": "Regular maintenance is the key to beautiful, long-lasting extensions. Here is what you need to know.",
+    "points": [
+      {
+        "mark": "calendar",
+        "title": "Book every 6–8 weeks",
+        "text": "Regular maintenance helps move up the bonds and keeps your extensions looking seamless."
+      },
+      {
+        "mark": "head",
+        "title": "Prevents tension and damage",
+        "text": "Moving up the extensions prevents unnecessary tension on your natural hair and reduces breakage."
+      },
+      {
+        "mark": "sparkle",
+        "title": "Keeps hair looking flawless",
+        "text": "Maintenance blends your extensions perfectly with your natural hair as it grows."
+      },
+      {
+        "mark": "clock",
+        "title": "Stay on top of your appointments",
+        "text": "Consistent care means less work over time and longer-lasting results."
+      },
+      {
+        "mark": "heart",
+        "title": "Supports healthy hair growth",
+        "text": "Proper maintenance helps your natural hair stay healthy, strong and able to grow."
+      }
+    ]
+  },
   "transformations": [
     {
       "before": "before.jpg",
@@ -338,8 +368,8 @@
     "horizonDays": 90,
     "timezone": "Europe/London"
   },
-  "today": "2026-08-29",
+  "today": "2026-08-30",
   "cardMode": "static",
-  "generatedAt": "2026-08-29T21:22:29.107Z",
+  "generatedAt": "2026-08-30T11:08:01.806Z",
   "static": true
 }
