@@ -1232,3 +1232,17 @@ Three rules it follows:
 It needs `RESEND_API_KEY`, and `NOTIFY_EMAIL_FROM` on a domain verified in
 Resend. Set `NOTIFY_REPLY_TO` as well, so a client hitting reply reaches a
 person rather than the void.
+
+**Verifying a domain does not require a mailbox on it.** Resend proves
+ownership through DNS records — a DKIM key, an SPF record and an MX for
+bounce handling — so what is needed is control of the domain's DNS, not an
+inbox. The `from` address only ever sends. Nothing has to arrive at it,
+because replies on both emails are steered elsewhere: the client's
+confirmation replies to `NOTIFY_REPLY_TO`, and her booking alert replies
+to the client who just booked, so answering one is a single tap.
+
+Until a domain is verified, sending falls back to Resend's shared
+`onboarding@resend.dev`, which **only delivers to the address the Resend
+account is registered under**. That is the trap worth knowing about: the
+stylist's own alert arrives, every client confirmation is silently refused,
+and testing with your own address makes it look like it works.
