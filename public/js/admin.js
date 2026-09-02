@@ -897,21 +897,35 @@ $('#newBookingForm').addEventListener('submit', async (e) => {
 
 function renderHours() {
   const h = state.draftHours;
+  $('#hoursRows').className = 'stack';
   $('#hoursRows').innerHTML = DAY_ORDER.map((d) => {
     const day = h[String(d)] || { open: false, start: '09:00', end: '18:00', breakStart: '', breakEnd: '' };
     return `
-      <div class="hours-row ${day.open ? '' : 'is-closed'}" data-day="${d}">
-        <div class="dayname">${DAY_NAMES[d]}</div>
-        <label class="toggle">
-          <input type="checkbox" data-f="open" ${day.open ? 'checked' : ''}>
-          <span class="track" aria-hidden="true"></span>
-          <span class="state">${day.open ? 'Open' : 'Closed'}</span>
-        </label>
-        <div class="time-fields field"><label>Start</label><input class="input" type="time" data-f="start" value="${esc(day.start || '09:00')}"></div>
-        <div class="time-fields field"><label>Finish</label><input class="input" type="time" data-f="end" value="${esc(day.end || '18:00')}"></div>
-        <div class="time-fields field"><label>Break from</label><input class="input" type="time" data-f="breakStart" value="${esc(day.breakStart || '')}"></div>
-        <div class="time-fields field"><label>Break to</label><input class="input" type="time" data-f="breakEnd" value="${esc(day.breakEnd || '')}"></div>
-      </div>`;
+      <details class="stack-item hours-row ${day.open ? '' : 'is-closed'}" data-day="${d}">
+        <summary class="stack-head">
+          <span class="stack-headings">
+            <span class="stack-title">${DAY_NAMES[d]}</span>
+            ${hoursSummary(day)}
+          </span>
+          <span class="chev" aria-hidden="true"></span>
+        </summary>
+        <div class="stack-body">
+          <div class="stack-toggle">
+            <label class="toggle">
+              <input type="checkbox" data-f="open" ${day.open ? 'checked' : ''}>
+              <span class="track" aria-hidden="true"></span>
+              <span class="state">${day.open ? 'Open' : 'Closed'}</span>
+            </label>
+            <span class="hint">${day.open ? 'Clients can book this day' : 'Nothing can be booked'}</span>
+          </div>
+          <div class="stack-grid time-fields">
+            <div class="field"><label>Start</label><input class="input" type="time" data-f="start" value="${esc(day.start || '09:00')}"></div>
+            <div class="field"><label>Finish</label><input class="input" type="time" data-f="end" value="${esc(day.end || '18:00')}"></div>
+            <div class="field"><label>Break from</label><input class="input" type="time" data-f="breakStart" value="${esc(day.breakStart || '')}"></div>
+            <div class="field"><label>Break to</label><input class="input" type="time" data-f="breakEnd" value="${esc(day.breakEnd || '')}"></div>
+          </div>
+        </div>
+      </details>`;
   }).join('');
 
   $$('#hoursRows [data-f]').forEach((input) => {
@@ -923,9 +937,24 @@ function renderHours() {
       if (field === 'open') {
         row.classList.toggle('is-closed', !input.checked);
         row.querySelector('.toggle .state').textContent = input.checked ? 'Open' : 'Closed';
+        row.querySelector('.stack-toggle .hint').textContent =
+          input.checked ? 'Clients can book this day' : 'Nothing can be booked';
       }
+      // The collapsed line has to follow the fields, or closing the row hides
+      // the change she just made behind a stale summary.
+      row.querySelector('.stack-sub').outerHTML = hoursSummary(state.draftHours[day]);
     });
   });
+}
+
+/**
+ * The one line that stands in for a whole day when the row is shut.
+ * It has to answer "am I working, and between when" without being opened.
+ */
+function hoursSummary(day) {
+  if (!day.open) return '<span class="stack-sub is-off">Closed</span>';
+  const brk = day.breakStart && day.breakEnd ? ` · break ${day.breakStart}–${day.breakEnd}` : '';
+  return `<span class="stack-sub"><span class="num">${esc(day.start)}–${esc(day.end)}</span>${esc(brk)}</span>`;
 }
 
 $('#hoursForm').addEventListener('submit', async (e) => {
@@ -994,26 +1023,50 @@ $('#blockForm').addEventListener('submit', async (e) => {
 
 /* ------------------------------------------------------------ services */
 
+/** How long, how much — the two things she looks for down a price list. */
+function svcSummary(s) {
+  const price = s.price ? `£${Number(s.price).toLocaleString('en-GB')}` : 'On request';
+  const dep = s.deposit ? ` · £${Number(s.deposit).toLocaleString('en-GB')} deposit` : '';
+  return `<span class="stack-sub"><span class="num">${s.duration} min</span> · ${esc(price)}${esc(dep)}</span>`;
+}
+
 function renderServices() {
+  $('#serviceRows').className = 'stack';
   $('#serviceRows').innerHTML = state.draftServices
     .map(
       (s, i) => `
-      <div class="svc-row" data-i="${i}">
-        <div class="field"><label>Service name</label><input class="input" data-f="name" value="${esc(s.name)}"></div>
-        <div class="field"><label>Category</label><input class="input" data-f="category" value="${esc(s.category)}"></div>
-        <div class="field"><label>Minutes</label><input class="input" data-f="duration" type="number" min="15" max="600" step="15" value="${s.duration}"></div>
-        <div class="field"><label>Price £</label><input class="input" data-f="price" type="number" min="0" step="5" value="${s.price}"></div>
-        <div class="field"><label>Deposit £</label><input class="input" data-f="deposit" type="number" min="0" step="5" value="${s.deposit}"></div>
-        <button class="svc-remove" type="button" data-remove="${i}" title="Remove this service" aria-label="Remove ${esc(s.name)}">×</button>
-      </div>`,
+      <details class="stack-item svc-row" data-i="${i}">
+        <summary class="stack-head">
+          <span class="stack-headings">
+            <span class="stack-title">${esc(s.name) || 'Untitled'}</span>
+            ${svcSummary(s)}
+          </span>
+          <span class="chev" aria-hidden="true"></span>
+        </summary>
+        <div class="stack-body">
+          <div class="stack-grid">
+            <div class="field wide"><label>Service name</label><input class="input" data-f="name" value="${esc(s.name)}"></div>
+            <div class="field wide"><label>Category</label><input class="input" data-f="category" value="${esc(s.category)}"></div>
+            <div class="field"><label>Minutes</label><input class="input" data-f="duration" type="number" min="15" max="600" step="15" value="${s.duration}"></div>
+            <div class="field"><label>Price £</label><input class="input" data-f="price" type="number" min="0" step="5" value="${s.price}"></div>
+            <div class="field"><label>Deposit £</label><input class="input" data-f="deposit" type="number" min="0" step="5" value="${s.deposit}"></div>
+          </div>
+          <button class="stack-remove" type="button" data-remove="${i}" aria-label="Remove ${esc(s.name)}">Remove this service</button>
+        </div>
+      </details>`,
     )
     .join('');
 
   $$('#serviceRows [data-f]').forEach((input) =>
     input.addEventListener('input', () => {
-      const i = Number(input.closest('.svc-row').dataset.i);
+      const row = input.closest('.svc-row');
+      const i = Number(row.dataset.i);
       const f = input.dataset.f;
       state.draftServices[i][f] = ['duration', 'price', 'deposit'].includes(f) ? Number(input.value) : input.value;
+      // Update the shut-row line in place rather than re-rendering: a re-render
+      // would close the row and take the keyboard away mid-word.
+      row.querySelector('.stack-title').textContent = state.draftServices[i].name || 'Untitled';
+      row.querySelector('.stack-sub').outerHTML = svcSummary(state.draftServices[i]);
     }),
   );
 
