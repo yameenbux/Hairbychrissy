@@ -52,22 +52,56 @@ function duration(mins) {
  */
 const BASE = resolveApiBase();
 
+/*
+ * The session, held where no cookie policy can take it away.
+ *
+ * The cookie is still sent (credentials:'include' below) and is still the
+ * better mechanism when the dashboard and API share an origin. But published
+ * to Pages they do NOT: the API is a different site, so its cookie is a
+ * third-party cookie, and Safari blocks those outright. That produced a
+ * miserable failure — the password was accepted, the browser silently dropped
+ * the cookie, the next request was anonymous, and the dashboard told her the
+ * session had expired. Over and over, with the correct password.
+ *
+ * A bearer token in a header is subject to none of that.
+ */
+const TOKEN_KEY = 'hbc_admin_token';
+
+function readToken() {
+  // Private browsing can make even reading throw, and a dashboard that will
+  // not open is worse than one that has to be signed into again.
+  try { return localStorage.getItem(TOKEN_KEY) || null; } catch { return null; }
+}
+
+function saveToken(token) {
+  try { if (token) localStorage.setItem(TOKEN_KEY, token); } catch { /* session lasts this tab only */ }
+}
+
+function clearToken() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch { /* nothing to clear */ }
+}
+
 async function api(path, options = {}) {
   /*
-   * credentials:'include' is not optional here. fetch defaults to
-   * 'same-origin', and this dashboard is NOT same-origin with the API — it is
-   * served from Pages and talks to Render. Without this the browser refuses
-   * both to store the session cookie the login hands back and to send it on
-   * anything afterwards, so every call after a SUCCESSFUL sign-in returns 401
-   * and the login screen comes straight back.
+   * credentials:'include' still matters for the same-origin case: fetch
+   * defaults to 'same-origin' and would not send the cookie cross-site at all.
+   * It is belt and braces now rather than the only strap.
    */
+  const token = readToken();
   const res = await fetch(`${BASE}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && !path.endsWith('/login')) {
+    // Whatever we were holding is not accepted any more. Keeping it would
+    // resend a dead token on every retry.
+    clearToken();
     showLogin();
     throw new Error('Session expired — please sign in again.');
   }
@@ -80,6 +114,44 @@ async function api(path, options = {}) {
     throw err;
   }
   return data;
+}
+
+/**
+ * Fetch something behind the admin gate that the browser would otherwise
+ * request on its own — an <img> or a download link.
+ *
+ * Neither can carry an Authorization header, and cross-site neither carries
+ * the cookie either, so both would come back 401 and the photos would render
+ * broken. Fetching them here and handing back a blob: URL is the way to attach
+ * the session to a request the markup makes.
+ */
+async function authedBlob(path) {
+  const token = readToken();
+  const res = await fetch(`${BASE}${path}`, {
+    credentials: 'include',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error(`Request failed (${res.status})`);
+  return URL.createObjectURL(await res.blob());
+}
+
+/** Load every photo placeholder left by the appointment markup. */
+async function loadShots(root = document) {
+  for (const link of $$('a.shot[data-shot]', root)) {
+    const path = link.dataset.shot;
+    delete link.dataset.shot;              // never fetch the same one twice
+    try {
+      const url = await authedBlob(path);
+      link.href = url;
+      const img = $('img', link);
+      if (img) img.src = url;
+    } catch {
+      link.replaceWith(Object.assign(document.createElement('span'), {
+        className: 'shot shot-failed',
+        textContent: 'Photo could not be loaded',
+      }));
+    }
+  }
 }
 
 function flash(el, message, kind = 'ok') {
@@ -135,8 +207,26 @@ async function showApp() {
   $('#app').hidden = false;
   $('#adminNav').hidden = false;
   $('#adminNavToggle').hidden = false;
-  // Same base the API calls use, so the export works under a subpath too.
-  $('#bookingsExport').href = `${BASE}/api/admin/bookings.csv`;
+  /*
+   * The export is a plain link, so it navigates without the Authorization
+   * header and — cross-site — without the cookie either, landing on a 401
+   * instead of a file. Fetch it with the session attached and hand the
+   * browser the result.
+   */
+  $('#bookingsExport').href = '#';
+  $('#bookingsExport').onclick = async (ev) => {
+    ev.preventDefault();
+    try {
+      const url = await authedBlob('/api/admin/bookings.csv');
+      const a = Object.assign(document.createElement('a'), { href: url, download: 'bookings.csv' });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      flash($('#todayNotice') || $('#loginError'), `Export failed — ${err.message}`, 'err');
+    }
+  };
   await refresh();
   await loadAlerts().catch(() => {});
   setView(state.view);
@@ -148,7 +238,8 @@ $('#loginForm').addEventListener('submit', async (e) => {
   const err = $('#loginError');
   err.hidden = true;
   try {
-    await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('#pw').value }) });
+    const out = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('#pw').value }) });
+    saveToken(out.token);
     $('#pw').value = '';
     await showApp();
   } catch (e2) {
@@ -160,6 +251,7 @@ $('#loginForm').addEventListener('submit', async (e) => {
 $('#logoutBtn').addEventListener('click', async (e) => {
   e.preventDefault();
   await api('/api/admin/logout', { method: 'POST' }).catch(() => {});
+  clearToken();
   showLogin();
 });
 
@@ -412,6 +504,7 @@ function renderDay() {
   }
 
   $('#dayList').innerHTML = rows.join('');
+  loadShots($('#dayList'));
   bindApptActions('#dayList');
   bindGapActions('#dayList');
 }
@@ -533,8 +626,8 @@ function apptRow(b) {
         <strong>The look they want:</strong>
         <div class="shots">
           ${b.photos.map((f) => `
-            <a class="shot" href="${BASE}/api/admin/bookings/${esc(b.id)}/photos/${esc(f)}" target="_blank" rel="noopener">
-              <img src="${BASE}/api/admin/bookings/${esc(b.id)}/photos/${esc(f)}" alt="Photo the client sent" loading="lazy">
+            <a class="shot" data-shot="/api/admin/bookings/${esc(b.id)}/photos/${esc(f)}" target="_blank" rel="noopener">
+              <img alt="Photo the client sent" loading="lazy">
             </a>`).join('')}
         </div>
       </div>` : ''}
@@ -708,6 +801,7 @@ function renderBookings() {
     ? list.map(apptRow).join('')
     : '<div class="empty">No bookings match that view.</div>';
   bindApptActions('#bookingList');
+  loadShots($('#bookingList'));
 }
 
 $('#bookingFilter').addEventListener('change', renderBookings);

@@ -71,7 +71,10 @@ function corsHeaders(req) {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    // Authorization is not optional: the dashboard signs its requests with a
+    // bearer token because cross-site it cannot rely on the session cookie,
+    // and a header missing from this list is refused at the preflight.
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Max-Age': '600',
     Vary: 'Origin',
@@ -639,7 +642,13 @@ async function handleAdminApi(req, res, url) {
     if (!checkPassword(password)) {
       return json(res, 401, { error: 'Incorrect password.' });
     }
-    return json(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(makeToken(), req) });
+    /*
+     * The token goes in the BODY as well as the cookie. Cross-site, the cookie
+     * may never be stored — Safari blocks third-party cookies — so the body is
+     * the only copy the dashboard can count on holding onto.
+     */
+    const token = makeToken();
+    return json(res, 200, { ok: true, token }, { 'Set-Cookie': sessionCookie(token, req) });
   }
 
   if (p === '/api/admin/logout' && req.method === 'POST') {
