@@ -131,20 +131,10 @@
 .pill-off { color: var(--danger); border-color: var(--danger); }
 
 /* ---- hours editor ---- */
-.hours-row {
-  display: grid;
-  grid-template-columns: 130px 84px repeat(4, 1fr);
-  gap: 16px;
-  align-items: end;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-.hours-row:first-child { border-top: 1px solid var(--hairline-soft); }
-.hours-row .dayname { font-size: var(--t-sm); font-weight: 600; letter-spacing: var(--ls-label); color: var(--espresso); text-transform: uppercase; padding-bottom: 12px; }
-.hours-row.is-closed .time-fields { opacity: 0.35; }
-.hours-row .field { margin: 0; }
-.hours-row .field label { font-size: var(--t-xs); letter-spacing: var(--ls-label); }
-.hours-row input[type='time'] { min-height: 44px; padding: 8px 10px; font-size: var(--t-sm); }
+/* The day rows are .stack-item now; only the dimming of a closed day's times
+   survives from the old flat grid. */
+.hours-row.is-closed .time-fields { opacity: 0.45; }
+.hours-row input[type='time'] { min-height: 48px; padding: 8px 10px; font-size: var(--t-sm); }
 
 .toggle { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; padding-bottom: 12px; }
 .toggle input { position: absolute; opacity: 0; pointer-events: none; }
@@ -161,6 +151,91 @@
 .toggle input:focus-visible + .track { outline: 2px solid var(--clay); outline-offset: 2px; }
 .toggle .state { font-size: var(--t-xs); font-weight: 600; letter-spacing: var(--ls-label); color: var(--espresso-70); }
 
+/* ---- collapsing rows: her week, and her price list ----------------------
+ * Both were a flat wall of inputs — seven days and seven services, every field
+ * of every one on screen at once. On a phone that is several screens of
+ * scrolling to change one finish time, and no way to see the shape of the week.
+ *
+ * So each row collapses to a summary of itself and opens when tapped. <details>
+ * rather than a scripted panel: it is a real disclosure widget, so the keyboard
+ * and VoiceOver already understand it, and it costs no state to keep in sync.
+ * ---------------------------------------------------------------------- */
+
+.stack { border-top: 1px solid var(--hairline-soft); }
+.stack-item { border-bottom: 1px solid var(--hairline-soft); }
+
+/*
+ * Title and summary stack, they do not sit side by side. Squeezed onto one
+ * line a name like "Hollywood Waves with Clip-Ins" starves the summary next to
+ * it and "60 min · £50" breaks across three lines. Stacked, each gets the full
+ * width and the row stays two clean lines however long the name is.
+ */
+.stack-head {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 64px; padding: 14px 4px;
+  cursor: pointer; list-style: none;
+  font-family: var(--sans);
+}
+/* flex:1 (basis 0) not 1 1 auto — with an auto basis the column shrink-wraps
+   its text and the chevron ends up floating mid-row instead of at the edge. */
+.stack-headings { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+/* Safari draws its own triangle and ignores list-style. */
+.stack-head::-webkit-details-marker { display: none; }
+.stack-head:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+
+.stack-title {
+  font-size: var(--t-sm); font-weight: 600;
+  /* The wider label tracking pushed "Extensions & Fittings" onto two lines.
+     Caps tracking keeps the editorial feel and fits the longest name she has. */
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase; color: var(--espresso);
+  line-height: var(--lh-snug);
+}
+.stack-sub {
+  font-size: var(--t-xs); letter-spacing: var(--ls-caps); color: var(--espresso-70);
+  /* One line, always. It is a glance, not a paragraph. */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stack-sub.is-off { color: var(--espresso-70); opacity: 0.7; }
+.stack-sub .num { color: var(--espresso); font-weight: 600; }
+
+/* The affordance. Rotating on open is the whole signal that this row moves. */
+.stack-head .chev {
+  flex: none; width: 10px; height: 10px; margin-left: auto;
+  border-right: 1.5px solid var(--espresso-70); border-bottom: 1.5px solid var(--espresso-70);
+  transform: rotate(45deg); transition: transform 200ms linear;
+}
+.stack-item[open] > .stack-head .chev { transform: rotate(-135deg); }
+
+.stack-body { padding: 4px 4px 24px; }
+/* Two across on a phone, four where there is room. Fixed pairs rather than
+   auto-fit so Start and Finish always sit side by side. */
+.stack-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.stack-grid .field { margin: 0; }
+.stack-grid .field label { font-size: var(--t-xs); letter-spacing: var(--ls-label); }
+.stack-grid .input { min-height: 48px; font-size: var(--t-sm); width: 100%; }
+.stack-grid .wide { grid-column: 1 / -1; }
+@media (min-width: 760px) {
+  .stack-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stack-grid .wide { grid-column: auto; }
+}
+
+/* The switch sits on its own line above the times, where it reads as the thing
+   that governs them rather than as another field. */
+.stack-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 0 18px;
+}
+.stack-toggle .hint { font-size: var(--t-xs); color: var(--espresso-70); }
+
+.stack-remove {
+  margin-top: 20px; min-height: 48px; width: 100%;
+  border: 1px solid var(--hairline); background: transparent; color: var(--danger);
+  font-family: var(--sans); font-size: var(--t-xs);
+  letter-spacing: var(--ls-label); text-transform: uppercase; cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) { .stack-remove:hover { border-color: var(--danger); } }
+
 /* ---- blocked dates ---- */
 .blocked-row {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
@@ -173,32 +248,8 @@
 .blocked-row .r { font-size: var(--t-xs); color: var(--espresso-70); }
 
 /* ---- services editor ---- */
-.svc-row {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr 90px 90px 90px 44px;
-  gap: 12px;
-  align-items: end;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-.svc-row:first-child { border-top: 1px solid var(--hairline-soft); }
-.svc-row .field { margin: 0; }
-.svc-row .field label { font-size: var(--t-xs); letter-spacing: var(--ls-label); }
-.svc-row .input { min-height: 44px; font-size: var(--t-sm); }
-.svc-remove {
-  min-height: 44px; width: 44px;
-  border: 1px solid var(--hairline); background: transparent; color: var(--danger);
-  cursor: pointer; font-size: var(--t-md); font-family: var(--sans);
-}
-@media (hover: hover) and (pointer: fine) {
-  .svc-remove:hover { border-color: var(--danger); }
-}
 
 @media (max-width: 900px) {
-  .hours-row { grid-template-columns: 1fr 1fr; }
-  .hours-row .dayname { grid-column: 1 / -1; padding-bottom: 0; }
-  .svc-row { grid-template-columns: 1fr 1fr; }
-  .svc-row .svc-remove { width: 100%; }
   .appt { grid-template-columns: 1fr; }
   .appt .actions { justify-content: flex-start; }
 }
@@ -260,15 +311,14 @@
   /* These sat at 40px and 15px respectively. */
   .appt .actions .btn-sm { min-height: 44px; }
   .hours-row input[type='time'],
-  .svc-row .input { font-size: var(--t-sm); min-height: 48px; }
+  .stack-grid .input { font-size: var(--t-sm); min-height: 48px; }
   .blocked-row .btn-sm,
   .channel-row .btn-sm,
   .device-row .btn-sm { min-height: 44px; }
-  .svc-remove { min-height: 48px; }
+  .stack-remove { min-height: 48px; }
   /* The label is the tap target, not the hidden checkbox — the padding that
      aligns it with the time fields left it 2px short. */
   .toggle { min-height: 44px; align-items: center; padding-bottom: 0; }
-  .hours-row .dayname { padding-bottom: 0; }
   .toggle .track { width: 52px; height: 30px; }
   .toggle .track::after { width: 24px; height: 24px; }
   .toggle input:checked + .track::after { transform: translateX(22px); }
@@ -290,8 +340,21 @@
   .gap { flex-wrap: wrap; }
   .gap .g-time { min-width: 0; }
   .gap .btn-sm { width: 100%; min-height: 44px; }
-  .daybar .input[type='date'] { max-width: none; flex: 1 1 140px; }
-  .daybar .btn-sm { min-height: 44px; }
+  /*
+   * These wrapped one-per-row, so moving between days was four stacked
+   * full-width buttons taking up half the screen. An explicit grid keeps the
+   * arrows, the date and Today on one line and gives the booking button the
+   * width it deserves underneath.
+   */
+  .daybar {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px auto;
+    gap: 8px; align-items: center;
+  }
+  .daybar .input[type='date'] { max-width: none; width: 100%; margin: 0; }
+  .daybar .btn-sm { min-height: 44px; padding-left: 10px; padding-right: 10px; }
+  .daybar .grow { display: none; }
+  #newBookingBtn { grid-column: 1 / -1; width: 100%; min-height: 48px; }
   .alert-banner { padding-bottom: 8px; }
   .alert-banner .alert-inner { padding: 12px 16px; }
   .view { padding-bottom: max(40px, env(safe-area-inset-bottom)); }
@@ -374,13 +437,42 @@
     max-height: calc(100dvh - var(--header-h)); overflow-y: auto; overscroll-behavior: contain;
     z-index: 90;
   }
-  .navlinks.open a { min-height: 52px; border-bottom: 1px solid var(--hairline-soft); }
+  /*
+   * The gutter. Without it every item sat hard against x=0 — the text touched
+   * the edge of the phone and read as cut off, which is exactly how it was
+   * reported. The drawer spans the full width on purpose; its CONTENTS have to
+   * line up with the wordmark above them.
+   */
+  .navlinks.open a {
+    min-height: 52px;
+    padding: 0 var(--gutter);
+    border-bottom: 1px solid var(--hairline-soft);
+    justify-content: space-between;
+  }
+  .navlinks.open a.active { color: var(--espresso); }
+  /* The active marker is a full-height edge here, not the desktop underline —
+     an underline on a list row reads as a divider, not as "you are here". */
+  .navlinks.open a.active::after {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    right: auto; width: 3px; height: auto; background: var(--clay);
+  }
+  .navlinks.open a:last-child { border-bottom: 0; }
+  /* Ends the sheet cleanly instead of letting the page show through mid-list. */
+  .navlinks.open { box-shadow: 0 18px 40px -24px rgba(51, 38, 28, 0.5); }
   .nav-toggle { display: inline-flex; }
   .spec-grid { grid-template-columns: repeat(2, 1fr); }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
-  .spec-grid { grid-template-columns: 1fr; }
+  /*
+   * These were one per row, so four numbers filled the whole screen and she
+   * had to scroll past her own dashboard to reach the day. Two by two puts
+   * the lot above the fold.
+   */
+  .spec-grid { grid-template-columns: repeat(2, 1fr); }
+  .spec-cell { padding: 16px 14px; }
+  .spec-cell .value { font-size: var(--t-lg); }
+  .spec-cell .key { margin-top: 4px; letter-spacing: var(--ls-caps); }
   .panel { padding: 20px; }
 }
