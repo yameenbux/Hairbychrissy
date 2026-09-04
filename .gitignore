@@ -18,3 +18,16 @@ backups/
 .DS_Store
 *.log
 .shots/
+
+# MCP server config. Written by `claude mcp add -s project` and by the
+# 21st.dev CLI, and can carry an API key in a plaintext header.
+.mcp.json
+
+# Other credential shapes, for the same reason as .env above
+.env.*
+*.pem
+*.key
+secrets.json
+
+# Local Claude Code state, specific to one machine
+.claude/settings.local.json
