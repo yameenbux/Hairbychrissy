@@ -105,11 +105,31 @@ const PROBE = `(() => {
   if (document.documentElement.scrollWidth > vw + 1) {
     problems.push({ kind: 'page-overflow', sel: 'html', text: '', detail: document.documentElement.scrollWidth + ' > ' + vw });
   }
+  /*
+   * An element reaching past the viewport only matters if it actually widens
+   * the page. If an ancestor clips or scrolls it, nothing escapes and there is
+   * nothing to report — which is the case for the portfolio carousel, whose
+   * whole effect is a ring of cards fanning off both edges inside a frame that
+   * clips them.
+   *
+   * Without this the carousel alone produced 108 of 120 findings, and a report
+   * that is 90% one known-good component is a report nobody reads closely
+   * enough to spot the other 12. The document-level check above is what
+   * catches a real sideways scroll, and it is untouched.
+   */
+  const isClipped = (el) => {
+    for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+      const ox = getComputedStyle(n).overflowX;
+      if (ox && ox !== 'visible') return true;
+    }
+    return false;
+  };
   document.querySelectorAll('body *').forEach(el => {
     const r = el.getBoundingClientRect();
     if (r.width > 0 && (r.right > vw + 1 || r.left < -1)) {
       const cs = getComputedStyle(el);
       if (cs.position === 'fixed') return;
+      if (isClipped(el)) return;
       problems.push({
         kind: 'element-overflow',
         sel: el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\\s+/).slice(0,2).join('.') : ''),
