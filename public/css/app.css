@@ -1633,3 +1633,98 @@ a { color: inherit; text-decoration: none; }
   .fx-brand, .fx-keep { grid-column: auto; }
   .fx-mark { font-size: var(--t-lg); }
 }
+
+/* ============================================================== BOOK ROW
+   Three across: what it is, the card, the practical detail. Even columns so
+   the eye can take the three in one pass rather than reading a wall on the
+   left and a photograph on the right.
+   ======================================================================= */
+
+.book-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: clamp(28px, 4vw, 72px);
+  align-items: center;
+  /* The card's 3D needs a viewer distance to rotate against. */
+  perspective: 1400px;
+}
+
+.book-side { display: flex; flex-direction: column; gap: var(--s-2); }
+.book-side h2 { margin-bottom: var(--s-2); }
+.book-side p { max-width: 36ch; }
+/* The right column reads as a short list of facts, not another paragraph. */
+.book-side-end { gap: var(--s-3); }
+.book-fact { display: flex; flex-direction: column; gap: 6px; }
+.book-fact p { margin: 0; font-size: var(--t-xs); color: var(--espresso-70); }
+
+/* ---- the card ---- */
+
+.tiltcard { width: clamp(260px, 30vw, 320px); }
+.tc-inner {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+  box-shadow: 0 40px 70px -40px rgba(51, 38, 28, 0.6);
+}
+.tc-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Earns its keep: the title and the button sit on a photograph, and without
+   it the contrast depends on whatever is behind them. */
+.tc-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom,
+    rgba(51, 38, 28, 0.35) 0%, rgba(51, 38, 28, 0.05) 38%, rgba(51, 38, 28, 0.72) 100%);
+}
+
+.tc-content {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: var(--s-3);
+  /* Lifted off the photograph so the tilt has something to parallax against. */
+  transform: translateZ(40px);
+}
+.tc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.tc-title {
+  margin: 0;
+  font-family: var(--display-face);
+  font-size: var(--t-lg); line-height: var(--lh-snug); letter-spacing: var(--ls-heading);
+  color: var(--paper);
+}
+.tc-sub {
+  margin: 4px 0 0;
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tc-corner {
+  flex: none;
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--paper);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  transition: background 200ms linear;
+}
+.tc-corner svg { width: 18px; height: 18px; }
+@media (hover: hover) and (pointer: fine) { .tc-corner:hover { background: rgba(255, 255, 255, 0.3); } }
+.tc-corner:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+
+.tc-action {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: 12px 16px;
+  background: var(--paper); color: var(--espresso);
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+  transition: background 200ms linear, color 200ms linear;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tc-action:hover { background: var(--espresso); color: var(--paper); }
+}
+.tc-action:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+
+@media (max-width: 960px) {
+  /* Three columns become one; the card leads, since it carries the action. */
+  .book-row { grid-template-columns: 1fr; gap: var(--stack); justify-items: start; }
+  .tiltcard { width: 100%; max-width: 360px; }
+  .book-side p { max-width: 52ch; }
+}

@@ -16,6 +16,7 @@
 import { resolveApiBase } from './api-base.js';
 import { createCoverflow } from './coverflow.js';
 import { createReveal } from './reveal.js';
+import { createTiltCard } from './tiltcard.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -154,6 +155,7 @@ function renderStatic() {
 
   renderPriceList('#serviceGrid');
   renderFooterSocial();
+  renderBookCard();
 
   /*
    * No reviews means no reviews section — not a heading with nothing under it.
@@ -552,6 +554,27 @@ function renderFooterSocial() {
       brand.website ? `<li><a href="${esc(brand.website)}" target="_blank" rel="noopener">${esc(brand.websiteLabel || brand.website)}</a></li>` : '',
     ].join('');
   }
+}
+
+
+/**
+ * The card in the middle of the booking section.
+ *
+ * Uses the photo that was already in this section rather than anything new.
+ */
+function renderBookCard() {
+  const box = $('#bookCard');
+  if (!box) return;
+  createTiltCard(box, {
+    image: './images/work-02.jpg',
+    alt: 'Hollywood waves, fitted and styled by Chrissy',
+    title: 'Live availability',
+    subtitle: 'Pick a day and a time',
+    actionText: 'Book your slot',
+    actionHref: './book.html',
+    cornerHref: '#services',
+    cornerLabel: 'See the price list first',
+  });
 }
 
 /* --------------------------------------------------------------- motion */

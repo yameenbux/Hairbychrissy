@@ -182,19 +182,31 @@
      now the page asks, and the booking page answers. -->
 <section class="band band-cream" id="book">
   <div class="shell">
-    <div class="split reveal">
-      <div class="split-text">
+    <!-- Three across: what it is on the left, the card in the middle, the
+         practical detail on the right. -->
+    <div class="book-row">
+      <div class="book-side reveal">
         <span class="label">Booking</span>
         <h2 class="display-sm">Live<br>availability</h2>
         <p>Pick what you are having done, choose a day and take a time. The calendar shows exactly what is free — nothing is held back, and nothing is double booked.</p>
-        <p>Cash or card, whichever suits you. You can add a photo of the look you are after while you book.</p>
-        <div class="cta-repeat" style="margin-top:var(--stack);border-top:0;padding-top:0">
-          <a class="btn btn-cta" href="./book.html">Book your slot</a>
-          <span class="cta-note" id="bookHoursNote"></span>
-        </div>
       </div>
-      <div class="split-visual">
-        <div class="media-placeholder" data-img="./images/work-02.jpg" style="aspect-ratio:4/5"></div>
+
+      <!-- Ported 3D tilt card. Her own photo from this section, not a stock one. -->
+      <div class="book-card reveal" id="bookCard"></div>
+
+      <div class="book-side book-side-end reveal">
+        <div class="book-fact">
+          <span class="label label-plain">Paying</span>
+          <p>Cash or card, whichever suits you. Nothing is taken up front for styling.</p>
+        </div>
+        <div class="book-fact">
+          <span class="label label-plain">Bring a picture</span>
+          <p>You can add a photo of the look you are after while you book.</p>
+        </div>
+        <div class="book-fact">
+          <span class="label label-plain">Opening hours</span>
+          <p class="small muted" id="bookHoursNote"></p>
+        </div>
       </div>
     </div>
   </div>
