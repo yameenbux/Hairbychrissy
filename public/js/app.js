@@ -539,6 +539,19 @@ function renderFooterSocial() {
              stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">${SOCIAL_MARKS[r.mark]}</svg>
       </a>`)
     .join('');
+
+  /*
+   * The Elsewhere column, from the same two records. Named links rather than
+   * marks: a column of headings wants words under it, and "@hairbychrissy_x"
+   * tells somebody where they are going in a way a glyph does not.
+   */
+  const list = $('#fxElsewhere');
+  if (list) {
+    list.innerHTML = [
+      brand.instagram ? `<li><a href="${esc(brand.instagram)}" target="_blank" rel="noopener">${esc(brand.handle || 'Instagram')}</a></li>` : '',
+      brand.website ? `<li><a href="${esc(brand.website)}" target="_blank" rel="noopener">${esc(brand.websiteLabel || brand.website)}</a></li>` : '',
+    ].join('');
+  }
 }
 
 /* --------------------------------------------------------------- motion */

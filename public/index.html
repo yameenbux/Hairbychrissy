@@ -247,23 +247,47 @@
      Its 20-second scrolling hatch is static here — the rule is a divider, and
      a divider that never stops moving is decoration this page's motion system
      does not allow. -->
-<footer class="site-footer footer-centred">
-  <div class="shell">
-    <div class="fc-stack">
-      <span class="fc-mark reveal">Hair by Chrissy</span>
-      <p class="fc-signoff reveal" id="signoff"></p>
+<!-- Ported from a React multi-column footer: a brand block beside columns of
+     links, closing on one line.
 
-      <nav class="fc-links reveal" aria-label="Footer">
-        <a href="#services">Services</a>
-        <a href="#work">Work</a>
-          <a href="./book.html">Book</a>
-        <a href="#faq">FAQ</a>
+     Its four columns carried about fourteen links — Documentation, Pricing,
+     Privacy Policy, Our Story, Terms of Service. She has four pages and two
+     accounts. Inventing the rest would put a row of dead anchors in the
+     footer of a real business, so the columns are built from what exists:
+     where to go on the site, where else to find her, where she works, and
+     how to hear from her. -->
+<footer class="site-footer footer-cols">
+  <div class="shell">
+    <div class="fx-grid">
+
+      <div class="fx-brand reveal">
+        <span class="fx-mark">Hair by Chrissy</span>
+        <p class="fx-signoff" id="signoff"></p>
+        <span class="fx-social" id="footerSocial"></span>
+      </div>
+
+      <nav class="fx-col reveal" aria-labelledby="fxExplore">
+        <h3 class="fx-head" id="fxExplore">Explore</h3>
+        <ul>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#work">Work</a></li>
+          <li><a href="./book.html">Book</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
       </nav>
 
-      <span class="fc-social reveal" id="footerSocial"></span>
+      <nav class="fx-col reveal" aria-labelledby="fxElse">
+        <h3 class="fx-head" id="fxElse">Elsewhere</h3>
+        <ul id="fxElsewhere"></ul>
+      </nav>
 
-      <div class="fc-keep reveal">
-        <span class="label label-plain">Keep in touch</span>
+      <div class="fx-col reveal">
+        <h3 class="fx-head">Studio</h3>
+        <ul id="footStudio"></ul>
+      </div>
+
+      <div class="fx-col fx-keep reveal">
+        <h3 class="fx-head">Keep in touch</h3>
         <p class="small muted">New availability and aftercare, occasionally. No spam.</p>
         <form class="newsletter" id="newsletterForm" novalidate>
           <label for="nlEmail" class="visually-hidden">Email address</label>
@@ -273,12 +297,8 @@
         <p class="small muted" id="newsletterNote" role="status"></p>
       </div>
 
-      <ul class="fc-studio small muted reveal" id="footStudio"></ul>
     </div>
   </div>
-
-  <!-- The signature rule. Diagonal hatch at 315deg, as in the original. -->
-  <div class="fc-rule" aria-hidden="true"></div>
 
   <div class="legal-bar">
     <div class="shell">
