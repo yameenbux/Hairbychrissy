@@ -35,14 +35,7 @@ export function createCoverflow(root, slides, options = {}) {
     perspective = 3,
     falloff = 0.56,
     fade = 0.1,
-    /*
-     * Left undefined on purpose. This used to carry a default, and the module
-     * wrote it inline on the root — where it beat every stylesheet rule, so
-     * resizing the strip in CSS silently did nothing. Sizing belongs in the
-     * stylesheet with the rest of the layout; pass this only to override it
-     * for one instance.
-     */
-    cardWidth = null,
+    cardWidth = 'clamp(180px, 46vw, 320px)',
     gap = 0.05,
     loop = true,
     showCaption = true,
@@ -64,7 +57,7 @@ export function createCoverflow(root, slides, options = {}) {
   const canLoop = loop && count >= 5;
 
   root.classList.add('coverflow');
-  if (cardWidth) root.style.setProperty('--cf-card', cardWidth);
+  root.style.setProperty('--cf-card', cardWidth);
   root.setAttribute('role', 'region');
   root.setAttribute('aria-roledescription', 'carousel');
   root.setAttribute('aria-label', label);
@@ -79,23 +72,15 @@ export function createCoverflow(root, slides, options = {}) {
             </div>`).join('')}
         </div>
       </div>
+      ${showNavigation ? `
+        <button class="cf-nav cf-prev" type="button" aria-label="Previous photo">${chevron('left')}</button>
+        <button class="cf-nav cf-next" type="button" aria-label="Next photo">${chevron('right')}</button>` : ''}
     </div>
     ${showCaption ? '<div class="cf-caption" aria-live="polite"></div>' : ''}
-    ${(showNavigation || showPagination) ? `
-      <div class="cf-controls">
-        ${showNavigation ? `<button class="cf-nav cf-prev" type="button" aria-label="Previous photo">${chevron('left')}</button>` : ''}
-        ${showPagination ? `<div class="cf-dots">${slides.map((_, i) =>
-          `<button class="cf-dot" type="button" aria-label="Show photo ${i + 1}"></button>`).join('')}</div>` : ''}
-        ${showNavigation ? `<button class="cf-nav cf-next" type="button" aria-label="Next photo">${chevron('right')}</button>` : ''}
-      </div>` : ''}
+    ${showPagination ? `<div class="cf-dots">${slides.map((_, i) =>
+      `<button class="cf-dot" type="button" aria-label="Show photo ${i + 1}"></button>`).join('')}</div>` : ''}
   `;
 
-  /*
-   * The arrows sit in the control row with the dots, not over the artwork.
-   * Pinned to the stage edges they were fine on a full-width strip; narrowed
-   * to sit under the heading, those edges are ON the neighbouring cards, and
-   * a white button parked on a photograph of somebody's hair reads as a fault.
-   */
   const frame = root.querySelector('.cf-frame');
   const cards = [...root.querySelectorAll('.cf-card')];
   const dots = [...root.querySelectorAll('.cf-dot')];
