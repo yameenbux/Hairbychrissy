@@ -476,3 +476,18 @@
   .spec-cell .key { margin-top: 4px; letter-spacing: var(--ls-caps); }
   .panel { padding: 20px; }
 }
+
+/* ------------------------------------------------- no star pass in here
+   admin.html loads app.css, so the dashboard inherits the star pass that the
+   client site's buttons wear. It should not have it. The shop window is
+   allowed to be pleased with itself; a tool Chrissy uses between clients is
+   not, and there is a specific problem too — .btn-danger is the red one that
+   cancels a booking, and a clay light sliding across it softens exactly the
+   button that should not be soft.
+
+   Every state is listed because `:hover` and `:focus-visible` out-specify a
+   bare `.btn::before` wherever they are declared, so switching it off has to
+   be done at matching weight rather than by coming later in the cascade. */
+.btn::before, .btn::after,
+.btn:hover::before, .btn:hover::after,
+.btn:focus-visible::before, .btn:focus-visible::after { display: none; }

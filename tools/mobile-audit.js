@@ -77,6 +77,30 @@ const PROBE = `(() => {
     }
   });
 
+  /*
+   * 2b. Inline icons that have escaped their sizing.
+   *
+   * An <svg> with no width and height rule falls back to its own viewBox or to
+   * 300x150, which on a page of 22px marks reads as a bug the moment you see
+   * it. This is here because it HAS happened twice: once when a container was
+   * renamed and its sizing rules were left behind on the old selector, and
+   * once when a block of CSS was deleted by its two end markers and took the
+   * block sitting between them with it. Neither showed up in a tap-target or
+   * an overflow check — the icons were simply enormous.
+   */
+  document.querySelectorAll('svg').forEach(el => {
+    if (!el.getClientRects().length) return;
+    const r = el.getBoundingClientRect();
+    if (r.width > 96 || r.height > 96) {
+      problems.push({
+        kind: 'unsized-icon',
+        sel: 'svg' + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/)[0] : ''),
+        text: (el.closest('a,button')?.getAttribute('aria-label') || '').slice(0, 28),
+        detail: Math.round(r.width) + 'x' + Math.round(r.height) + ' — no size rule reaching it?'
+      });
+    }
+  });
+
   // 3. Horizontal overflow.
   if (document.documentElement.scrollWidth > vw + 1) {
     problems.push({ kind: 'page-overflow', sel: 'html', text: '', detail: document.documentElement.scrollWidth + ' > ' + vw });
