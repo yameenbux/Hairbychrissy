@@ -172,6 +172,41 @@
       "file": "work-brunette.jpg",
       "label": "Hollywood waves",
       "caption": "Deep brunette, glass-finish wave"
+    },
+    {
+      "file": "service-extensions.jpg",
+      "label": "Extensions & fittings",
+      "caption": ""
+    },
+    {
+      "file": "service-hollywood-waves.jpg",
+      "label": "Hollywood waves",
+      "caption": ""
+    },
+    {
+      "file": "service-hollywood-waves-clipins.jpg",
+      "label": "Hollywood waves with clip-ins",
+      "caption": ""
+    },
+    {
+      "file": "service-pinned-curls.jpg",
+      "label": "Pinned curls",
+      "caption": ""
+    },
+    {
+      "file": "service-hair-ups.jpg",
+      "label": "Hair ups",
+      "caption": ""
+    },
+    {
+      "file": "service-dry-style.jpg",
+      "label": "Dry from wet & style",
+      "caption": ""
+    },
+    {
+      "file": "service-removals.jpg",
+      "label": "Removals",
+      "caption": ""
     }
   ],
   "faqs": [
@@ -331,8 +366,8 @@
     "horizonDays": 90,
     "timezone": "Europe/London"
   },
-  "today": "2026-08-30",
+  "today": "2026-09-10",
   "cardMode": "static",
-  "generatedAt": "2026-08-30T17:21:41.555Z",
+  "generatedAt": "2026-09-10T12:22:16.896Z",
   "static": true
 }
