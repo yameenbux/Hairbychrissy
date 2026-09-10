@@ -252,6 +252,7 @@
       "price": 0,
       "priceOnRequest": true,
       "deposit": 0,
+      "highlight": "Her speciality",
       "blurb": "Custom extensions for length, volume and the hair of your dreams. All methods. Book a consultation and I will colour match you and quote for the fitting."
     },
     {
@@ -368,6 +369,6 @@
   },
   "today": "2026-09-10",
   "cardMode": "static",
-  "generatedAt": "2026-09-10T12:22:16.896Z",
+  "generatedAt": "2026-09-10T12:33:00.737Z",
   "static": true
 }
