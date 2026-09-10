@@ -14,6 +14,7 @@
  */
 
 import { resolveApiBase } from './api-base.js';
+import { createCoverflow } from './coverflow.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -333,16 +334,22 @@ function renderPortfolio() {
   if (!grid) return;
   const items = (state.site.gallery || []).filter((g) => havePhoto(g.file));
   if (!items.length) { grid.closest('section')?.remove(); return; }
-  grid.innerHTML = items
-    .map(
-      (g) => `
-      <figure class="reveal" style="margin:0">
-        <div class="card-media" style="background-image:url('./images/${esc(g.file)}')"></div>
-        <figcaption class="card-body"><span class="card-name">${esc(g.label)}</span></figcaption>
-        <p class="small muted" style="margin-top:6px">${esc(g.caption)}</p>
-      </figure>`,
-    )
-    .join('');
+  /*
+   * A flat three-up grid showed her work as a contact sheet — three thumbnails
+   * of equal weight, none of them large enough to look at. The strip puts one
+   * photo forward at a time and lets you push through the rest, which is how
+   * somebody actually decides whether they like what she does.
+   */
+  createCoverflow(
+    grid,
+    items.map((g) => ({
+      src: `./images/${g.file}`,
+      alt: g.caption || g.label,
+      title: g.label,
+      subtitle: g.caption,
+    })),
+    { label: 'Recent work by Chrissy' },
+  );
   if (state.site.brand?.instagram) $('#folioIg').href = state.site.brand.instagram;
   observeReveals();
 }
