@@ -154,6 +154,7 @@ function renderStatic() {
 
   renderPriceList('#serviceGrid');
   renderFooterSocial();
+  upgradeProcessToTabs();
 
   /*
    * No reviews means no reviews section — not a heading with nothing under it.
@@ -568,6 +569,97 @@ function renderFooterSocial() {
              stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">${SOCIAL_MARKS[r.mark]}</svg>
       </a>`)
     .join('');
+}
+
+/**
+ * The process, as tabs.
+ *
+ * Ported from an Ark UI tabs component. Ark gives you the ARIA for free; done
+ * by hand that means the full pattern rather than three buttons that swap a
+ * panel — roles and ids wired both ways, a roving tabindex so the group is one
+ * stop rather than three, and arrow keys, Home and End, which is how anyone
+ * driving a tablist from the keyboard expects to move.
+ *
+ * Built as an UPGRADE over the markup rather than as the markup. The three
+ * steps are written into index.html as plain cards and this rearranges them,
+ * so with no JavaScript — or before it runs — all three are still there and
+ * readable. Tabs hide two thirds of a section by design; that is a fair
+ * trade for a control surface and a poor one for the only explanation of
+ * the process on the page, so the words never depend on the script.
+ */
+function upgradeProcessToTabs() {
+  const wrap = $('.step-cards');
+  if (!wrap) return;
+  const cards = $$('.step-card', wrap);
+  if (cards.length < 2) return;
+
+  const titles = cards.map((c, i) => ({
+    label: $('h3', c)?.textContent?.trim() || `Step ${i + 1}`,
+    numeral: $('.numeral', c)?.textContent?.trim() || `${i + 1}/`,
+  }));
+
+  const list = document.createElement('div');
+  list.className = 'ptabs reveal';
+  list.setAttribute('role', 'tablist');
+  list.setAttribute('aria-label', 'The process');
+  list.innerHTML = titles
+    .map((t, i) => `
+      <button class="ptab" type="button" role="tab"
+              id="ptab-${i}" aria-controls="ppanel-${i}"
+              aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">
+        <span class="ptab-n">${esc(t.numeral)}</span>
+        <span class="ptab-label">${esc(t.label)}</span>
+      </button>`)
+    .join('');
+
+  cards.forEach((card, i) => {
+    /*
+     * Drop the scroll-reveal. It sets opacity:0 until an IntersectionObserver
+     * adds .in, and an element that is `hidden` never intersects anything — so
+     * the two closed panels would stay at zero opacity for good, and the open
+     * one rendered blank if its reveal had not already fired. A panel that
+     * appears because somebody pressed a tab should appear at once anyway; the
+     * reveal belongs to the tab strip now.
+     */
+    card.classList.remove('reveal', 'in');
+    card.setAttribute('role', 'tabpanel');
+    card.id = `ppanel-${i}`;
+    card.setAttribute('aria-labelledby', `ptab-${i}`);
+    // Focusable so a keyboard user can reach and scroll the panel they opened.
+    card.tabIndex = 0;
+    card.hidden = i !== 0;
+    // The heading and numeral are the tab now; repeating them inside the panel
+    // says the same word twice, one above the other.
+    $('.numeral', card)?.remove();
+    $('h3', card)?.remove();
+  });
+
+  wrap.classList.add('is-tabbed');
+  wrap.prepend(list);
+
+  const tabs = $$('.ptab', list);
+
+  function select(next, moveFocus = true) {
+    const i = (next + tabs.length) % tabs.length;
+    tabs.forEach((tab, n) => {
+      const on = n === i;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      cards[n].hidden = !on;
+    });
+    if (moveFocus) tabs[i].focus();
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(i, false));
+    tab.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); select(i + 1); }
+      else if (key === 'ArrowLeft' || key === 'ArrowUp') { e.preventDefault(); select(i - 1); }
+      else if (key === 'Home') { e.preventDefault(); select(0); }
+      else if (key === 'End') { e.preventDefault(); select(tabs.length - 1); }
+    });
+  });
 }
 
 /* --------------------------------------------------------------- motion */

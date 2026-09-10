@@ -1509,19 +1509,193 @@ a { color: inherit; text-decoration: none; }
    ---------------------------------------------------------------------- */
 
 .footer-social { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
-.footer-social a {
+.footer-social a,
+.fc-social a {
   /* 44px of target around a 22px mark. */
   display: inline-flex; align-items: center; justify-content: center;
   width: 44px; height: 44px;
   color: var(--espresso-70);
   transition: color 200ms linear;
 }
-.footer-social svg { width: 22px; height: 22px; }
-@media (hover: hover) and (pointer: fine) { .footer-social a:hover { color: var(--espresso); } }
-.footer-social a:focus-visible { outline: 2px solid var(--clay); outline-offset: -6px; }
+.footer-social svg,
+.fc-social svg { width: 22px; height: 22px; }
+@media (hover: hover) and (pointer: fine) {
+  .footer-social a:hover,
+  .fc-social a:hover { color: var(--espresso); }
+}
+.footer-social a:focus-visible,
+.fc-social a:focus-visible { outline: 2px solid var(--clay); outline-offset: -6px; }
 
 @media (max-width: 560px) {
   /* Wrapped onto its own line, the auto margin would shove it to the right
      edge on its own. Left, with the links. */
   .footer-social { margin-left: 0; }
+}
+
+/* ============================================================ PROCESS TABS
+   Ported from an Ark UI tabs component: a segmented control over one panel.
+   Its skin was a grey pill with a white selected chip and a soft shadow; here
+   the ground is cream, the selected tab is paper, and the accent marks the
+   selection on an edge rather than with a shadow — this page has one shadow
+   language and it belongs to the coverflow.
+
+   Applied by JS on top of the three cards, so .is-tabbed is what switches the
+   layout. Without it the cards stay a three-up grid.
+   ========================================================================= */
+
+.step-cards.is-tabbed {
+  display: block;   /* the grid was for three abreast; there is one panel now */
+}
+
+.ptabs {
+  display: flex; flex-wrap: wrap; gap: 2px;
+  padding: 4px;
+  margin-bottom: var(--s-4);
+  background: var(--cream);
+  width: fit-content; max-width: 100%;
+}
+.band-cream .ptabs { background: var(--paper); }
+
+.ptab {
+  display: inline-flex; align-items: baseline; gap: 10px;
+  min-height: 48px; padding: 12px 20px;
+  background: none; border: 0; cursor: pointer;
+  font-family: var(--sans);
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--espresso-70);
+  transition: background 200ms linear, color 200ms linear;
+}
+.ptab-n { font-family: var(--display-face); font-size: var(--t-sm); color: var(--clay-deep); }
+
+.ptab[aria-selected='true'] {
+  background: var(--paper);
+  color: var(--espresso);
+  /* The marker, in place of the original's drop shadow. */
+  box-shadow: inset 0 -2px 0 var(--clay);
+}
+.band-cream .ptab[aria-selected='true'] { background: var(--cream); }
+.ptab:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) {
+  .ptab:not([aria-selected='true']):hover { color: var(--espresso); }
+}
+
+/*
+ * One panel now, so the fact and the words can sit beside each other instead
+ * of stacking. Stacked, the fact panel ran the full width with its label alone
+ * in the bottom corner and the prose started a screen further down.
+ */
+.is-tabbed .step-card { max-width: 880px; }
+.is-tabbed .step-card:focus-visible { outline: 2px solid var(--clay); outline-offset: 6px; }
+.is-tabbed .step-panel { margin-bottom: var(--s-3); }
+.is-tabbed .step-card p { max-width: 46ch; }
+
+@media (min-width: 760px) {
+  .is-tabbed .step-card {
+    display: grid;
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: start;
+  }
+  .is-tabbed .step-panel { margin-bottom: 0; min-height: 200px; }
+  .is-tabbed .step-card p { margin-top: 0; }
+}
+
+@media (max-width: 560px) {
+  /* Three across at this width would set the labels in about four characters
+     each. A full-width stack keeps them readable and keeps the 48px target. */
+  .ptabs { width: 100%; }
+  .ptab { flex: 1 1 100%; justify-content: flex-start; }
+}
+
+/* ========================================================== CENTRED FOOTER
+   Ported from a React footer section. Her palette and her wordmark; the
+   layout, the hatched rule and the centred stack are the component's.
+
+   This is the one centred band on a site that is otherwise a left-aligned
+   editorial system — deliberate, and asked for. The ban list's centring rule
+   names .band/.shell/.section-head/.hero/.split for that reason: a closing
+   gesture is the one place it reads as intent rather than as default.
+   ========================================================================= */
+
+.footer-centred { padding-bottom: 0; }
+
+.fc-stack {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--s-4);
+  text-align: center;
+  padding-bottom: var(--stack);
+}
+
+.fc-mark {
+  font-family: var(--display-face);
+  font-size: var(--t-2xl); line-height: var(--lh-display); letter-spacing: var(--ls-display);
+  color: var(--espresso);
+}
+.fc-signoff {
+  /* Uppercase with label tracking runs wide; 40ch broke "…next hair / chapter."
+     across two lines at desktop for no reason. */
+  margin: 0; max-width: 52ch;
+  font-size: var(--t-xs); letter-spacing: var(--ls-caps); text-transform: uppercase;
+  color: var(--espresso-70);
+}
+
+.fc-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px clamp(4px, 1vw, 12px); }
+.fc-links a {
+  display: inline-flex; align-items: center;
+  min-height: 44px; padding: 0 14px;
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--espresso-70);
+  transition: background 200ms linear, color 200ms linear;
+}
+/* The original grew a chip behind the link on hover; here it is the same
+   gesture without the spring — a ground that arrives, in her cream. */
+@media (hover: hover) and (pointer: fine) {
+  .fc-links a:hover { background: var(--paper); color: var(--espresso); }
+}
+.fc-links a:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+
+.fc-social { display: inline-flex; justify-content: center; gap: 4px; margin-left: 0; }
+
+.fc-keep { display: flex; flex-direction: column; align-items: center; gap: var(--s-2); max-width: 40ch; }
+.fc-keep p { max-width: 36ch; margin: 0; }
+.fc-keep .newsletter { justify-content: center; width: 100%; }
+
+.fc-studio {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 4px 16px;
+}
+/* Read as one line separated by marks rather than as a stacked address. */
+.fc-studio li + li::before { content: '·'; margin-right: 16px; color: var(--clay-deep); }
+
+/*
+ * The hatched rule. 315deg repeating gradient, as the original — but static:
+ * its 20-second travelling background is decoration, and this page's motion
+ * band is 200 to 300ms with no looping.
+ */
+.fc-rule {
+  height: 48px;
+  border-top: 1px solid var(--hairline-soft);
+  border-bottom: 1px solid var(--hairline-soft);
+  background-image: repeating-linear-gradient(315deg,
+    var(--hairline) 0, var(--hairline) 1px, transparent 0, transparent 50%);
+  background-size: 10px 10px;
+  opacity: 0.55;
+}
+
+/* Staggered, in the order the eye takes them. Delay only — the reveal itself
+   is the site's existing 280ms fade, so nothing new enters the motion band. */
+.fc-stack .reveal:nth-child(2) { transition-delay: 60ms; }
+.fc-stack .reveal:nth-child(3) { transition-delay: 120ms; }
+.fc-stack .reveal:nth-child(4) { transition-delay: 180ms; }
+.fc-stack .reveal:nth-child(5) { transition-delay: 240ms; }
+.fc-stack .reveal:nth-child(6) { transition-delay: 300ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-stack .reveal { transition-delay: 0ms; }
+}
+
+@media (max-width: 560px) {
+  .fc-mark { font-size: var(--t-xl); }
+  .fc-rule { height: 32px; }
 }
