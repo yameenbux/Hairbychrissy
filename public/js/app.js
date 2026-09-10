@@ -116,21 +116,6 @@ function renderStatic() {
   if (brand.strapline) put('#strapline', 'textContent', brand.strapline);
 
   // Her three headline services, in her own words, above the price list.
-  const offerList = $('#offerList');
-  if (offerList && state.site.offers) {
-    offerList.innerHTML = state.site.offers
-      .map(
-        (o, i) => `
-        <article class="step reveal">
-          <span class="numeral">${i + 1}/</span>
-          <h3>${esc(o.title)}</h3>
-          <p class="small muted" style="letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">${esc(o.kicker)}</p>
-          <p>${esc(o.text)}</p>
-        </article>`,
-      )
-      .join('');
-  }
-
   // Why extensions — her own four benefits, as text rather than her graphic so
   // it stays searchable, translatable and readable at any width.
   const benefitList = $('#benefitList');
@@ -153,7 +138,7 @@ function renderStatic() {
   renderTransformations();
   renderPortfolio();
 
-  renderPriceList('#serviceGrid');
+  renderServiceGallery('#serviceGallery');
   renderFooterSocial();
   renderBookCard();
 
@@ -410,43 +395,41 @@ function startHeroVideo(video) {
 }
 
 /**
- * The price list on the home page.
+ * The services, as an expanding gallery.
  *
- * Separate from renderServiceCards on purpose: that one is the picker on
- * book.html, where a compact tile you tap to select is right and a card
- * arguing the case for a service would be in the way. This one has to sell.
+ * Ported from a React image gallery — a row of panels where the one you are
+ * pointing at opens and the rest give way. What replaced: a numbered 1/2/3
+ * list above and seven stacked price cards below, which between them said the
+ * same seven things three times over and made the section a scroll.
  *
- * Design ported from a React/shadcn pricing section. What came across is the
- * shape that earns its keep for her — a card per service, the price given
- * room, a ticked list of what it actually involves, one service raised above
- * the rest, and a CTA on every card rather than one at the foot of the page.
- *
- * What did NOT come across, and why, is in the commit message: a
- * monthly/annual billing toggle, confetti, and a 150-star mouse-reactive
- * field. She sells appointments, not subscriptions.
+ * THE ORIGINAL EXPANDS ON HOVER AND NOTHING ELSE, which is a desktop-only
+ * gesture on a page most of her clients open on a phone. Here the row is only
+ * a row where there is a pointer that can hover; on a touch screen and at
+ * narrow widths it becomes a plain grid with every panel already open, so
+ * nothing is behind a gesture that does not exist. Keyboard focus opens a
+ * panel too — otherwise the Book button inside it could never be reached.
  */
-function renderPriceList(target) {
-  const grid = $(target);
-  if (!grid) return;
+function renderServiceGallery(target) {
+  const box = $(target);
+  if (!box) return;
 
-  grid.classList.add('price-list');
-  grid.innerHTML = state.site.services
+  box.innerHTML = state.site.services
     .map((s) => `
-      <article class="price-card reveal${s.highlight ? ' is-lead' : ''}">
-        ${s.highlight ? `<span class="price-flag">${esc(s.highlight)}</span>` : ''}
-        <span class="price-media media-placeholder" data-img="./images/service-${esc(s.id)}.jpg"></span>
-        <div class="price-body">
-          <span class="price-cat">${esc(s.category)}</span>
-          <h3 class="price-name">${esc(s.name)}</h3>
-          <p class="price-blurb">${esc(s.blurb || '')}</p>
-          <p class="price-figure">
-            <span class="price-amount">${priceLabel(s)}</span>
-            <span class="price-unit">${s.priceOnRequest ? 'quoted at consultation' : 'per appointment'}</span>
+      <article class="svc-panel reveal" data-id="${esc(s.id)}">
+        <span class="svc-photo media-placeholder" data-img="./images/service-${esc(s.id)}.jpg"></span>
+        <span class="svc-scrim" aria-hidden="true"></span>
+        <!-- The shut state. A name down the edge, so the row can be read
+             without pointing at all seven in turn — the original showed bare
+             images, which tells you nothing about what you are looking at. -->
+        <span class="svc-tab" aria-hidden="true">${esc(s.name)}</span>
+        <div class="svc-body">
+          <h3 class="svc-name">${esc(s.name)}</h3>
+          <p class="svc-meta">
+            <span class="svc-price">${priceLabel(s)}</span>
+            <span class="svc-dot" aria-hidden="true">·</span>
+            <span>${duration(s.duration)}</span>
           </p>
-          <ul class="price-points">
-            ${pricePoints(s).map((point) => `<li>${tick()}<span>${esc(point)}</span></li>`).join('')}
-          </ul>
-          <a class="btn btn-outline price-cta" href="./book.html?service=${encodeURIComponent(s.id)}">
+          <a class="svc-book" href="./book.html?service=${encodeURIComponent(s.id)}">
             ${s.priceOnRequest ? 'Book a consultation' : 'Book this'}
           </a>
         </div>
@@ -455,28 +438,6 @@ function renderPriceList(target) {
 
   loadImagery();
   observeReveals();
-}
-
-/**
- * The ticked rows under a price.
- *
- * Every one is read off the service record — how long it is booked for, what
- * is due when. Nothing here is a claim about the result, because that would be
- * me writing marketing copy about hair on her behalf, which is how six
- * invented reviews ended up on this site once already.
- */
-function pricePoints(s) {
-  const points = [duration(s.duration) + (s.priceOnRequest ? ' consultation' : ' in the chair')];
-  if (s.priceOnRequest) points.push('Colour matched, then quoted');
-  points.push(s.deposit ? `${money(s.deposit)} deposit to hold the slot` : 'No deposit — nothing to pay up front');
-  points.push('Cash or card on the day');
-  return points;
-}
-
-/** Inline, because the ban list rightly refuses an emoji standing in for an icon. */
-function tick() {
-  return `<svg class="price-tick" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
-    <path d="M3 8.5 6.2 11.5 13 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></svg>`;
 }
 
 function renderServiceCards(target, selectable) {
