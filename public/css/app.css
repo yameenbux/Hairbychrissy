@@ -272,21 +272,107 @@ a { color: inherit; text-decoration: none; }
 .btn-sm { min-height: 44px; padding: 10px 20px; font-size: var(--t-xs); }
 .btn[disabled], .btn[aria-disabled='true'] { opacity: 0.35; pointer-events: none; }
 
+/* -------------------------------------------------------- the star button
+   Ported from a star-button component. The original is a Tailwind pill with
+   two wide, soft lights — one under the bottom edge, one over the top —
+   sliding in opposite directions behind a rounded, clipped face. Each is a
+   `radial-gradient(circle, <colour>, transparent 10%)` on a box three times
+   the button's width, moved by a keyframe set to
+   `calc(var(--duration) * 1s) linear` with duration 3 and a count that never
+   ends.
+
+   Three things could not come across as written, and each of them is this
+   site's own rule rather than my taste:
+
+     - THE NEVER-ENDING PART. Rule 7 of the ban list fails a looping keyframe
+       outright, and it is there because the brief said "Subtle. 200-300ms.
+       Nothing bounces." Lights sliding across a button for as long as the
+       page is open is the opposite of subtle, and the landing page carries
+       eleven buttons — it would be eleven of them going at once, forever.
+       So the pass is TRIGGERED: the lights make one crossing, in 300ms, when
+       the pointer arrives or the button takes focus, and then it is over.
+     - 3000ms, ten times the top of the band the brief set.
+     - THE COLOUR. The original's lights are a cold gradient of exactly the
+       family the ban list opens with. These are clay — her accent.
+
+   The mechanism is untouched, and it is the part worth having: two oversized
+   radial gradients parked off either end, translated across the face. It
+   ports to a transition rather than a keyframe because both ends of the
+   travel are off-canvas, so the snap back when the pointer leaves happens
+   where there is nothing to see, and the light only ever appears to run one
+   way.
+
+   The corners stay square. Every other button on this site is square, and a
+   pill among them would read as a paste rather than as a part.
+
+   The selector list is every button-shaped control on the site, not just the
+   .btn family — the services gallery's action and the booking card's action
+   are buttons in every sense but the class name, and a treatment that skipped
+   them would make the page look half-converted. Icon controls (the carousel
+   arrows and dots, the card's corner link) are deliberately not in it: they
+   are 44px squares, and a light crossing one has nowhere to travel. */
+
+.btn,
+.svc-book,
+.tc-action {
+  position: relative;
+  overflow: hidden;   /* the lights are wider than the button; this is the frame */
+  isolation: isolate; /* so `z-index: -1` below means "behind the label", not "behind the page" */
+}
+
+/* Both lights. A negative z-index inside an isolated element paints above the
+   button's own ground and below its label, which is exactly where a light
+   glowing through the face belongs. */
+.btn::before, .btn::after,
+.svc-book::before, .svc-book::after,
+.tc-action::before, .tc-action::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 300%;
+  height: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  background-image: radial-gradient(circle, var(--clay), transparent 10%);
+  opacity: 0;
+  /* 0ms on the way back. Both ends of the travel sit off the button, so there
+     is nothing on screen to snap. */
+  transition: opacity 200ms linear, transform 0ms linear;
+}
+.btn::before, .svc-book::before, .tc-action::before { bottom: -11px; right: -250%; }  /* parked off the right */
+.btn::after,  .svc-book::after,  .tc-action::after  { top: -10px;   left: -250%; }  /* parked off the left */
+
+/* Focus gets the same pass as hover. A keyboard should not be handed the
+   quieter version of the button; the focus ring still draws over the top.
+   The hover half lives with the rest of the hover rules further down, behind
+   the pointer guard — on a touch screen :hover sticks after a tap, and a
+   button left with its lights stranded mid-crossing looks broken. */
+.btn:focus-visible::before, .btn:focus-visible::after,
+.svc-book:focus-visible::before, .svc-book:focus-visible::after,
+.tc-action:focus-visible::before, .tc-action:focus-visible::after {
+  opacity: 0.7;
+  transition: opacity 200ms linear, transform 300ms linear;
+}
+.btn:focus-visible::before,
+.svc-book:focus-visible::before,
+.tc-action:focus-visible::before { transform: translateX(-100%); }
+.btn:focus-visible::after,
+.svc-book:focus-visible::after,
+.tc-action:focus-visible::after  { transform: translateX(100%); }
+
 /* ------------------------------------------------------------ the CTA
    One action on this site: book a slot. It wears the same words and the same
    treatment everywhere it appears, so a client who has scrolled past it four
    times recognises it on the fifth rather than reading it again.
 
-   The clay rule under it is the accent doing what the accent is for —
-   marking the one thing that matters, never decorating a button face. */
-.btn-cta { position: relative; }
-.btn-cta::after {
-  content: '';
-  position: absolute; left: 0; right: 0; bottom: -1px;
-  height: 2px; background: var(--clay);
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 240ms ease;
-}
+   It used to carry a clay rule under it that swept in on hover, drawn on
+   `::after`. The star pass needs both pseudo-elements for its two lights, so
+   that rule could not stay where it was — and two accents firing on one
+   control on one hover was one too many anyway. The accent stays, as a mark
+   rather than a motion: a clay line sitting under the CTA at all times,
+   drawn inside the box so it costs no height. Still the accent marking the
+   one thing that matters, still never decorating a button face. */
+.btn-cta { position: relative; box-shadow: inset 0 -2px 0 var(--clay); }
 
 .cta-repeat {
   display: flex;
@@ -870,7 +956,19 @@ a { color: inherit; text-decoration: none; }
   .btn:hover { background: var(--espresso-70); border-color: var(--espresso-70); }
   .btn-outline:hover { background: var(--espresso); color: var(--paper); border-color: var(--espresso); }
   .btn-light:hover { background: var(--cream); border-color: var(--cream); color: var(--espresso); }
-  .btn-cta:hover::after { transform: scaleX(1); }
+  /* The star pass. One crossing, 300ms, then the lights are gone again. */
+  .btn:hover::before, .btn:hover::after,
+  .svc-book:hover::before, .svc-book:hover::after,
+  .tc-action:hover::before, .tc-action:hover::after {
+    opacity: 0.7;
+    transition: opacity 200ms linear, transform 300ms linear;
+  }
+  .btn:hover::before,
+  .svc-book:hover::before,
+  .tc-action:hover::before { transform: translateX(-100%); }
+  .btn:hover::after,
+  .svc-book:hover::after,
+  .tc-action:hover::after  { transform: translateX(100%); }
 
   .hero-secondary:hover { color: var(--paper); border-bottom-color: var(--paper); }
 
@@ -901,6 +999,25 @@ a { color: inherit; text-decoration: none; }
   .site-footer a:hover { color: var(--espresso); }
   .filedrop:hover { border-color: var(--clay); background: var(--cream); }
   .thumb-x:hover span { border-color: var(--danger); color: var(--danger); }
+}
+
+/* The star pass, for somebody who has asked for less motion. The whole point
+   of it is travel, and there is no still version of a light crossing a button,
+   so it simply does not run — the button answers with its fill, which it did
+   before any of this. This sits here rather than up with the other star rules
+   because it has to out-order the `:hover` rules above, and the blanket `*`
+   rule below cannot do the job: `*` matches elements, and these are
+   pseudo-elements. */
+@media (prefers-reduced-motion: reduce) {
+  .btn::before, .btn::after,
+  .btn:hover::before, .btn:hover::after,
+  .btn:focus-visible::before, .btn:focus-visible::after,
+  .svc-book::before, .svc-book::after,
+  .svc-book:hover::before, .svc-book:hover::after,
+  .svc-book:focus-visible::before, .svc-book:focus-visible::after,
+  .tc-action::before, .tc-action::after,
+  .tc-action:hover::before, .tc-action:hover::after,
+  .tc-action:focus-visible::before, .tc-action:focus-visible::after { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

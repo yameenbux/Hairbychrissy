@@ -63,15 +63,30 @@ const WIDTHS = [1280, 1440, 1920];
       );
     }
 
-    // Nav labels must match between header and footer.
+    /*
+     * Nav labels must match between header and footer.
+     *
+     * The footer selector is the column of site links, which is `.fx-col` under
+     * the Explore heading since the footer was rebuilt in columns. It used to be
+     * `.footer-links`, and when that class went the check did not start passing
+     * or erroring — it started comparing the header against an EMPTY list and
+     * reporting a mismatch that was really a dead selector. So an empty side is
+     * now called out as exactly that, rather than being dressed up as a
+     * difference of opinion about labels.
+     */
     const [head, foot] = await Promise.all([
       page.$$eval('.site-header nav a', (as) => as.map((a) => a.textContent.trim().toLowerCase())),
-      page.$$eval('.footer-links a', (as) => as.map((a) => a.textContent.trim().toLowerCase())),
+      page.$$eval('[aria-labelledby="fxExplore"] a', (as) => as.map((a) => a.textContent.trim().toLowerCase())),
     ]);
-    const same = JSON.stringify(head) === JSON.stringify(foot);
-    if (!same) failures += 1;
-    console.log(`  ${same ? 'PASS' : 'FAIL'}  nav labels identical in header and footer`);
-    if (!same) console.log(`        header: ${head.join(', ')}\n        footer: ${foot.join(', ')}`);
+    if (!head.length || !foot.length) {
+      failures += 1;
+      console.log(`  FAIL  nav label check found nothing to compare — ${!head.length ? 'header' : 'footer'} selector matched no links`);
+    } else {
+      const same = JSON.stringify(head) === JSON.stringify(foot);
+      if (!same) failures += 1;
+      console.log(`  ${same ? 'PASS' : 'FAIL'}  nav labels identical in header and footer`);
+      if (!same) console.log(`        header: ${head.join(', ')}\n        footer: ${foot.join(', ')}`);
+    }
 
     // Focus must be visible — the design being minimal is not an excuse.
     const focusOk = await page.evaluate(() => {
