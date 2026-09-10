@@ -152,7 +152,8 @@ function renderStatic() {
   renderReels();
   renderPortfolio();
 
-  renderServiceCards('#serviceGrid', false);
+  renderPriceList('#serviceGrid');
+  renderFooterSocial();
 
   /*
    * No reviews means no reviews section — not a heading with nothing under it.
@@ -182,11 +183,15 @@ function renderStatic() {
     .map((f) => `<details><summary>${esc(f.q)}</summary><div class="answer"><p>${esc(f.a)}</p></div></details>`)
     .join(''));
 
+  /*
+   * Where she works, and nothing else. Her Instagram and her shop used to be
+   * appended here as well; they are neither of them studio details, and they
+   * now have marks of their own on the link row, so listing them twice was
+   * only telling somebody the same thing in two places.
+   */
   put('#footStudio', 'innerHTML', [
     ...brand.addressLines.map((l) => `<li>${esc(l)}</li>`),
     brand.email ? `<li><a href="mailto:${esc(brand.email)}">${esc(brand.email)}</a></li>` : '',
-    `<li><a href="${esc(brand.instagram)}" target="_blank" rel="noopener">${esc(brand.handle)}</a></li>`,
-    brand.website ? `<li><a href="${esc(brand.website)}" target="_blank" rel="noopener">${esc(brand.websiteLabel || brand.website)}</a></li>` : '',
   ].join(''));
 
   put('#legalCopy', 'textContent', `© ${new Date().getFullYear()} ${brand.name}. London.`);
@@ -431,6 +436,76 @@ function startHeroVideo(video) {
   }
 }
 
+/**
+ * The price list on the home page.
+ *
+ * Separate from renderServiceCards on purpose: that one is the picker on
+ * book.html, where a compact tile you tap to select is right and a card
+ * arguing the case for a service would be in the way. This one has to sell.
+ *
+ * Design ported from a React/shadcn pricing section. What came across is the
+ * shape that earns its keep for her — a card per service, the price given
+ * room, a ticked list of what it actually involves, one service raised above
+ * the rest, and a CTA on every card rather than one at the foot of the page.
+ *
+ * What did NOT come across, and why, is in the commit message: a
+ * monthly/annual billing toggle, confetti, and a 150-star mouse-reactive
+ * field. She sells appointments, not subscriptions.
+ */
+function renderPriceList(target) {
+  const grid = $(target);
+  if (!grid) return;
+
+  grid.classList.add('price-list');
+  grid.innerHTML = state.site.services
+    .map((s) => `
+      <article class="price-card reveal${s.highlight ? ' is-lead' : ''}">
+        ${s.highlight ? `<span class="price-flag">${esc(s.highlight)}</span>` : ''}
+        <span class="price-media media-placeholder" data-img="./images/service-${esc(s.id)}.jpg"></span>
+        <div class="price-body">
+          <span class="price-cat">${esc(s.category)}</span>
+          <h3 class="price-name">${esc(s.name)}</h3>
+          <p class="price-blurb">${esc(s.blurb || '')}</p>
+          <p class="price-figure">
+            <span class="price-amount">${priceLabel(s)}</span>
+            <span class="price-unit">${s.priceOnRequest ? 'quoted at consultation' : 'per appointment'}</span>
+          </p>
+          <ul class="price-points">
+            ${pricePoints(s).map((point) => `<li>${tick()}<span>${esc(point)}</span></li>`).join('')}
+          </ul>
+          <a class="btn btn-outline price-cta" href="./book.html?service=${encodeURIComponent(s.id)}">
+            ${s.priceOnRequest ? 'Book a consultation' : 'Book this'}
+          </a>
+        </div>
+      </article>`)
+    .join('');
+
+  loadImagery();
+  observeReveals();
+}
+
+/**
+ * The ticked rows under a price.
+ *
+ * Every one is read off the service record — how long it is booked for, what
+ * is due when. Nothing here is a claim about the result, because that would be
+ * me writing marketing copy about hair on her behalf, which is how six
+ * invented reviews ended up on this site once already.
+ */
+function pricePoints(s) {
+  const points = [duration(s.duration) + (s.priceOnRequest ? ' consultation' : ' in the chair')];
+  if (s.priceOnRequest) points.push('Colour matched, then quoted');
+  points.push(s.deposit ? `${money(s.deposit)} deposit to hold the slot` : 'No deposit — nothing to pay up front');
+  points.push('Cash or card on the day');
+  return points;
+}
+
+/** Inline, because the ban list rightly refuses an emoji standing in for an icon. */
+function tick() {
+  return `<svg class="price-tick" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+    <path d="M3 8.5 6.2 11.5 13 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/></svg>`;
+}
+
 function renderServiceCards(target, selectable) {
   const grid = $(target);
   if (!grid) return;
@@ -461,6 +536,38 @@ function renderServiceCards(target, selectable) {
   });
   loadImagery();
   observeReveals();
+}
+
+/**
+ * The social row in the footer.
+ *
+ * The component this came from showed six icons, every one of them a
+ * placeholder pointing at "#". Six marks on a footer is a design for a company
+ * with six accounts. She has two — Instagram, and the shop she also runs — so
+ * the row has two, and neither is a guess: both come from lib/seed.js. If she
+ * adds TikTok tomorrow it is one entry there and it appears here.
+ */
+const SOCIAL_MARKS = {
+  instagram: '<rect x="4" y="4" width="16" height="16" rx="4.5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.2" cy="6.9" r="1.1" fill="currentColor" stroke="none"/>',
+  shop: '<path d="M4.6 8.5h14.8l-1.1 10a1.6 1.6 0 0 1-1.6 1.4H7.3a1.6 1.6 0 0 1-1.6-1.4z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>',
+};
+
+function renderFooterSocial() {
+  const box = $('#footerSocial');
+  if (!box) return;
+  const brand = state.site.brand || {};
+  const rows = [
+    brand.instagram && { href: brand.instagram, mark: 'instagram', label: `Instagram — ${brand.handle || 'her page'}` },
+    brand.website && { href: brand.website, mark: 'shop', label: brand.websiteLabel || 'Her other site' },
+  ].filter(Boolean);
+
+  box.innerHTML = rows
+    .map((r) => `
+      <a href="${esc(r.href)}" target="_blank" rel="noopener" aria-label="${esc(r.label)}" title="${esc(r.label)}">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor"
+             stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">${SOCIAL_MARKS[r.mark]}</svg>
+      </a>`)
+    .join('');
 }
 
 /* --------------------------------------------------------------- motion */

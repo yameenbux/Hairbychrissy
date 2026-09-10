@@ -1364,3 +1364,164 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 620px) {
   .cf-nav { display: none; }
 }
+
+/* ============================================================== PRICE LIST
+   Ported from a React/shadcn pricing section. What came over is the shape:
+   a card per service, the price given room, a ticked list of what the
+   appointment actually involves, one service raised above the rest, and a way
+   to book on every card rather than one CTA at the foot of the page.
+   ========================================================================= */
+
+.price-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 28px);
+  /* Stretch, not start. The cards carry different amounts of copy, and with
+     `start` each one shrank to its own content — which put every Book button
+     at a different height and undid the `margin-top:auto` below. Equal-height
+     cards in a row are what let the CTAs line up. */
+  align-items: stretch;
+}
+
+.price-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--hairline-soft);
+  /* Squared, like everything else here. The original's 16px radius belongs to
+     a different house style; this one has no rounded corners anywhere. */
+}
+
+/* The raised card. A border and a flag, not a drop shadow — the page has one
+   shadow language and it belongs to the coverflow. */
+.price-card.is-lead { border: 1px solid var(--espresso); }
+.price-flag {
+  position: absolute; top: 0; left: 0; z-index: 2;
+  padding: 8px 14px;
+  background: var(--espresso); color: var(--paper);
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+}
+
+.price-media { display: block; aspect-ratio: 4 / 5; overflow: hidden; }
+.price-media > * { width: 100%; height: 100%; object-fit: cover; }
+
+.price-body { display: flex; flex-direction: column; flex: 1; padding: var(--s-3); }
+
+.price-cat { font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase; color: var(--espresso-70); }
+.price-name {
+  margin: 8px 0 0;
+  font-family: var(--display-face);
+  font-size: var(--t-lg); line-height: var(--lh-snug); letter-spacing: var(--ls-heading);
+  color: var(--espresso);
+}
+.price-blurb { margin: 10px 0 0; max-width: none; font-size: var(--t-xs); color: var(--espresso-70); }
+
+.price-figure {
+  margin: var(--s-3) 0 0; max-width: none;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  padding-top: var(--s-2); border-top: 1px solid var(--hairline-soft);
+}
+.price-amount { font-family: var(--display-face); font-size: var(--t-xl); line-height: 1; color: var(--espresso); }
+.price-unit { font-size: var(--t-xs); letter-spacing: var(--ls-caps); color: var(--espresso-70); }
+
+.price-points { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; gap: 8px; }
+.price-points li { display: flex; gap: 10px; align-items: flex-start; font-size: var(--t-xs); color: var(--espresso-70); }
+.price-tick { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--clay-deep); }
+
+/* Pushed to the bottom so the buttons line up across cards of different
+   heights — a ragged row of CTAs is the thing that makes a price grid look
+   thrown together. */
+/*
+ * ONE margin-top rule. There were three, and the last of them —
+ * `.price-points + .price-cta` setting a fixed top margin — outranked the
+ * `auto` that does the aligning, so the buttons sat wherever the copy above
+ * them ended. The gap above the button is padding on the button's own box
+ * now, which cannot fight the auto margin.
+ */
+.price-cta {
+  margin-top: auto;
+  padding-top: 14px; padding-bottom: 14px;
+  width: 100%;
+}
+/* Clears the ticked list without touching margin-top. */
+.price-points { padding-bottom: var(--s-3); }
+
+@media (max-width: 900px) {
+  .price-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .price-list { grid-template-columns: 1fr; }
+  /* Portrait crops stack into a very long page at one card per row. */
+  .price-media { aspect-ratio: 16 / 10; }
+}
+
+/* ============================================================ PROCESS CARDS
+   Ported from a React feature grid. What came over is the card: a panel that
+   states one fact, over the words that explain it, revealed on scroll.
+   What did not is the motion — its three demos ran on 2-second setInterval
+   loops, and looping animation is the one thing this site's own ban list
+   refuses outright.
+   ========================================================================= */
+
+.step-cards { align-items: stretch; }
+
+.step-card {
+  position: relative;
+  display: flex; flex-direction: column;
+  padding: 0;
+  border-top: 0;   /* the panel is the top edge now, not a hairline */
+}
+.step-card::before { content: none; }
+
+.step-panel {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: var(--s-2);
+  min-height: 168px;
+  padding: var(--s-3);
+  margin-bottom: var(--s-3);
+  background: var(--cream);
+  /* The single accent, as a marker on the leading edge — the same job the
+     hairline connector did before, kept so the three still read as a run. */
+  border-left: 2px solid var(--clay);
+}
+.band-cream .step-panel { background: var(--paper); }
+
+.step-mark { width: 40px; height: 40px; color: var(--clay-deep); }
+.step-fact {
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+  color: var(--espresso);
+}
+
+.step-card .numeral { display: block; margin-bottom: var(--s-2); }
+.step-card h3 { font-size: var(--t-sm); letter-spacing: var(--ls-label); text-transform: uppercase; margin-bottom: var(--s-2); }
+.step-card p { color: var(--espresso-70); }
+
+@media (max-width: 860px) {
+  .step-cards { grid-template-columns: 1fr; }
+  .step-panel { min-height: 0; flex-direction: row; align-items: center; }
+}
+
+/* ---- footer social row -------------------------------------------------
+   Sits on the end of the existing link row rather than starting a band of its
+   own: two marks do not carry a row to themselves, and the footer already has
+   enough horizontal rules on it.
+   ---------------------------------------------------------------------- */
+
+.footer-social { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.footer-social a {
+  /* 44px of target around a 22px mark. */
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  color: var(--espresso-70);
+  transition: color 200ms linear;
+}
+.footer-social svg { width: 22px; height: 22px; }
+@media (hover: hover) and (pointer: fine) { .footer-social a:hover { color: var(--espresso); } }
+.footer-social a:focus-visible { outline: 2px solid var(--clay); outline-offset: -6px; }
+
+@media (max-width: 560px) {
+  /* Wrapped onto its own line, the auto margin would shove it to the right
+     edge on its own. Left, with the links. */
+  .footer-social { margin-left: 0; }
+}
