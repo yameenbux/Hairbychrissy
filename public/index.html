@@ -298,45 +298,51 @@
 </main>
 
 <!-- ============================================================= FOOTER -->
-<footer class="site-footer">
+<!-- Ported from a React footer section: a centred stack — wordmark, links,
+     social marks, a hatched rule, one closing line. Her palette and her
+     wordmark throughout, as asked.
+
+     Kept from what was here: the newsletter form and the studio lines. The
+     component has neither, but deleting a working sign-up and the only
+     statement of where she works would be losing function to gain a layout.
+     Both are centred into the stack instead.
+
+     Its 20-second scrolling hatch is static here — the rule is a divider, and
+     a divider that never stops moving is decoration this page's motion system
+     does not allow. -->
+<footer class="site-footer footer-centred">
   <div class="shell">
-    <div class="footer-top">
-      <div>
-        <div class="footer-lockup">
-          <span class="rotated">London based</span>
-          <span class="giant">Hair<br>by Chrissy</span>
-        </div>
-        <p class="small muted" id="signoff" style="margin-top:var(--s-3);letter-spacing:var(--ls-caps)"></p>
-      </div>
-      <div class="footer-aside">
+    <div class="fc-stack">
+      <span class="fc-mark reveal">Hair by Chrissy</span>
+      <p class="fc-signoff reveal" id="signoff"></p>
+
+      <nav class="fc-links reveal" aria-label="Footer">
+        <a href="#services">Services</a>
+        <a href="#work">Work</a>
+        <a href="#process">Process</a>
+        <a href="./book.html">Book</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <span class="fc-social reveal" id="footerSocial"></span>
+
+      <div class="fc-keep reveal">
         <span class="label label-plain">Keep in touch</span>
-        <p class="small muted" style="max-width:34ch">New availability and aftercare, occasionally. No spam.</p>
+        <p class="small muted">New availability and aftercare, occasionally. No spam.</p>
         <form class="newsletter" id="newsletterForm" novalidate>
           <label for="nlEmail" class="visually-hidden">Email address</label>
           <input class="input" id="nlEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email address">
           <button class="btn" type="submit">Join</button>
         </form>
         <p class="small muted" id="newsletterNote" role="status"></p>
-        <div>
-          <span class="label label-plain" style="display:block;margin-bottom:var(--s-1)">Studio</span>
-          <ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px" class="small muted" id="footStudio"></ul>
-        </div>
       </div>
-    </div>
 
-    <!-- Ported from a React footer: a row of links, a row of social marks, one
-         closing line. Its six social icons were placeholders pointing at "#";
-         the two below are the two accounts she actually has, and no others
-         have been invented to fill the row out. -->
-    <nav class="footer-links" aria-label="Footer">
-      <a href="#services">Services</a>
-      <a href="#work">Work</a>
-      <a href="#process">Process</a>
-      <a href="./book.html">Book</a>
-      <a href="#faq">FAQ</a>
-      <span class="footer-social" id="footerSocial"></span>
-    </nav>
+      <ul class="fc-studio small muted reveal" id="footStudio"></ul>
+    </div>
   </div>
+
+  <!-- The signature rule. Diagonal hatch at 315deg, as in the original. -->
+  <div class="fc-rule" aria-hidden="true"></div>
 
   <div class="legal-bar">
     <div class="shell">
