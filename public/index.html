@@ -37,7 +37,6 @@
       <nav id="primaryNav" aria-label="Primary">
         <a href="#services">Services</a>
         <a href="#work">Work</a>
-        <a href="#process">Process</a>
         <a href="./book.html">Book</a>
         <a href="#faq">FAQ</a>
       </nav>
@@ -102,8 +101,27 @@
   </div>
 </section>
 
+<!-- ========================================================== PORTFOLIO -->
+<section class="band band-cream" id="work">
+  <div class="shell">
+    <div class="section-head reveal">
+      <span class="label">Recent work</span>
+      <h2 class="display">The<br>portfolio</h2>
+    </div>
+    <div id="folioGrid"></div>
+    <p class="small muted" style="margin-top:var(--s-4)">
+      More on Instagram — <a class="link-underline" id="folioIg" href="https://www.instagram.com/hairbychrissy_x" target="_blank" rel="noopener">@hairbychrissy_x</a>
+    </p>
+
+    <div class="cta-repeat reveal">
+      <a class="btn btn-cta" href="./book.html">Book your slot</a>
+      <span class="cta-note">Live availability — pick a day and a time.</span>
+    </div>
+  </div>
+</section>
+
 <!-- =========================================================== SERVICES -->
-<section class="band band-cream" id="services">
+<section class="band" id="services">
   <div class="shell">
     <div class="section-head reveal">
       <span class="label">The services</span>
@@ -122,59 +140,6 @@
     <div class="cta-repeat reveal">
       <a class="btn btn-cta" href="./book.html">Book your slot</a>
       <span class="cta-note">Extensions are quoted at a free consultation.</span>
-    </div>
-  </div>
-</section>
-
-<!-- ============================================================ PROCESS -->
-<section class="band" id="process">
-  <div class="shell">
-    <div class="section-head reveal">
-      <span class="label">The process</span>
-      <h2 class="display">Consult<br>Fit<br>Maintain</h2>
-    </div>
-    <!-- Card shape ported from a React feature grid: a panel that states the
-         one fact you want, over the words that explain it. Its three demo
-         visuals were a type tester, a layout shuffler and a load-time meter,
-         all on 2-second loops — features of a website builder, not of a hair
-         appointment. These state what each step actually costs you in time. -->
-    <div class="process step-cards">
-      <article class="step-card reveal">
-        <div class="step-panel">
-          <svg class="step-mark" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor"
-               stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="14" cy="14" r="13.5"/><circle cx="14" cy="14" r="7"/><path d="M14 10v4.3l2.8 1.7"/>
-          </svg>
-          <span class="step-fact">Free · 30 minutes</span>
-        </div>
-        <span class="numeral">1/</span>
-        <h3>Consult</h3>
-        <p>A free thirty minutes. We look at the condition of your own hair, match your colour properly and decide which method suits it — then order the right hair in advance.</p>
-      </article>
-      <article class="step-card reveal">
-        <div class="step-panel">
-          <svg class="step-mark" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor"
-               stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="14" cy="14" r="13.5"/><path d="M16.9 19.7v-1.8a4.5 4.5 0 0 0-1-6.5 4.5 4.5 0 0 0-7.2 2.8l-1 1.7 1.4.5v1.6a1.6 1.6 0 0 0 1.6 1.7z"/>
-          </svg>
-          <span class="step-fact">By hand · no heat, no glue</span>
-        </div>
-        <span class="numeral">2/</span>
-        <h3>Fit</h3>
-        <p>Hand-placed in a private studio. No heat and no glue against your own hair, whichever method you go for. Cut and blended before you leave.</p>
-      </article>
-      <article class="step-card reveal">
-        <div class="step-panel">
-          <svg class="step-mark" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor"
-               stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="14" cy="14" r="13.5"/><rect x="7" y="8" width="14" height="12" rx="1"/><path d="M7 12h14M11 6v4M17 6v4"/>
-          </svg>
-          <span class="step-fact">Every 6–8 weeks</span>
-        </div>
-        <span class="numeral">3/</span>
-        <h3>Maintain</h3>
-        <p>Back every six to eight weeks. The bonds move up as your hair grows, which keeps the set seamless and takes the tension off the hair underneath.</p>
-      </article>
     </div>
   </div>
 </section>
@@ -220,30 +185,11 @@
   </div>
 </section>
 
-<!-- ========================================================== PORTFOLIO -->
-<section class="band band-cream" id="work">
-  <div class="shell">
-    <div class="section-head reveal">
-      <span class="label">Recent work</span>
-      <h2 class="display">The<br>portfolio</h2>
-    </div>
-    <div id="folioGrid"></div>
-    <p class="small muted" style="margin-top:var(--s-4)">
-      More on Instagram — <a class="link-underline" id="folioIg" href="https://www.instagram.com/hairbychrissy_x" target="_blank" rel="noopener">@hairbychrissy_x</a>
-    </p>
-
-    <div class="cta-repeat reveal">
-      <a class="btn btn-cta" href="./book.html">Book your slot</a>
-      <span class="cta-note">Live availability — pick a day and a time.</span>
-    </div>
-  </div>
-</section>
-
 <!-- ============================================================ BOOKING -->
 <!-- The flow itself is on book.html. Keeping a full four-step wizard halfway
      down a marketing page meant the calendar was something you scrolled past;
      now the page asks, and the booking page answers. -->
-<section class="band" id="book">
+<section class="band band-cream" id="book">
   <div class="shell">
     <div class="split reveal">
       <div class="split-text">
@@ -264,7 +210,7 @@
 </section>
 
 <!-- ============================================================ REVIEWS -->
-<section class="band band-cream" id="reviews">
+<section class="band" id="reviews">
   <div class="shell">
     <div class="section-head reveal">
       <span class="label">Clients</span>
@@ -319,8 +265,7 @@
       <nav class="fc-links reveal" aria-label="Footer">
         <a href="#services">Services</a>
         <a href="#work">Work</a>
-        <a href="#process">Process</a>
-        <a href="./book.html">Book</a>
+          <a href="./book.html">Book</a>
         <a href="#faq">FAQ</a>
       </nav>
 

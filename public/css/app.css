@@ -679,17 +679,52 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------------------------------------------------------------- FAQ */
 
-.faq details { border-bottom: 1px solid var(--hairline-soft); }
+/* ---- FAQ ---------------------------------------------------------------
+ * Ported from a React FAQ section: a rotating chevron, and a ground under the
+ * question that is open. Its card-per-question treatment did NOT come over —
+ * bordered cards at px-6 py-4 with gaps between them make the section TALLER,
+ * and the brief was that it takes up too much room. Two columns and an
+ * exclusive accordion are what actually buy the height back: eight questions
+ * become four rows, and only one answer can be open at a time.
+ * --------------------------------------------------------------------- */
+
+.faq { display: grid; gap: 0 clamp(24px, 4vw, 56px); }
+.faq details {
+  border-bottom: 1px solid var(--hairline-soft);
+  /* Keeps a row's two cells from stretching to match each other's height. */
+  align-self: start;
+}
 .faq summary {
   list-style: none; cursor: pointer;
-  min-height: 64px;
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  font-size: var(--t-sm); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso);
+  min-height: 56px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  font-size: var(--t-xs); letter-spacing: var(--ls-caps); text-transform: uppercase; color: var(--espresso);
+  transition: color 200ms linear;
 }
 .faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: '+'; color: var(--clay); font-size: var(--t-md); font-weight: 300; }
-.faq details[open] summary::after { content: '–'; }
-.faq .answer { padding: 0 0 28px; }
+.faq summary .q { min-width: 0; }
+.faq summary:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+
+.faq-chev {
+  flex: none; width: 18px; height: 18px; color: var(--clay-deep);
+  transition: transform 200ms linear;
+}
+.faq details[open] .faq-chev { transform: rotate(180deg); }
+/* The open question is the one being read; the ground says so without a
+   border or a shadow, neither of which this page spends on a list. */
+.faq details[open] > summary { color: var(--espresso); }
+.faq details[open] { background: var(--cream); }
+.band-cream .faq details[open] { background: var(--paper); }
+.faq details[open] > summary,
+.faq details[open] > .answer { padding-left: 16px; padding-right: 16px; }
+
+.faq .answer { padding: 0 0 24px; }
+.faq .answer p { max-width: 56ch; }
+
+@media (min-width: 760px) {
+  /* Eight questions in one column is eight rows of scrolling. */
+  .faq { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 /* ------------------------------------------------------------- forms */
 
@@ -1454,157 +1489,6 @@ a { color: inherit; text-decoration: none; }
   .price-list { grid-template-columns: 1fr; }
   /* Portrait crops stack into a very long page at one card per row. */
   .price-media { aspect-ratio: 16 / 10; }
-}
-
-/* ============================================================ PROCESS CARDS
-   Ported from a React feature grid. What came over is the card: a panel that
-   states one fact, over the words that explain it, revealed on scroll.
-   What did not is the motion — its three demos ran on 2-second setInterval
-   loops, and looping animation is the one thing this site's own ban list
-   refuses outright.
-   ========================================================================= */
-
-.step-cards { align-items: stretch; }
-
-.step-card {
-  position: relative;
-  display: flex; flex-direction: column;
-  padding: 0;
-  border-top: 0;   /* the panel is the top edge now, not a hairline */
-}
-.step-card::before { content: none; }
-
-.step-panel {
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-  gap: var(--s-2);
-  min-height: 168px;
-  padding: var(--s-3);
-  margin-bottom: var(--s-3);
-  background: var(--cream);
-  /* The single accent, as a marker on the leading edge — the same job the
-     hairline connector did before, kept so the three still read as a run. */
-  border-left: 2px solid var(--clay);
-}
-.band-cream .step-panel { background: var(--paper); }
-
-.step-mark { width: 40px; height: 40px; color: var(--clay-deep); }
-.step-fact {
-  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
-  color: var(--espresso);
-}
-
-.step-card .numeral { display: block; margin-bottom: var(--s-2); }
-.step-card h3 { font-size: var(--t-sm); letter-spacing: var(--ls-label); text-transform: uppercase; margin-bottom: var(--s-2); }
-.step-card p { color: var(--espresso-70); }
-
-@media (max-width: 860px) {
-  .step-cards { grid-template-columns: 1fr; }
-  .step-panel { min-height: 0; flex-direction: row; align-items: center; }
-}
-
-/* ---- footer social row -------------------------------------------------
-   Sits on the end of the existing link row rather than starting a band of its
-   own: two marks do not carry a row to themselves, and the footer already has
-   enough horizontal rules on it.
-   ---------------------------------------------------------------------- */
-
-.footer-social { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
-.footer-social a,
-.fc-social a {
-  /* 44px of target around a 22px mark. */
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px;
-  color: var(--espresso-70);
-  transition: color 200ms linear;
-}
-.footer-social svg,
-.fc-social svg { width: 22px; height: 22px; }
-@media (hover: hover) and (pointer: fine) {
-  .footer-social a:hover,
-  .fc-social a:hover { color: var(--espresso); }
-}
-.footer-social a:focus-visible,
-.fc-social a:focus-visible { outline: 2px solid var(--clay); outline-offset: -6px; }
-
-@media (max-width: 560px) {
-  /* Wrapped onto its own line, the auto margin would shove it to the right
-     edge on its own. Left, with the links. */
-  .footer-social { margin-left: 0; }
-}
-
-/* ============================================================ PROCESS TABS
-   Ported from an Ark UI tabs component: a segmented control over one panel.
-   Its skin was a grey pill with a white selected chip and a soft shadow; here
-   the ground is cream, the selected tab is paper, and the accent marks the
-   selection on an edge rather than with a shadow — this page has one shadow
-   language and it belongs to the coverflow.
-
-   Applied by JS on top of the three cards, so .is-tabbed is what switches the
-   layout. Without it the cards stay a three-up grid.
-   ========================================================================= */
-
-.step-cards.is-tabbed {
-  display: block;   /* the grid was for three abreast; there is one panel now */
-}
-
-.ptabs {
-  display: flex; flex-wrap: wrap; gap: 2px;
-  padding: 4px;
-  margin-bottom: var(--s-4);
-  background: var(--cream);
-  width: fit-content; max-width: 100%;
-}
-.band-cream .ptabs { background: var(--paper); }
-
-.ptab {
-  display: inline-flex; align-items: baseline; gap: 10px;
-  min-height: 48px; padding: 12px 20px;
-  background: none; border: 0; cursor: pointer;
-  font-family: var(--sans);
-  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
-  color: var(--espresso-70);
-  transition: background 200ms linear, color 200ms linear;
-}
-.ptab-n { font-family: var(--display-face); font-size: var(--t-sm); color: var(--clay-deep); }
-
-.ptab[aria-selected='true'] {
-  background: var(--paper);
-  color: var(--espresso);
-  /* The marker, in place of the original's drop shadow. */
-  box-shadow: inset 0 -2px 0 var(--clay);
-}
-.band-cream .ptab[aria-selected='true'] { background: var(--cream); }
-.ptab:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
-@media (hover: hover) and (pointer: fine) {
-  .ptab:not([aria-selected='true']):hover { color: var(--espresso); }
-}
-
-/*
- * One panel now, so the fact and the words can sit beside each other instead
- * of stacking. Stacked, the fact panel ran the full width with its label alone
- * in the bottom corner and the prose started a screen further down.
- */
-.is-tabbed .step-card { max-width: 880px; }
-.is-tabbed .step-card:focus-visible { outline: 2px solid var(--clay); outline-offset: 6px; }
-.is-tabbed .step-panel { margin-bottom: var(--s-3); }
-.is-tabbed .step-card p { max-width: 46ch; }
-
-@media (min-width: 760px) {
-  .is-tabbed .step-card {
-    display: grid;
-    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-    gap: clamp(24px, 4vw, 56px);
-    align-items: start;
-  }
-  .is-tabbed .step-panel { margin-bottom: 0; min-height: 200px; }
-  .is-tabbed .step-card p { margin-top: 0; }
-}
-
-@media (max-width: 560px) {
-  /* Three across at this width would set the labels in about four characters
-     each. A full-width stack keeps them readable and keeps the 48px target. */
-  .ptabs { width: 100%; }
-  .ptab { flex: 1 1 100%; justify-content: flex-start; }
 }
 
 /* ========================================================== CENTRED FOOTER
