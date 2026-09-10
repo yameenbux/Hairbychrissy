@@ -15,6 +15,7 @@
 
 import { resolveApiBase } from './api-base.js';
 import { createCoverflow } from './coverflow.js';
+import { createReveal } from './reveal.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -149,7 +150,6 @@ function renderStatic() {
   if (brand.signoff) put('#signoff', 'textContent', brand.signoff);
 
   renderTransformations();
-  renderReels();
   renderPortfolio();
 
   renderPriceList('#serviceGrid');
@@ -233,73 +233,27 @@ function renderTransformations() {
   const wrap = $('#baSet');
   if (!wrap) return;
   const sets = (state.site.transformations || []).filter((t) => havePhoto(t.before) && havePhoto(t.after));
-  wrap.innerHTML = sets
-    .map(
-      (t) => `
-      <figure class="ba reveal">
-        <div class="ba-pair">
-          <div class="ba-side">
-            <div class="card-media" style="background-image:url('./images/${esc(t.before)}')"></div>
-            <span class="ba-tag">Before</span>
-          </div>
-          <div class="ba-side">
-            <div class="card-media" style="background-image:url('./images/${esc(t.after)}')"></div>
-            <span class="ba-tag">After</span>
-          </div>
-        </div>
-        ${t.caption ? `<figcaption>${esc(t.caption)}</figcaption>` : ''}
-      </figure>`,
-    )
-    .join('');
+  if (!sets.length) { wrap.closest('section')?.remove(); return; }
+
+  /*
+   * Ported from a React comparison slider. Side by side, each pair was two
+   * half-width crops and you compared them by looking back and forth; dragged,
+   * the same head is in the same place and the hair changes underneath your
+   * thumb, which is the whole point of a before and after.
+   */
+  wrap.innerHTML = sets.map((_, i) => `<div class="ba-slot" data-i="${i}"></div>`).join('');
+  $$('#baSet .ba-slot').forEach((slot, i) => {
+    const t = sets[i];
+    createReveal(slot, {
+      before: `./images/${t.before}`,
+      after: `./images/${t.after}`,
+      caption: t.caption ? esc(t.caption) : '',
+      label: t.caption ? `Before and after — ${t.caption}` : `Before and after ${i + 1}`,
+    });
+  });
   observeReveals();
 }
 
-/**
- * Her reels. Nothing is fetched until the section is actually scrolled to, and
- * not at all under reduced motion or Save Data — autoplaying video a client
- * never reaches is pure waste of their allowance. The poster stands in either
- * way.
- */
-function renderReels() {
-  const grid = $('#reelGrid');
-  if (!grid) return;
-  const list = (state.site.reels || []).filter((r) => havePhoto(r.poster));
-  if (!list.length) { grid.remove(); return; }
-
-  grid.innerHTML = list
-    .map(
-      (r) => `
-      <figure class="reel reveal">
-        <video poster="./images/${esc(r.poster)}" muted loop playsinline preload="none"
-               disablepictureinpicture data-webm="./video/${esc(r.webm)}" data-mp4="./video/${esc(r.mp4)}"></video>
-        ${r.caption ? `<figcaption>${esc(r.caption)}</figcaption>` : ''}
-      </figure>`,
-    )
-    .join('');
-  observeReveals();
-
-  if (!motionOK() || navigator.connection?.saveData) return;
-  if (!('IntersectionObserver' in window)) return;
-
-  const io = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        const v = entry.target;
-        if (!entry.isIntersecting) { v.pause(); return; }
-        if (v.dataset.started !== 'true') {
-          v.dataset.started = 'true';
-          if (v.dataset.webm) v.insertAdjacentHTML('beforeend', `<source src="${v.dataset.webm}" type="video/webm">`);
-          if (v.dataset.mp4) v.insertAdjacentHTML('beforeend', `<source src="${v.dataset.mp4}" type="video/mp4">`);
-          v.preload = 'auto';
-          v.load();
-        }
-        v.play().catch(() => {});
-      });
-    },
-    { threshold: 0.35 },
-  );
-  $$('#reelGrid video').forEach((v) => io.observe(v));
-}
 
 /*
  * Her maintenance essentials.

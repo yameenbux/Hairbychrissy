@@ -1255,43 +1255,85 @@ a { color: inherit; text-decoration: none; }
 
 /* ------------------------------------------------- before / after + reels */
 
-.ba-set { display: grid; gap: clamp(40px, 6vh, 72px); }
-.ba { margin: 0; }
-.ba-pair { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(10px, 1.6vw, 20px); }
-.ba-side { position: relative; }
-.ba .card-media {
-  aspect-ratio: 4 / 5;
-  background-size: cover;
-  background-position: center 32%;
-  background-color: var(--cream);
-}
-.ba-tag {
-  position: absolute; left: 12px; bottom: 12px;
-  padding: 6px 12px;
-  background: var(--espresso);
-  color: var(--paper);
-  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
-}
-.ba figcaption {
-  margin-top: 16px;
-  font-size: var(--t-sm);
-  color: var(--espresso-70);
-  max-width: 48ch;
+/* ================================================= BEFORE AND AFTER SLIDERS
+   Ported from a React comparison slider. Side by side, each pair was two
+   half-width crops you compared by looking back and forth; dragged, the same
+   head stays put and the hair changes under your thumb.
+
+   Three across, full bleed. Her source photos are portrait, and cropping them
+   to a wide letterbox would cut off the length — which is the thing being
+   shown. Three abreast is what keeps each one from looking chunky, rather than
+   flattening the crop.
+   ======================================================================== */
+
+.ba-set {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;                 /* a hairline between, not a gutter */
+  margin-top: var(--stack);
 }
 
-.reel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(20px, 3vw, 40px); max-width: 720px; }
-.reel { margin: 0; }
-.reel video {
-  width: 100%;
-  aspect-ratio: 9 / 16;
-  object-fit: cover;
+.reveal-slider { min-width: 0; }
+.rv-figure { margin: 0; }
+
+.rv-box {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
   background: var(--cream);
-  display: block;
+  cursor: ew-resize;
+  touch-action: pan-y;      /* the sideways drag is ours; the page still scrolls */
+  user-select: none;
 }
-.reel figcaption {
-  margin-top: 14px;
-  font-size: var(--t-xs);
-  color: var(--espresso-70);
+.rv-box:focus-visible { outline: 2px solid var(--clay); outline-offset: -2px; }
+
+.rv-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 30%;
+  display: block;
+  user-select: none;
+}
+/* Clipping the WRAPPER, not the image, keeps the photo unscaled so the two
+   halves line up at every position. */
+.rv-clip { position: absolute; inset: 0; }
+
+.rv-tag {
+  position: absolute; top: 12px; z-index: 3;
+  padding: 5px 10px;
+  background: var(--espresso); color: var(--paper);
+  font-size: var(--t-xs); letter-spacing: var(--ls-label); text-transform: uppercase;
+}
+.rv-tag-before { left: 12px; }
+.rv-tag-after { right: 12px; }
+
+.rv-divider {
+  position: absolute; top: 0; bottom: 0; z-index: 4;
+  width: 2px; margin-left: -1px;
+  background: var(--paper);
+  pointer-events: none;
+}
+.rv-handle {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper); color: var(--espresso);
+  border: 1px solid var(--hairline);
+  transition: transform 200ms linear;
+}
+.rv-handle svg { width: 20px; height: 20px; }
+.rv-box.is-dragging .rv-handle { transform: translate(-50%, -50%) scale(1.08); }
+
+.rv-caption {
+  margin-top: 12px; padding: 0 var(--gutter);
+  font-size: var(--t-xs); color: var(--espresso-70);
+}
+
+@media (max-width: 860px) {
+  /* Three abreast on a phone is three slivers; nothing to compare. */
+  .ba-set { grid-template-columns: 1fr; gap: var(--s-4); }
+  .rv-caption { padding: 0 var(--gutter); }
 }
 
 @media (max-width: 860px) {
@@ -1308,7 +1350,17 @@ a { color: inherit; text-decoration: none; }
    written to the node — so what is here is only the skin and the chrome.
    ========================================================================= */
 
-.coverflow { --cf-card: clamp(180px, 46vw, 320px); }
+/*
+ * Sized against the line beneath it. "More on Instagram — @hairbychrissy_x"
+ * measures 289px, and the strip is meant to read as a little wider than that
+ * rather than as a full-bleed band: at 320px cards the track alone stood 400px
+ * tall and the fan ran the whole width of the page.
+ *
+ * Left-aligned, not centred, so it sits under the heading and over the
+ * Instagram line in one column — the same edge everything else on this page
+ * hangs from.
+ */
+.coverflow { --cf-card: clamp(150px, 34vw, 200px); max-width: 440px; }
 
 .cf-stage { position: relative; }
 
@@ -1326,7 +1378,8 @@ a { color: inherit; text-decoration: none; }
 
 .cf-track {
   position: relative;
-  height: calc(var(--cf-card) * 1.25);   /* her work is portrait, not square */
+  /* 4:5 crops, so the track is the card width and a quarter. */
+  height: calc(var(--cf-card) * 1.25);
   transform-style: preserve-3d;
   user-select: none;
 }
@@ -1349,18 +1402,29 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- chrome ---- */
 
+/* One control line under the caption: arrow, dots, arrow. */
+.cf-controls {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--s-2); margin-top: var(--s-2);
+}
+/*
+ * The dots have to give. Ten of them at a 24px target plus two 44px arrows is
+ * 360px of control for a 335px phone, and the row pushed the page sideways.
+ * The strip between them shrinks instead; the arrows keep their full target.
+ */
+.cf-dots { min-width: 0; flex: 0 1 auto; }
+.cf-dot { flex: 0 1 24px; min-width: 12px; }
+
 .cf-nav {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  z-index: 200;
-  width: 48px; height: 48px;
+  position: static;
+  flex: none;
+  width: 44px; height: 44px;
   display: inline-flex; align-items: center; justify-content: center;
   background: var(--paper); border: 1px solid var(--hairline);
   color: var(--espresso); cursor: pointer;
   transition: border-color 200ms linear;
 }
 .cf-nav svg { width: 20px; height: 20px; }
-.cf-prev { left: 0; }
-.cf-next { right: 0; }
 @media (hover: hover) and (pointer: fine) { .cf-nav:hover { border-color: var(--espresso); } }
 .cf-nav:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
 
@@ -1378,7 +1442,7 @@ a { color: inherit; text-decoration: none; }
 }
 .cf-sub { margin-top: 6px; margin-bottom: 0; font-size: var(--t-xs); color: var(--espresso-70); }
 
-.cf-dots { display: flex; justify-content: center; gap: 4px; margin-top: var(--s-2); }
+.cf-dots { display: flex; justify-content: center; gap: 4px; }
 .cf-dot {
   /* 44px of target around a 2px mark — the mark is the affordance, the
      padding is what a thumb actually has to hit. */
@@ -1394,11 +1458,7 @@ a { color: inherit; text-decoration: none; }
 .cf-dot.is-on::after { opacity: 1; background: var(--clay-deep); }
 .cf-dot:focus-visible { outline: 2px solid var(--clay); outline-offset: -6px; }
 
-/* The arrows crowd the cards on a narrow screen; the drag and the dots carry
-   it there, and both are the gesture a phone reaches for first anyway. */
-@media (max-width: 620px) {
-  .cf-nav { display: none; }
-}
+/* The arrows no longer sit over the cards, so they stay at every width. */
 
 /* ============================================================== PRICE LIST
    Ported from a React/shadcn pricing section. What came over is the shape:
