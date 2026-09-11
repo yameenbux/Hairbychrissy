@@ -40,7 +40,7 @@
     "signoff": "Let's create your next hair chapter.",
     "credit": {
       "name": "YSB Designs",
-      "url": ""
+      "url": "https://ysbdesigns.uk"
     },
     "location": "LONDON BASED",
     "addressLines": [
@@ -364,6 +364,6 @@
   },
   "today": "2026-09-11",
   "cardMode": "static",
-  "generatedAt": "2026-09-11T11:25:35.840Z",
+  "generatedAt": "2026-09-11T13:29:45.355Z",
   "static": true
 }
