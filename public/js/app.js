@@ -274,22 +274,29 @@ function renderCare() {
   const care = state.site.maintenance;
   if (!box || !care?.points?.length) return;
 
+  const intro = $('#careIntro');
+  if (intro) intro.textContent = care.intro;
+
+  /*
+   * An ordered list, because the points are a sequence — book, and the rest
+   * follows — but NOT a numbered one. Her own graphic marked each point with a
+   * symbol rather than a digit, and the numerals would compete with the marks
+   * for the same job. `list-style: none` in the CSS drops the digits; <ol>
+   * keeps the order for anything reading the markup rather than looking at it.
+   */
   box.innerHTML = `
-    <p class="care-intro">${esc(care.intro)}</p>
-    <ul class="care-list">
+    <ol class="care-rail">
       ${care.points
         .map(
           (c) => `
-        <li class="care-item">
-          ${careMark(c.mark)}
-          <div>
-            <h3>${esc(c.title)}</h3>
-            <p>${esc(c.text)}</p>
-          </div>
+        <li class="care-step">
+          <span class="care-node">${careMark(c.mark)}</span>
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.text)}</p>
         </li>`,
         )
         .join('')}
-    </ul>`;
+    </ol>`;
 }
 
 function renderPortfolio() {

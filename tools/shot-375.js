@@ -174,7 +174,12 @@ async function shoot(page, name, results) {
   await page.locator('#navToggle').click().catch(() => {});
 
   // ---- the booking page, reached the way a client reaches it
-  await page.locator('.cta-repeat a.btn-cta').first().click();
+  // Any VISIBLE CTA, not one particular block. `.cta-repeat a.btn-cta`
+  // named a element that no longer renders on the landing page, and this
+  // died on a 30s timeout rather than reporting. The header CTA is hidden
+  // on phones too, so pinning it to one instance was wrong at some widths
+  // even while it worked.
+  await page.locator('a.btn-cta:visible').first().click();
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(1600);
   await shoot(page, 'book service', results);
