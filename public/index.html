@@ -138,23 +138,32 @@
 <!-- ======================================================== MAINTENANCE -->
 <section class="band band-cream" id="maintenance">
   <div class="shell">
-    <div class="split split-flip reveal">
-      <!--
-        Her maintenance essentials, as text rather than the poster they came
-        from. Same content, same side of the page — but readable on a phone
-        without pinching, and reachable by search and by a screen reader.
-      -->
-      <div class="split-visual">
-        <div class="care" id="careList"></div>
-      </div>
-      <div class="split-text">
+    <!--
+      Her maintenance essentials, as text rather than the poster they came
+      from. Same content — but readable on a phone without pinching, and
+      reachable by search and by a screen reader.
+
+      The five points read ACROSS the page rather than down it. As a column
+      beside the prose they were a list you had to scroll through to see the
+      end of; as a rail they are five stages you take in at a glance, which is
+      what they actually are — a schedule, not an argument.
+    -->
+    <div class="care-head reveal">
+      <div>
         <span class="label">Maintenance</span>
         <h2 class="display-sm">Recover<br>and protect</h2>
+        <!-- Her opening line, filled in by the renderer. It sits under the
+             heading rather than above the rail because that column was
+             otherwise empty to the depth of the copy beside it. -->
+        <p class="care-intro" id="careIntro"></p>
+      </div>
+      <div class="care-head-copy">
         <p>Left too long, extensions begin pulling on the hair they are attached to. Moving them up on schedule takes that tension off, guards against breakage and lets your own hair keep growing underneath.</p>
         <p>Staying on top of appointments is also less work in the chair, and the results last longer.</p>
         <a class="link-underline" href="./book.html">Book your slot</a>
       </div>
     </div>
+    <div class="care reveal" id="careList"></div>
   </div>
 </section>
 

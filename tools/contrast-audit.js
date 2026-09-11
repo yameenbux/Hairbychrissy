@@ -78,7 +78,12 @@ const AUDIT = `(() => {
   await p.waitForTimeout(1200);
   await audit('client site — landing');
 
-  await p.locator('.cta-repeat a.btn-cta').first().click();
+  // Any VISIBLE CTA, not one particular block. `.cta-repeat a.btn-cta`
+  // named a element that no longer renders on the landing page, and this
+  // died on a 30s timeout rather than reporting. The header CTA is hidden
+  // on phones too, so pinning it to one instance was wrong at some widths
+  // even while it worked.
+  await p.locator('a.btn-cta:visible').first().click();
   await p.waitForLoadState('domcontentloaded');
   await p.waitForTimeout(1500);
   await audit('client site — booking page');
