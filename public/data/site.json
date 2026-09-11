@@ -159,6 +159,11 @@
   "reviews": [],
   "gallery": [
     {
+      "file": "work-waves-profile.jpg",
+      "label": "Hollywood waves",
+      "caption": "Warm brunette, wave set from the cheekbone down"
+    },
+    {
       "file": "work-blonde.jpg",
       "label": "Hollywood waves",
       "caption": "Platinum, waist length, waved and brushed out"
@@ -179,18 +184,8 @@
       "caption": ""
     },
     {
-      "file": "service-hollywood-waves.jpg",
-      "label": "Hollywood waves",
-      "caption": ""
-    },
-    {
       "file": "service-hollywood-waves-clipins.jpg",
       "label": "Hollywood waves with clip-ins",
-      "caption": ""
-    },
-    {
-      "file": "service-pinned-curls.jpg",
-      "label": "Pinned curls",
       "caption": ""
     },
     {
@@ -367,8 +362,8 @@
     "horizonDays": 90,
     "timezone": "Europe/London"
   },
-  "today": "2026-09-10",
+  "today": "2026-09-11",
   "cardMode": "static",
-  "generatedAt": "2026-09-10T12:33:00.737Z",
+  "generatedAt": "2026-09-11T10:42:34.430Z",
   "static": true
 }
