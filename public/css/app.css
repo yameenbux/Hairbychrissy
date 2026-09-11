@@ -731,22 +731,31 @@ a { color: inherit; text-decoration: none; }
  * stretched across the full shell it would be a slab, and the rail reads
  * better sitting straight on the cream with a hairline through it.
  */
+/*
+ * This band carries less than the others and does not need their air. Measured
+ * at 1440 it was 777px tall, of which 380 — very nearly half — was the section
+ * padding either side of a heading, one line of copy and a 219px rail. The
+ * site-wide --band stays where the brief put it; this is one section opting
+ * down because its content got shorter, not the rhythm being rewritten.
+ */
+#maintenance { padding-block: clamp(72px, 12vh, 128px); }
+
 .care-head {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: clamp(32px, 5vw, 88px);
-  align-items: start;
-  margin-bottom: var(--stack);
+  /* Baselines, not tops: the intro is one or two lines against a two-line
+     display heading, and hung from the top it floats in the middle of nothing. */
+  align-items: end;
+  margin-bottom: var(--s-5);
 }
-.care-head-copy > * + * { margin-top: var(--s-3); }
-.care-head-copy .link-underline { display: inline-block; margin-top: var(--s-3); }
 
 /* No rule under it any more. Constrained to 60ch it stopped two-thirds of the
    way across and read as a divider that had failed to finish. */
 .care-intro {
   color: var(--espresso-70);
-  margin-top: var(--s-3);
-  max-width: 42ch;
+  margin: 0;
+  max-width: 46ch;
 }
 
 /*
@@ -809,7 +818,7 @@ a { color: inherit; text-decoration: none; }
  * was meant to save for a squint.
  */
 @media (max-width: 980px) {
-  .care-head { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+  .care-head { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); margin-bottom: var(--s-5); }
   .care-rail { grid-template-columns: minmax(0, 1fr); }
   .care-step { padding-left: calc(40px + var(--s-3)); }
   .care-node { position: absolute; top: 0; left: 0; margin-bottom: 0; }
