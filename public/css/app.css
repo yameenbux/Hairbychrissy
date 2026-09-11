@@ -225,6 +225,18 @@ a { color: inherit; text-decoration: none; }
 .band { padding: var(--band) 0; background: var(--paper); }
 .band-cream { background: var(--cream); }
 .band-tight { padding: var(--band-tight) 0; }
+/*
+ * A band that carries less, and does not need the air of one that carries a
+ * photograph. Measured, not eyeballed: at 1440 the maintenance band was 777px
+ * tall around 219px of rail, the portfolio 1358px around a 599px carousel, and
+ * the questions 911px around a 228px list — each one roughly 380px of padding
+ * wrapped around content that had got shorter.
+ *
+ * The site-wide --band stays exactly where the brief put it. This is sections
+ * opting down, not the rhythm being rewritten, and it is one class rather than
+ * three id rules because three of those is how a rule quietly becomes four.
+ */
+.band-lean { padding-block: clamp(72px, 12vh, 128px); }
 
 .rule { height: 1px; background: var(--hairline-soft); border: 0; margin: 0; }
 
@@ -241,6 +253,7 @@ a { color: inherit; text-decoration: none; }
 .split-text .display-sm { margin-bottom: var(--s-3); }
 
 .section-head { margin-bottom: var(--stack); }
+.band-lean .section-head { margin-bottom: var(--s-5); }
 .section-head .label { margin-bottom: var(--s-3); }
 .section-head .display { margin-bottom: var(--s-3); }
 
@@ -731,14 +744,6 @@ a { color: inherit; text-decoration: none; }
  * stretched across the full shell it would be a slab, and the rail reads
  * better sitting straight on the cream with a hairline through it.
  */
-/*
- * This band carries less than the others and does not need their air. Measured
- * at 1440 it was 777px tall, of which 380 — very nearly half — was the section
- * padding either side of a heading, one line of copy and a 219px rail. The
- * site-wide --band stays where the brief put it; this is one section opting
- * down because its content got shorter, not the rhythm being rewritten.
- */
-#maintenance { padding-block: clamp(72px, 12vh, 128px); }
 
 .care-head {
   display: grid;
@@ -1550,7 +1555,7 @@ a { color: inherit; text-decoration: none; }
    ========================================================================= */
 
 /*
- * The portfolio band, trimmed. Measured at 1440 it was 1358px tall for a
+ * The portfolio band. Measured at 1440 it was 1358px tall for a
  * carousel 599px high: 380 of that was section padding, 246 the heading block,
  * and 76 the Instagram line sitting under the carousel with a gap above it.
  *
@@ -1558,7 +1563,6 @@ a { color: inherit; text-decoration: none; }
  * where it started — that is settled, and shaving it again to win pixels would
  * be relitigating it.
  */
-#work { padding-block: clamp(72px, 12vh, 128px); }
 /*
  * Named areas rather than source order, so the markup can stay in the order it
  * should be read — heading, work, elsewhere — while the wide layout lifts the
