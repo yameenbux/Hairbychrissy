@@ -115,9 +115,19 @@ Host the Node app somewhere (Render, Railway, Fly, a VPS), then:
 ### Subpath safety
 
 Pages serves from `/Hairbychrissy/`, not a domain root. Every asset path is
-relative, and both scripts derive their base from their own URL via
-`import.meta.url` rather than assuming `/`. The manifest uses `./` for
-`start_url` and `scope`, so Add to Home Screen works from the subpath too.
+relative, and the manifest uses `./` for `start_url` and `scope`, so Add to
+Home Screen works from the subpath too.
+
+The API base is resolved in one shared module, `public/js/api-base.js`, in
+three steps: the injected `<meta name="hbc-api">` tag, then a table of known
+hosts, then the same origin derived from the module's own URL via
+`import.meta.url` rather than assumed to be `/`.
+
+That module exists because of a real failure. `app.js` and `admin.js` each
+worked it out separately, and admin.js assumed the API sat on the same origin
+as the page — so on Pages the sign-in POST went to the static host, which has
+no `/api`, and came back 404. A correct password read to Chrissy as a wrong
+one. One resolver, imported by both, is the fix.
 
 ## Running it
 
@@ -870,18 +880,43 @@ permanently pressed.
 ### One action
 
 Every page pushes toward booking a slot, in the same words — **"Book your
-slot"** — and the same treatment: header, hero, and after each block that
-finishes an argument (services, work, reviews, FAQ), plus the confirmation and
-the 404. The hero used to offer two buttons side by side, which is two calls to
-action; "See the price list" is a quiet link now. The confirmation page offered
-"Back to the site" and "Print / save" as equal buttons and no way to book
-again.
+slot"** — and the same treatment. The hero used to offer two buttons side by
+side, which is two calls to action; "See the price list" is a quiet link now.
+The confirmation page offered "Back to the site" and "Print / save" as equal
+buttons and no way to book again.
+
+**This has since been pulled back, section by section, at the client's
+request.** The repeated mid-page CTA that used to close services, work, reviews
+and the FAQ is gone: each removal was asked for on its own and each was
+reasonable, but they compound, so it is worth writing down where that actually
+leaves the landing page.
+
+| Where | Reaches booking | Note |
+|---|---|---|
+| Header | "Book your slot" | **Hidden on phones** — the nav collapses to a burger |
+| Hero | "Book your slot" | Above the fold at every viewport |
+| Services gallery | "Book a consultation" / "Book this" | Seven of them, one per service |
+| Booking card | "Book your slot" | The tilt card in the booking band |
+| Reviews band | "Book your slot" | **Does not render** — the band removes itself while there are no reviews |
+
+So below the hero on a phone, a client reaches booking through the services
+gallery or the booking card, and nothing else. The ban list's `missing-cta`
+rule still passes — it checks the words are on the page, which they are — but
+it counts markup, not what renders, and the reviews CTA is the gap between
+those two things. If enquiries dip, this is the first place to look.
+
 - **Asymmetric splits that alternate sides** down the page.
-- **Service grid 4 / 2 / 1** with a full-width SELECT bar revealed over the
-  image bottom. On touch, where there is no hover, the bar is always visible.
-- **Motion**: fade plus 20px rise, 600ms ease-out, 80ms stagger, driven by
-  `IntersectionObserver`. A slow 26s drift on the organic shapes. Nothing
-  animates above the fold. `prefers-reduced-motion` drops to opacity only.
+- **Services** are an expanding gallery: one panel per service, opening to its
+  price and its own way in. (The 4 / 2 / 1 grid with a SELECT bar over the
+  image is still live — it is the service picker on the booking page, rendered
+  by the same `renderServiceCards`.)
+- **Maintenance** reads across the page as a five-stage rail rather than down
+  it as a column, marked with her own symbols and deliberately not numbered.
+- **Motion**: fade plus a 14px rise over 280ms ease-out, 80ms stagger between
+  siblings, driven by `IntersectionObserver`. Nothing animates above the fold.
+  `prefers-reduced-motion` drops to opacity only. The numbers are not free
+  choices — the ban list fails any transition outside 200-300ms, so a slower
+  reveal would not survive `npm run audit:banlist`.
 
 ### The header
 
@@ -1086,12 +1121,12 @@ than one built on this year's framework.
 | **Supabase** | PostgREST and Storage over plain `fetch` — no SDK, so the zero-dependency property survives. Upserts diffed so a booking writes one row, not the whole table |
 | **Real time** | Server-Sent Events — every open browser repaints when anyone books or Chrissy changes her hours |
 | **Notifications** | Self-hosted Web Push (VAPID, ES256, JWT signing) + transactional email with an HTML and plain-text part |
-| **Auth** | HMAC-signed session cookie, `SameSite=Lax`, constant-time password comparison |
+| **Auth** | HMAC-signed session, constant-time password comparison. The cookie's attributes follow the connection — `SameSite=None; Secure` cross-site, `Lax` otherwise — and a bearer token in an `Authorization` header is accepted alongside it, because Safari blocks the cross-site cookie outright and that read to Chrissy as a wrong password |
 | **Payments** | Stripe Checkout, with a simulated checkout for draft mode |
 | **Uploads** | Base64-in-JSON, magic-byte file type sniffing, one-time upload tokens |
 | **Front end** | Vanilla JavaScript, no build step; CSS custom properties, Grid, Flexbox, `IntersectionObserver` |
 | **CI/CD** | GitHub Actions publishing to GitHub Pages, regenerating the content snapshot on every deploy |
-| **Testing** | Playwright driving eight custom audit tools; Pillow for the contact sheets |
+| **Testing** | Playwright driving seven custom audit tools plus a 375px screenshot sweep; Pillow for the contact sheets |
 | **Media** | ffmpeg — her reels trimmed, `cropdetect`-cropped, audio stripped, encoded to mp4 + webm (3.6MB down to 435KB); Pillow for image resizing and progressive JPEG |
 
 ### Exposure gained
@@ -1141,14 +1176,42 @@ where a thing that looked finished was not:
 
 ```
 npm run audit:contrast   WCAG AA on real rendered pixels, 18 states
-npm run audit:mobile     6 handsets — tap targets, iOS zoom, overflow
+npm run audit:mobile     6 handsets — tap targets, iOS zoom, overflow, icon sizing
 npm run audit:header     wordmark centring and overlap, 11 widths
 npm run audit:hero       the CTA must be above the fold, 9 viewports
 npm run audit:scrim      hero contrast across 6 video frames
 npm run audit:sticky     anchors clear the sticky header; nav parity
 npm run audit:banlist    the design ban list, as a rule rather than a memo
 npm run shots            every page and state at 375px, overflow measured
+npm run stamp            cache-bust every stylesheet and script reference
 ```
+
+Two of these exist because of a specific failure, and both are worth knowing
+about before changing the code they guard.
+
+**`unsized-icon`, in the mobile audit.** An `<svg>` with no width or height
+rule reaching it falls back to its own viewBox or to 300x150, which on a page
+of 22px marks is unmissable. That has happened twice: once when a container was
+renamed and left its sizing behind on the old selector, and once when a block
+of CSS was deleted by its two end markers and took the block sitting between
+them with it. The check fails any `<svg>` rendering wider or taller than 96px.
+
+**`npm run stamp`.** Pages serves assets with `max-age=600` and that header is
+the CDN's, not ours, so for ten minutes after a deploy a returning visitor gets
+the new HTML with the *previous* stylesheet — which looks far more broken than
+either version alone, and did. `tools/stamp-assets.js` puts `?v=<short sha>` on
+every local stylesheet and script reference as the last step before upload.
+
+One token for everything rather than a hash per file, because the JS is ES
+modules: `app.js` imports `./coverflow.js` directly, so stamping the `<script>`
+tag does nothing for a change landing only in `coverflow.js`. A single build
+token stamps the import specifiers too and cannot get the ordering wrong. Its
+check is deliberately **wider** than its stamp — any quoted local `.css` or
+`.js` path must carry a `?v=`, and a reference the stamp cannot reach fails the
+build rather than shipping stale.
+
+Under Node none of this is needed: `serveStatic` already sends `no-store` for
+anything that is not an image or a font.
 
 ---
 
@@ -1158,12 +1221,16 @@ npm run shots            every page and state at 375px, overflow measured
 Identity, art direction, front end, booking engine and dashboard.
 
 Credited in the site footer too, driven from `lib/seed.js` rather than
-hard-coded into markup — so a web address can be added in one line and appears
-everywhere:
+hard-coded into markup. The renderer emits a linked credit when the URL is set
+and plain text when it is not, so the whole switch is one value:
 
 ```js
-credit: { name: 'YSB Designs', url: '' },   // add a URL and the footer links it
+credit: { name: 'YSB Designs', url: 'https://ysbdesigns.uk' },
 ```
+
+The footer link carries `target="_blank"` with `rel="noopener"`, so it opens in
+its own tab without handing that tab a `window.opener` reference back to
+Chrissy's site.
 
 Photography, video, prices, services and copy are **Chrissy's own**, taken from
 her Instagram and her price list, and used with her permission. Her Instagram
@@ -1175,6 +1242,12 @@ via Google Fonts.
 ---
 
 ## Before this goes live
+
+**Status at the time of writing: 4 is still open, and it is the one that costs
+a customer.** A client who books gets no confirmation email until a sending
+domain is verified — the shared sender only delivers to the account owner's own
+address, so the booking is taken, Chrissy is told, and the client hears
+nothing. Everything else in this list is either done or cosmetic by comparison.
 
 1. Set `ADMIN_PASSWORD` — the dashboard warns while the default is in use.
 2. Set `SESSION_SECRET` to a long random string.
