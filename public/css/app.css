@@ -1623,9 +1623,13 @@ a { color: inherit; text-decoration: none; }
   overflow-wrap: anywhere;
 }
 /* The 44px target lives on the link, not the list item, so the plain address
-   lines in Studio do not carry pointless height. */
+   lines in Studio do not carry pointless height.
+
+   `flex`, not `inline-flex`: an inline box is only as wide as its word, so
+   "FAQ" was a 29px-wide target in a column with room for far more. The row is
+   the target now — full column width, text still hard left, nothing moves. */
 .fx-col a {
-  display: inline-flex; align-items: center; min-height: 44px;
+  display: flex; align-items: center; min-height: 44px;
   transition: color 200ms linear;
 }
 @media (hover: hover) and (pointer: fine) { .fx-col a:hover { color: var(--espresso); } }

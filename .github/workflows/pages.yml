@@ -145,6 +145,18 @@ jobs:
             echo "==> ENQUIRY MODE — no HBC_API variable set, so the site cannot take bookings"
           fi
 
+      # Cache-bust the stylesheet and scripts.
+      #
+      # Pages serves assets with max-age=600 and we cannot change that header
+      # from here, so for ten minutes after a deploy a returning visitor gets
+      # the new HTML with the PREVIOUS app.css. That looked exactly like a
+      # broken deploy the last time it happened — the footer collapsed to one
+      # column with its icons blown up, minutes after the deploy that fixed it.
+      #
+      # Last, so it also stamps anything an earlier step wrote.
+      - name: Cache-bust assets
+        run: node tools/stamp-assets.js "${GITHUB_SHA::7}"
+
       # Jekyll would otherwise skip files and folders beginning with an
       # underscore.
       - name: Disable Jekyll processing
