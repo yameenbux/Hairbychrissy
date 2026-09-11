@@ -173,9 +173,20 @@ async function scan(page, label, results) {
     await page.waitForTimeout(1100);
     await scan(page, 'landing', results);
 
-    // Walk the booking flow — the screens that actually matter — entering it
-    // the way a client does, through the CTA rather than by direct URL.
-    await page.locator('.cta-repeat a.btn-cta').first().click();
+    /*
+     * Walk the booking flow — the screens that actually matter — entering it
+     * the way a client does, through the CTA rather than by direct URL.
+     *
+     * ANY VISIBLE CTA, not a particular one. This used to name
+     * `.cta-repeat a.btn-cta`, and it broke the moment that block came out of
+     * the FAQ: the only other one lives in the reviews section, which removes
+     * itself while Chrissy has no reviews, so the selector matched nothing and
+     * the audit died on a 30s timeout rather than reporting anything. Which
+     * CTA a client reaches for also depends on the width — the header CTA is
+     * hidden on phones, where the hero's is the one in front of them — so
+     * pinning the audit to one instance was wrong in both directions.
+     */
+    await page.locator('a.btn-cta:visible').first().click();
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1500);
     await scan(page, 'booking page', results);
