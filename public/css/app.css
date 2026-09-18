@@ -854,53 +854,143 @@ a { color: inherit; text-decoration: none; }
 
 /* ------------------------------------------------------------- aftercare */
 /*
- * Two columns of numbered guidance, which is the one place on this site a
- * numeral earns its place: these are steps in an order somebody follows after
- * a fitting, and "the third one" is how they will refer to it. The maintenance
- * rail deliberately has none, because those are reasons rather than steps.
+ * A scroll-reveal rail, ported from a React section. Numbered guidance down a
+ * filling hairline, with her work pinned alongside.
  *
- * Reading measure over density — the column caps at 46ch even where there is
- * room for more, because this is the longest prose on the site and a client is
- * reading it to get something right.
+ * A numeral earns its place here, which is not true anywhere else on the site:
+ * these are steps in an order somebody follows after a fitting, and "the third
+ * one" is how they will refer to it. The maintenance rail deliberately has
+ * none, because those are reasons rather than steps.
+ *
+ * ONE COLUMN OF TEXT, not the two this used to be. The filling rule only means
+ * anything if the reading order is a single line down the page; side by side,
+ * the right-hand column's rules fill while you are still reading the left.
+ * Reading measure still caps the paragraph at 46ch, because this is the
+ * longest prose on the site and a client is reading it to get something right.
  */
-.ac-list {
+.srail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.72fr);
+  gap: clamp(32px, 5vw, 88px);
+  align-items: start;
+}
+.srail-steps {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--stack) clamp(32px, 5vw, 88px);
-  counter-reset: ac;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack);
 }
-.ac-step {
-  counter-increment: ac;
-  position: relative;
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--hairline-soft);
-}
-.ac-step::before {
-  content: counter(ac, decimal-leading-zero);
-  position: absolute;
-  top: var(--s-3);
-  left: 0;
+/*
+ * Held back, but NOT with opacity.
+ *
+ * The original drops points it has not reached to opacity-50. Measured on this
+ * palette that puts her body copy at 2.26:1 against the paper — a third of what
+ * AA asks for, on the one page a client reads to avoid damaging their own hair,
+ * and on most of the page most of the time, because every point below the
+ * reading line is held back. Somebody arriving from search lands mid-guide and
+ * gets three-quarters of it greyed past legibility.
+ *
+ * So the emphasis moves in COLOUR WEIGHT instead. A point that has not been
+ * reached is set in espresso-70, which is the body colour everywhere else on
+ * the site and clears AA at 6.9:1; reaching it brings the heading up to full
+ * espresso. The filling rule beside it was always the real signal anyway, and
+ * it is far more precise than a dimmed paragraph. Nothing on this page is ever
+ * painted below the threshold in any scroll state.
+ */
+.srail-step h3 { color: var(--espresso-70); transition: color 200ms linear; }
+.srail-step.is-on h3 { color: var(--espresso); }
+.srail-num {
   font-size: var(--t-xs);
   letter-spacing: var(--ls-label);
-  color: var(--clay);
+  /* clay-deep, not clay. The token exists for exactly this — "the same accent
+     where it must clear 4.5:1" — and at 13px plain clay is 3.37:1. The old
+     .ac-step::before had the same bug and nothing caught it, because the
+     contrast audit never opened this page. It does now. */
+  color: var(--clay-deep);
+  margin: 0 0 var(--s-2);
+  padding-left: calc(2px + var(--s-3));
 }
-.ac-step h3 {
+.srail-row {
+  display: grid;
+  grid-template-columns: 2px minmax(0, 1fr);
+  gap: var(--s-3);
+}
+/* The unfilled rule is the same hairline every divider on this site is drawn
+   with, so the track reads as the page's own furniture rather than a widget. */
+.srail-track { position: relative; background: var(--hairline-soft); }
+/*
+ * NO TRANSITION on the height, deliberately. It is set from the scroll
+ * position on every frame, so easing it would make the rule chase the page
+ * instead of tracking it — and the further you scrolled, the further behind it
+ * would be.
+ */
+.srail-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: var(--clay);
+}
+.srail-text h3 {
   font-size: var(--t-lg);
   font-family: var(--display-face);
   font-weight: 300;
   margin: 0 0 var(--s-2);
-  padding-left: var(--s-4);
 }
-.ac-step p {
+.srail-text p {
   color: var(--espresso-70);
   font-size: var(--t-sm);
   max-width: 46ch;
-  padding-left: var(--s-4);
+  margin: 0;
 }
 
+/*
+ * The pinned half. `top` clears the sticky header rather than sitting at 0 —
+ * the original has no sticky header above it to clear, and audit:sticky exists
+ * because this exact mistake shipped once.
+ */
+.srail-visual {
+  position: sticky;
+  top: calc(var(--header-h) + var(--s-3));
+  height: min(72vh, 640px);
+  overflow: hidden;
+  /* Matches .media-placeholder, so the frame is the same colour before a
+     photograph decodes as it is if a file is ever missing. --surface-elevated
+     is named in images/README.md but is not a token that exists; using it here
+     would have left the frame transparent. */
+  background-color: var(--cream);
+}
+.srail-shot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 300ms linear;
+}
+.srail-shot.is-on { opacity: 1; }
+
+/*
+ * The photographs go below 1000px, as they do in the original — it hides that
+ * column under `lg` too. Stacked, a pinned image is a second thing competing
+ * for a screen that has one column of text to give, and this page is read on a
+ * phone more than anywhere else.
+ */
+@media (max-width: 1000px) {
+  .srail { grid-template-columns: minmax(0, 1fr); }
+  .srail-visual { display: none; }
+}
+
+/*
+ * The closing note and the one CTA. Restored verbatim — replacing the block
+ * above by its two end markers took this with it, which is precisely the
+ * mistake that blew the footer icons up to 335px. Delete by what a rule IS,
+ * not by what sits either side of it.
+ */
 .ac-foot {
   display: flex;
   flex-wrap: wrap;
@@ -912,9 +1002,6 @@ a { color: inherit; text-decoration: none; }
 }
 .ac-foot p { max-width: 52ch; margin: 0; }
 
-@media (max-width: 860px) {
-  .ac-list { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
-}
 
 /* ---------------------------------------------------- new-client steer */
 /*

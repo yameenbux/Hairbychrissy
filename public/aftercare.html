@@ -81,7 +81,13 @@
       </div>
       <p class="care-intro" id="aftercareIntro"></p>
     </div>
-    <ol class="ac-list reveal" id="aftercareList"></ol>
+    <!--
+      Ported from a React scroll-reveal section. The text column scrolls at its
+      own length and the photographs stay pinned beside it — see the note at the
+      top of public/js/scrollrail.js for why that is the other way round from
+      the original.
+    -->
+    <div class="srail reveal" id="aftercareList"></div>
     <div class="ac-foot reveal">
       <p class="small muted" id="aftercareNote"></p>
       <a class="btn btn-cta" href="./book.html">Book your slot</a>

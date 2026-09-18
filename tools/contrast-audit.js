@@ -30,21 +30,104 @@ const AUDIT = `(() => {
     let n = el;
     while (n && n !== document.documentElement) {
       const c = parse(getComputedStyle(n).backgroundColor);
-      if (c && c.a >= 0.85) return c.rgb;
+      if (c && c.a >= 0.85) return { rgb: c.rgb, host: n };
       n = n.parentElement;
     }
-    return [255,255,255];
+    return { rgb: [255,255,255], host: document.body };
   }
+
+  /*
+   * Is this text sitting on a PHOTOGRAPH rather than on a colour?
+   *
+   * bgOf resolves the nearest opaque background, which for white text over a
+   * service card is the cream band behind the photo — so it computed 1.11:1
+   * and called seven perfectly legible captions failures. They were quoted as
+   * an immovable baseline in this repository for weeks precisely because
+   * everyone could see they were wrong, which is how a check stops being read.
+   *
+   * A ratio against a colour the reader never sees is not a measurement. These
+   * are reported separately as unmeasurable, with the honest reason: a still
+   * frame of a photograph is what tools/scrim-audit.js samples for the hero,
+   * and that is the technique this needs too if it is ever to give a number.
+   */
+  /*
+   * Every element on the page that PAINTS A PICTURE — an img, a video, or
+   * anything carrying a background-image url(). Gradients are deliberately not
+   * in here: a gradient over a known colour is still arithmetic, a photograph
+   * is not.
+   *
+   * Collected once. The first version of this looked only for <img> tags and
+   * still called seven service captions failures, because what is behind them
+   * is a <span class="svc-photo"> with a background-image — a sibling, not an
+   * ancestor, and not an image element. Looking for the tag rather than for
+   * the paint is the mistake.
+   */
+  const painters = [...document.querySelectorAll('*')].filter((n) => {
+    if (/^(IMG|VIDEO|PICTURE)$/.test(n.tagName)) return true;
+    return /url\\(/.test(getComputedStyle(n).backgroundImage);
+  });
+
+  function overImagery(el) {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    for (const m of painters) {
+      if (m === el || m.contains(el)) {
+        // An ancestor painting a photo behind its own text counts too.
+        if (m !== el) return true;
+        continue;
+      }
+      const b = m.getBoundingClientRect();
+      if (!b.width || !b.height) continue;
+      if (b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top) return true;
+    }
+    return false;
+  }
+
+  function effectiveAlpha(el) {
+    let a = 1, n = el;
+    while (n && n !== document.documentElement) {
+      const o = parseFloat(getComputedStyle(n).opacity);
+      if (!Number.isNaN(o)) a *= o;
+      n = n.parentElement;
+    }
+    return a;
+  }
+  /** What the pixel ends up being: fg laid over bg at this alpha. */
+  const over = (fg, bg, a) => fg.map((c, i) => c * a + bg[i] * (1 - a));
+
+  const describe = (el) => el.tagName.toLowerCase() +
+    (el.className && typeof el.className === 'string'
+      ? '.' + el.className.trim().split(/\\s+/).slice(0,2).join('.')
+      : '');
+
   const out = [];
+  const unknown = [];
   document.querySelectorAll('*').forEach(el => {
     if (!el.offsetParent && el.tagName !== 'BODY') return;
     const txt = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join('');
     if (!txt) return;
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.opacity === '0') return;
+    if (cs.visibility === 'hidden') return;
+    /*
+     * Disabled controls are exempt, and that is the specification's own words:
+     * WCAG 1.4.3 requires no contrast ratio of "text ... that is part of an
+     * inactive user interface component". A greyed-out past date on the
+     * calendar or a booking step you have not reached yet is dimmed BECAUSE it
+     * cannot be used, and the dimming is the message.
+     *
+     * Without this the audit reports every disabled date in the month — twenty
+     * or so numerals that are behaving exactly as intended — and a check that
+     * fires on correct behaviour gets muted, which costs more than it saves.
+     */
+    if (el.closest('[disabled], [aria-disabled="true"], fieldset:disabled')) return;
     const fg = parse(cs.color); if (!fg) return;
     const bg = bgOf(el);
-    const l1 = lum(fg.rgb), l2 = lum(bg);
+    // Fully transparent is invisible, not low contrast — nothing to report.
+    const alpha = fg.a * effectiveAlpha(el);
+    if (alpha <= 0.02) return;
+    if (overImagery(el)) { unknown.push({ sel: describe(el), text: txt.slice(0,42) }); return; }
+    const painted = over(fg.rgb, bg.rgb, alpha);
+    const l1 = lum(painted), l2 = lum(bg.rgb);
     const ratio = (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);
     const size = parseFloat(cs.fontSize);
     const bold = parseInt(cs.fontWeight,10) >= 700;
@@ -52,13 +135,18 @@ const AUDIT = `(() => {
     const need = large ? 3 : 4.5;
     if (ratio < need) {
       out.push({
-        sel: el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0,2).join('.') : ''),
+        sel: describe(el),
         text: txt.slice(0,42), ratio: +ratio.toFixed(2), need,
-        size: Math.round(size), color: cs.color, bg: 'rgb(' + bg.join(',') + ')'
+        size: Math.round(size),
+        color: cs.color,
+        // The two differ whenever opacity is in play, and the difference is
+        // the whole point of the check — print both.
+        painted: 'rgb(' + painted.map(Math.round).join(',') + ')',
+        bg: 'rgb(' + bg.rgb.join(',') + ')'
       });
     }
   });
-  return out;
+  return { fails: out, unknown };
 })()`;
 
 (async () => {
@@ -66,16 +154,54 @@ const AUDIT = `(() => {
   const ctx = await b.newContext({ viewport: { width: 1440, height: 1200 }, permissions: ['notifications'] });
   const p = await ctx.newPage();
   let total = 0;
+  let unknownTotal = 0;
+
+  /*
+   * Scroll the whole page so every .reveal has fired, then come back.
+   *
+   * This is NOT a nicety. Reveals start at opacity 0 and only animate in when
+   * they intersect the viewport, so anything below the fold is invisible at
+   * the moment of measurement. The audit used to look at those elements'
+   * declared colours anyway and report white-on-cream failures for seven
+   * service cards that were not on screen — 35 of the 37 "known baseline"
+   * failures on the landing page were that, and they were quoted as a stable
+   * baseline in this repository for weeks.
+   *
+   * Compositing ancestor opacity fixed the false alarm but replaced it with a
+   * blind spot: skip anything at alpha 0 and below-the-fold content is never
+   * checked at all. Both are wrong. Revealing first and then measuring is the
+   * only version that looks at what a reader actually sees.
+   */
+  async function revealAll() {
+    await p.evaluate(async () => {
+      const step = Math.round(window.innerHeight * 0.8);
+      for (let y = 0; y < document.body.scrollHeight; y += step) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 120));
+      }
+      window.scrollTo(0, document.body.scrollHeight);
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    await p.waitForTimeout(700);
+  }
 
   async function audit(label) {
-    const fails = await p.evaluate(AUDIT);
-    console.log(`\n### ${label} — ${fails.length} contrast failure(s)`);
-    fails.forEach(f => console.log(`   ${f.ratio}:1 (need ${f.need}) ${f.size}px  ${f.sel}  "${f.text}"  ${f.color} on ${f.bg}`));
+    const { fails, unknown } = await p.evaluate(AUDIT);
+    console.log(`\n### ${label} — ${fails.length} contrast failure(s)` +
+      (unknown.length ? `, ${unknown.length} over imagery (needs an eye, or a scrim-audit-style frame sample)` : ''));
+    fails.forEach(f => console.log(
+      `   ${f.ratio}:1 (need ${f.need}) ${f.size}px  ${f.sel}  "${f.text}"  ${f.color}` +
+      `${f.painted !== f.color.replace(/\s/g, '') ? ` → painted ${f.painted}` : ''} on ${f.bg}`));
+    if (process.env.SHOW_UNKNOWN && unknown.length) {
+      unknown.forEach(u => console.log(`   [over imagery] ${u.sel}  "${u.text}"`));
+    }
     total += fails.length;
+    unknownTotal += unknown.length;
   }
 
   await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(1200);
+  await revealAll();
   await audit('client site — landing');
 
   // Any VISIBLE CTA, not one particular block. `.cta-repeat a.btn-cta`
@@ -105,6 +231,25 @@ const AUDIT = `(() => {
   await p.locator('#detailsForm button[type=submit]').click();
   await p.waitForTimeout(600);
   await audit('client site — payment step');
+
+  /*
+   * The two standalone pages, which this audit did not visit at all until now.
+   * aftercare.html carries the longest and most consequential prose on the
+   * site — it is what a client reads to avoid damaging their own hair — and it
+   * was the one page never checked.
+   *
+   * Scrolled to the bottom first: the aftercare rail dims points it has not
+   * reached, so measuring it at the top would measure the finished state of
+   * two of eight and the held-back state of the rest either way. Both ends get
+   * walked.
+   */
+  for (const [path, label] of [['/aftercare.html', 'aftercare'], ['/shop.html', 'shop']]) {
+    await p.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(1200);
+    await audit(`client site — ${label}, at the top`);
+    await revealAll();
+    await audit(`client site — ${label}, scrolled`);
+  }
 
   await p.goto(`${BASE}/admin`, { waitUntil: 'domcontentloaded' });
   await p.fill('#pw','chrissy'); await p.locator('#loginForm button[type=submit]').click();
@@ -175,6 +320,7 @@ const AUDIT = `(() => {
   }
 
   console.log(`\n=== TOTAL CONTRAST FAILURES: ${total} ===`);
+  if (unknownTotal) console.log(`=== ${unknownTotal} run(s) of text over imagery, not measurable from a colour ===`);
   await b.close();
   process.exit(total === 0 ? 0 : 1);
 })();
