@@ -34,6 +34,228 @@ from a private dashboard — and the client calendar updates the moment she save
 
 ---
 
+## Architecture
+
+Five diagrams, because the interesting parts of this build are not in any one
+file — they are in how the pieces are *arranged*. Everything below is drawn
+from the code as it stands, not from a plan.
+
+### One front end, two deployments
+
+There is a single copy of the site in `public/`. It is not built, bundled or
+transpiled, and the same bytes are served by both deployments. What differs is
+whether a booking API is on the other end — and the page finds that out at
+runtime rather than being compiled for one or the other.
+
+```mermaid
+flowchart TB
+    SRC["<b>public/</b><br/>one front end · no build step · no bundler"]
+
+    SRC --> CI
+    SRC --> HOST
+
+    subgraph CI["GitHub Actions · on push to main"]
+        direction TB
+        C1["tools/build-static-data.js<br/><i>snapshots the live DB to data/site.json</i>"]
+        C2["tools/stamp-assets.js<br/><i>?v=sha on every local css/js reference</i>"]
+        C3["actions/deploy-pages"]
+        C1 --> C2 --> C3
+    end
+
+    subgraph HOST["Any Node 18+ host · Render, a VPS, a laptop"]
+        direction TB
+        H1["server.js<br/><i>static files + /api/* + SSE</i>"]
+    end
+
+    CI --> PAGES[["GitHub Pages<br/>flat files only"]]
+    HOST --> LIVE[["Booking API<br/>live calendar · admin · payments"]]
+
+    PAGES --> PROBE{"public/js/app.js<br/>is an API actually reachable?"}
+    LIVE --> PROBE
+
+    PROBE -- no --> ENQ["<b>Enquiry mode</b><br/>her real price list, from the snapshot.<br/>Booking routes to an enquiry rather than<br/>faking a slot it cannot hold."]
+    PROBE -- yes --> FULL["<b>Full mode</b><br/>genuine live availability, deposits,<br/>and every open browser repainting."]
+```
+
+The snapshot step is the reason the published page is not a stub: Pages cannot
+query the database, so CI queries it at deploy time and writes the answer next
+to the HTML. Prices and services on the static site are the same values her
+dashboard holds, they are just an hour or a deploy old.
+
+### Inside the Node process
+
+`package.json` has an **empty `dependencies` block**. Every box below the router
+is hand-written on top of the Node standard library — including the PostgREST
+client, the VAPID/ES256 signing for web push, and the session HMAC.
+
+```mermaid
+flowchart TB
+    subgraph EDGE["Requests"]
+        direction LR
+        C["Client<br/><i>index · book · confirmed</i>"]
+        A["Chrissy<br/><i>admin.html</i>"]
+    end
+
+    RT["<b>server.js</b> — hand-rolled router<br/>JSON bodies · static files with correct MIME<br/>CORS as an explicit allowlist, never *"]
+
+    C --> RT
+    A -- "session cookie<br/>or bearer token" --> RT
+
+    subgraph LIB["lib/ — written on the Node standard library, nothing installed"]
+        direction LR
+        AUTH["auth.js<br/><i>HMAC session<br/>constant-time compare</i>"]
+        AVAIL["availability.js<br/><i>slot generation<br/>clash detection</i>"]
+        PHOTOS["photos.js<br/><i>magic-byte sniffing<br/>one-time tokens</i>"]
+        PAY["payments.js<br/><i>Stripe Checkout</i>"]
+        NOTIF["notify.js<br/><i>VAPID ES256 JWT<br/>HTML + text email</i>"]
+        STORE["store.js<br/><i>one interface<br/>two backends</i>"]
+    end
+
+    RT --> LIB
+
+    subgraph ADPT["Adapters"]
+        direction LR
+        SBL["supabase.js<br/><i>PostgREST + Storage<br/>over plain fetch — no SDK</i>"]
+        FSW["data/db.json<br/><i>atomic write</i>"]
+    end
+
+    STORE --> ADPT
+    PHOTOS --> SBL
+
+    subgraph OUT["Outside the process"]
+        direction LR
+        SB[("Supabase<br/>Postgres + Storage")]
+        MAIL["Resend<br/><i>transactional email</i>"]
+        WP["Web Push<br/><i>Apple · Google · Mozilla</i>"]
+        STR["Stripe"]
+    end
+
+    SBL --> SB
+    NOTIF --> MAIL
+    NOTIF --> WP
+    PAY --> STR
+
+    SSE(["/api/stream — Server-Sent Events"])
+    RT --> SSE
+    SSE -. "every open browser repaints<br/>the moment anything changes" .-> EDGE
+```
+
+The bearer token beside the cookie is not belt-and-braces. Safari blocks the
+cross-site cookie outright, and to Chrissy that read as a wrong password.
+
+### A booking, end to end
+
+This is the path the whole application exists to protect. Two decisions in it
+are worth reading carefully: the slot is **re-validated on the server** because
+the client's list is always seconds out of date, and the response is **withheld
+until the row is actually stored**.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant S as server.js
+    participant A as availability.js
+    participant D as store.js
+    participant N as notify.js
+
+    B->>S: POST /api/bookings
+    S->>S: validate name · email · phone · date · time
+    Note right of S: 400 and stop if any fail
+    S->>A: validateSlot(date, start, serviceId)
+    Note right of A: the client's slot list is seconds old,<br/>so it is never trusted
+    A-->>S: 409 if taken, closed, or inside her notice period
+    S->>S: derive the deposit from rules.depositPercent
+    Note right of S: derived, never stored beside the price,<br/>so it cannot go stale when she edits one
+    S->>D: write() · push the booking, mint a one-time upload token
+    S->>D: await commit()
+
+    alt the database is unreachable
+        D--)S: throws
+        S->>D: take the booking back out
+        S-->>B: 503 — "nothing has been taken"
+        Note right of S: a fire-and-forget write here would return<br/>a cheerful 201 for an appointment nobody has
+    else stored
+        S--)B: SSE bookings-changed → every open calendar repaints
+        S->>N: email + web push to Chrissy
+        S-->>B: 201 · booking + upload token
+        B->>S: POST the inspiration photos, using that token
+        Note over B,S: photos upload AFTER the booking exists,<br/>so a failed photo can never cost someone their slot
+    end
+```
+
+### Storage — two backends behind one interface
+
+The availability engine reads the whole dataset many times inside a single
+request, once for every candidate slot on a day. Putting a network round trip
+behind each of those would make the calendar slow for no benefit at this size.
+So the working copy is **in memory**, reads are synchronous, and only writes
+travel.
+
+```mermaid
+flowchart TB
+    AV["lib/availability.js<br/><i>reads the dataset many times per request</i>"]
+    AV -- "read() · synchronous, instant" --> MEM
+
+    MEM["<b>In-memory working copy</b><br/>the single source of truth at runtime"]
+
+    MEM -- "write(fn) · mutate, then persist" --> SEL
+
+    SEL{"SUPABASE_URL and<br/>SUPABASE_SERVICE_KEY set?"}
+
+    SEL -- yes --> SBP["lib/supabase.js<br/><i>PostgREST upsert, diffed — a booking<br/>writes one row, not the whole table</i>"]
+    SEL -- no --> JF["data/db.json<br/><i>write to a temp file, then rename;<br/>persist debounced</i>"]
+
+    SBP --> PG[("Postgres<br/>survives a redeploy with no disk")]
+    JF --> DK[("Disk<br/>local dev · the audit suite")]
+```
+
+The consequence is worth stating plainly: **exactly one process may own this
+data.** Two instances would each hold their own copy and overwrite each other's
+bookings. That is the ceiling of this design, and for one stylist it is nowhere
+near.
+
+### What gates a commit
+
+Nothing here is a linter. Every check drives a real Chromium through
+`playwright-core` and measures **rendered pixels** — the only form of these
+questions that has a truthful answer.
+
+```mermaid
+flowchart LR
+    CH["A change to<br/>public/ or lib/"] --> PW["playwright-core<br/>driving a real Chromium"]
+
+    PW --> SUITE
+
+    subgraph SUITE["Measured against rendered pixels, never source text"]
+        direction TB
+        A1["audit:banlist<br/><i>12 design rules</i>"]
+        A2["audit:contrast<br/><i>WCAG AA · 18 states</i>"]
+        A3["audit:mobile<br/><i>6 handsets</i>"]
+        A4["audit:header<br/><i>11 widths</i>"]
+        A5["audit:hero<br/><i>9 viewports</i>"]
+        A6["audit:scrim<br/><i>6 video frames</i>"]
+        A7["audit:sticky<br/><i>anchors · nav parity · focus</i>"]
+        A8["shots<br/><i>every page at 375px</i>"]
+    end
+
+    SUITE --> G{"all zero?"}
+    G -- yes --> OK["commit"]
+    G -- no --> FIX["fix the code, then run them again"]
+```
+
+The `no` branch means fixing the code. It does not mean relaxing the rule —
+that has been tried in this repository and reverted, twice, including once
+where the "failure" was my own comment prose tripping the ban list and the
+honest fix was to reword the comment.
+
+Several of these checks have caught bugs **in themselves**: a hero audit that
+passed while measuring the wrong element, and a contrast probe silently
+disarmed by a change to the seed data. A check that cannot fail is not a
+check.
+
+---
+
 ## Publishing
 
 There are two deployments, and they are not interchangeable:
@@ -1111,6 +1333,10 @@ deliberate constraint: a one-person business should not inherit a supply chain
 it cannot audit, and a site that still runs in five years is worth more here
 than one built on this year's framework.
 
+The table below is the inventory. [**Architecture**](#architecture) above is
+the same information drawn as five diagrams — how the pieces are arranged,
+which is where most of the interesting decisions live.
+
 ### Stack
 
 | Area | What was used |
@@ -1173,6 +1399,8 @@ where a thing that looked finished was not:
   data. A check that cannot fail is not a check.
 
 ### The audits
+
+Drawn as a pipeline under [What gates a commit](#what-gates-a-commit).
 
 ```
 npm run audit:contrast   WCAG AA on real rendered pixels, 18 states
