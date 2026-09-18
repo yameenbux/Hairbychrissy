@@ -120,6 +120,25 @@ function renderStatic() {
   if (brand.strapline) put('#strapline', 'textContent', brand.strapline);
 
   // Her three headline services, in her own words, above the price list.
+  //
+  // This comment sat here on its own for nine commits. The renderer it
+  // described went when the services became a gallery and the comment stayed,
+  // so `offers` kept being exported, kept being written into site.json, and
+  // was read by nothing.
+  const offerList = $('#offerList');
+  if (offerList && state.site.offers?.length) {
+    offerList.innerHTML = state.site.offers
+      .map(
+        (o) => `
+        <article class="offer">
+          <span class="offer-kicker">${esc(o.kicker)}</span>
+          <h3>${esc(o.title)}</h3>
+          <p>${esc(o.text)}</p>
+        </article>`,
+      )
+      .join('');
+  }
+
   // Why extensions — her own four benefits, as text rather than her graphic so
   // it stays searchable, translatable and readable at any width.
   const benefitList = $('#benefitList');
