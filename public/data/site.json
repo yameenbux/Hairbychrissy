@@ -42,10 +42,10 @@
       "name": "YSB Designs",
       "url": "https://ysbdesigns.uk"
     },
-    "location": "LONDON BASED",
+    "location": "BERMONDSEY · LONDON",
     "addressLines": [
       "Private studio",
-      "London",
+      "Bermondsey, London",
       "Exact address sent on booking"
     ],
     "email": "",
@@ -320,7 +320,7 @@
       "category": "EXTENSIONS",
       "duration": 60,
       "price": 50,
-      "deposit": 0,
+      "deposit": 10,
       "blurb": "Safe, gentle and professional removal to protect your natural hair and keep it healthy."
     },
     {
@@ -329,7 +329,7 @@
       "category": "STYLING",
       "duration": 60,
       "price": 30,
-      "deposit": 0,
+      "deposit": 6,
       "blurb": "The signature soft, glossy wave — set and brushed out to last the night."
     },
     {
@@ -338,7 +338,7 @@
       "category": "STYLING",
       "duration": 75,
       "price": 35,
-      "deposit": 0,
+      "deposit": 7,
       "blurb": "The same set, with your clip-ins fitted and blended through first."
     },
     {
@@ -347,7 +347,7 @@
       "category": "STYLING",
       "duration": 60,
       "price": 35,
-      "deposit": 0,
+      "deposit": 7,
       "blurb": "Pinned and set for a fuller, longer-lasting curl."
     },
     {
@@ -356,7 +356,7 @@
       "category": "STYLING",
       "duration": 60,
       "price": 35,
-      "deposit": 0,
+      "deposit": 7,
       "blurb": "From everyday glam to special occasions — bring a picture and we will work to it."
     },
     {
@@ -365,7 +365,7 @@
       "category": "STYLING",
       "duration": 60,
       "price": 45,
-      "deposit": 0,
+      "deposit": 9,
       "blurb": "Washed, dried and finished however you want it."
     }
   ],
@@ -424,10 +424,11 @@
     "cancellationHours": 48,
     "leadTimeHours": 12,
     "horizonDays": 90,
-    "timezone": "Europe/London"
+    "timezone": "Europe/London",
+    "depositPercent": 20
   },
   "today": "2026-09-18",
   "cardMode": "static",
-  "generatedAt": "2026-09-18T08:41:35.749Z",
+  "generatedAt": "2026-09-18T09:30:10.114Z",
   "static": true
 }

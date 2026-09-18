@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { read, write, nextRef, flush, commit, init as initStore, backend } from './lib/store.js';
-import { brand, reviews, gallery, faqs, offers, benefits, maintenance, aftercare, methods, transformations, reels } from './lib/seed.js';
+import { brand, reviews, gallery, faqs, offers, benefits, maintenance, aftercare, methods, transformations, reels, depositForService, rules as seedRules } from './lib/seed.js';
 import { slotsFor, monthSummary, validateSlot, validateAdminSlot, clashesWith, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
@@ -330,6 +330,10 @@ function siteConfig() {
       leadTimeHours: db.rules.leadTimeHours,
       horizonDays: db.rules.horizonDays,
       timezone: db.rules.timezone,
+      // The client shows the deposit it derives from this; the server charges
+      // the one IT derives. Both must read the same number or a page promises
+      // one figure and the card is charged another.
+      depositPercent: db.rules.depositPercent ?? seedRules.depositPercent,
     },
     workingHours: db.workingHours,
     today: nowIn(db.rules.timezone).date,
@@ -527,7 +531,14 @@ async function createBooking(req, res) {
   const quoted = Boolean(service.priceOnRequest);
   const total = quoted ? 0 : service.price;
   const wantsCard = payment === 'card' && !quoted && total > 0;
-  const depositDue = wantsCard ? (service.deposit > 0 ? Math.min(service.deposit, total) : total) : 0;
+  /*
+   * Derived from the deposit rule rather than a figure stored beside the
+   * price, so it cannot go stale when she edits a price in her dashboard.
+   * A quoted service returns 0 and falls through to paying in full, which for
+   * a free consultation is nothing.
+   */
+  const rule = depositForService(service);
+  const depositDue = wantsCard ? (rule > 0 ? Math.min(rule, total) : total) : 0;
   const balanceDue = total - depositDue;
   // A quoted service cannot take a card payment, so it is always held as cash.
   const effectivePayment = wantsCard ? 'card' : 'cash';

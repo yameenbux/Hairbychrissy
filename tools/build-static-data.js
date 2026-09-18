@@ -48,6 +48,7 @@ const payload = {
     leadTimeHours: rules.leadTimeHours,
     horizonDays: rules.horizonDays,
     timezone: rules.timezone,
+    depositPercent: rules.depositPercent,
   },
   today,
   cardMode: 'static',
