@@ -478,6 +478,14 @@ a { color: inherit; text-decoration: none; }
 .site-header nav { display: flex; align-items: center; gap: clamp(12px, 1.4vw, 22px); }
 @media (min-width: 1500px) { .site-header nav { gap: 28px; } }
 .nav-right { justify-content: flex-end; }
+/*
+ * Shop, where Instagram used to sit. Icon AND label: a bag on its own is a
+ * guess, and this is the only route to a shop on the whole site. The icon is
+ * the same mark the footer already uses for her collection, so the two read as
+ * the same idea rather than two different shops.
+ */
+.nav-shop { display: inline-flex; align-items: center; gap: 8px; }
+.nav-shop svg { flex: none; }
 /* Nav links, but not the CTA — it is a button that happens to live in the
    nav, and this rule out-specifies .btn. Left unexcluded it painted
    espresso-70 text onto the button's espresso ground: 2.12:1, caught by the
@@ -1414,6 +1422,24 @@ a { color: inherit; text-decoration: none; }
      The comment that used to live here warned about precisely this and I
      broke it anyway. The header audit caught it. */
   .site-header .nav-right a:not(.btn) { display: none; }
+
+  /*
+   * ...except Shop, which is the one thing in that column that is not
+   * reachable another way from here: the hamburger menu holds the five
+   * primary links and the footer is the length of the page away. The label
+   * goes, the bag stays, and the anchor becomes the 44px box the column was
+   * already reserving — so the right column stops being a spacer and starts
+   * carrying the link, with the flex row still symmetrical against the
+   * hamburger on the left. aria-label on the anchor keeps the name once
+   * display:none takes the text out of the accessibility tree.
+   */
+  .site-header .nav-right a.nav-shop {
+    display: inline-flex;
+    justify-content: center;
+    min-width: 44px;
+    gap: 0;
+  }
+  .nav-shop span { display: none; }
   .site-header .brand { max-width: calc(100% - 110px); }
   .brand-mark { width: 34px; height: 34px; }
   .footer-top { grid-template-columns: 1fr; }
