@@ -137,6 +137,7 @@ function renderStatic() {
 
   renderCare();
   renderAftercare();
+  renderMethods();
 
   if (brand.signoff) put('#signoff', 'textContent', brand.signoff);
 
@@ -324,6 +325,19 @@ function depositFor(s) {
   const pct = state.site?.rules?.depositPercent ?? 0;
   if (s.deposit > 0) return Math.min(s.deposit, s.price);
   return Math.min(Math.round((s.price * pct) / 100), s.price);
+}
+
+/* The five methods. Absent on pages that do not ask for them, so it leaves. */
+function renderMethods() {
+  const list = $('#methodList');
+  const methods = state.site.methods;
+  if (!list || !methods?.length) return;
+
+  list.innerHTML = methods.map(() => '<li class="method"><span class="method-name"></span><span class="method-note"></span></li>').join('');
+  $$('#methodList .method').forEach((li, i) => {
+    li.querySelector('.method-name').textContent = methods[i].name;
+    li.querySelector('.method-note').textContent = methods[i].note;
+  });
 }
 
 function renderAftercare() {

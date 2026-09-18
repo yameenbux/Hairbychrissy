@@ -467,7 +467,16 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-left, .nav-right { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 32px); }
 /* The gap belongs on the nav itself, or the links run into one another. */
-.site-header nav { display: flex; align-items: center; gap: clamp(14px, 2vw, 28px); }
+/*
+ * The gap has to give before the wordmark does. Six links at the old
+ * clamp(14px, 2vw, 28px) put FAQ straight through the wordmark at 1280px —
+ * caught by audit:header, which is the check that exists because this exact
+ * collision shipped once before with five.
+ *
+ * Narrower band, and the upper bound only returns where there is room for it.
+ */
+.site-header nav { display: flex; align-items: center; gap: clamp(12px, 1.4vw, 22px); }
+@media (min-width: 1500px) { .site-header nav { gap: 28px; } }
 .nav-right { justify-content: flex-end; }
 /* Nav links, but not the CTA — it is a button that happens to live in the
    nav, and this rule out-specifies .btn. Left unexcluded it painted
@@ -919,6 +928,58 @@ a { color: inherit; text-decoration: none; }
 }
 .newhere p { max-width: 52ch; }
 .newhere .btn { margin-top: var(--s-3); }
+
+/* ------------------------------------------------------------ coming soon */
+.soon { max-width: 60ch; }
+.soon-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  margin-top: var(--stack);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+/* --------------------------------------------------------------- methods */
+/*
+ * Name left, what it is right, a hairline between. The same shape she used on
+ * her own sample, minus its 01-05 numerals: five methods are a menu, not a
+ * sequence, and numbering them implies an order to work through.
+ *
+ * On a phone the note drops under the name rather than fighting it for the
+ * same line — "Seamless volume in a single sitting" against "Tape extensions"
+ * in 390px is two words per line each.
+ */
+.method-list { list-style: none; margin: 0; padding: 0; }
+.method {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s-3);
+  align-items: baseline;
+  /* One line of text does not need --s-3 either side; at five rows that was
+     costing most of a phone screen for no added legibility. */
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+.method:last-child { border-bottom: 1px solid var(--hairline-soft); }
+.method-name {
+  font-family: var(--display-face);
+  font-size: var(--t-lg);
+  font-weight: 300;
+}
+.method-note {
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--espresso-70);
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .method { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
+  .method-note { text-align: left; }
+}
 
 .benefits { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--stack) clamp(32px, 5vw, 96px); }
 .benefit { position: relative; padding-top: 26px; border-top: 1px solid var(--hairline-soft); }
