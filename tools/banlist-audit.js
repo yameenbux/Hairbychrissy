@@ -121,7 +121,7 @@ for (const f of CSS) {
  * pointing at itself proves nothing. Rules 1-7 still cover it, via HTML above.
  */
 const CTA = 'Book your slot';
-for (const f of ['public/index.html', 'public/confirmed.html', 'public/404.html']) {
+for (const f of ['public/index.html', 'public/aftercare.html', 'public/confirmed.html', 'public/404.html']) {
   if (!read(f).includes(CTA)) fail('missing-cta', f, 0, `no "${CTA}" on this page`);
 }
 
