@@ -244,40 +244,71 @@
 
 
 <!-- ============================================================= FOOTER -->
-<footer class="site-footer">
+<!-- Ported from a React footer section: a centred stack — wordmark, links,
+     social marks, a hatched rule, one closing line. Her palette and her
+     wordmark throughout, as asked.
+
+     Kept from what was here: the newsletter form and the studio lines. The
+     component has neither, but deleting a working sign-up and the only
+     statement of where she works would be losing function to gain a layout.
+     Both are centred into the stack instead.
+
+     Its 20-second scrolling hatch is static here — the rule is a divider, and
+     a divider that never stops moving is decoration this page's motion system
+     does not allow. -->
+<!-- Ported from a React multi-column footer: a brand block beside columns of
+     links, closing on one line.
+
+     Its four columns carried about fourteen links — Documentation, Pricing,
+     Privacy Policy, Our Story, Terms of Service. She has four pages and two
+     accounts. Inventing the rest would put a row of dead anchors in the
+     footer of a real business, so the columns are built from what exists:
+     where to go on the site, where else to find her, where she works, and
+     how to hear from her. -->
+<footer class="site-footer footer-cols">
   <div class="shell">
-    <div class="footer-top">
-      <div>
-        <div class="footer-lockup">
-          <span class="rotated">London based</span>
-          <span class="giant">Hair<br>by Chrissy</span>
-        </div>
-        <p class="small muted" id="signoff" style="margin-top:var(--s-3);letter-spacing:var(--ls-caps)"></p>
+    <div class="fx-grid">
+
+      <div class="fx-brand reveal">
+        <span class="fx-mark">Hair by Chrissy</span>
+        <p class="fx-signoff" id="signoff"></p>
+        <span class="fx-social" id="footerSocial"></span>
       </div>
-      <div class="footer-aside">
-        <span class="label label-plain">Keep in touch</span>
-        <p class="small muted" style="max-width:34ch">New availability and aftercare, occasionally. No spam.</p>
+
+      <nav class="fx-col reveal" aria-labelledby="fxExplore">
+        <h3 class="fx-head" id="fxExplore">Explore</h3>
+                        <ul>
+          <li><a href="./#services">Services</a></li>
+          <li><a href="./#work">Work</a></li>
+          <li><a href="#book">Book</a></li>
+          <li><a href="./aftercare.html">Aftercare</a></li>
+          <li><a href="./shop.html">Shop</a></li>
+          <li><a href="./#faq">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav class="fx-col reveal" aria-labelledby="fxElse">
+        <h3 class="fx-head" id="fxElse">Elsewhere</h3>
+        <ul id="fxElsewhere"></ul>
+      </nav>
+
+      <div class="fx-col reveal">
+        <h3 class="fx-head">Studio</h3>
+        <ul id="footStudio"></ul>
+      </div>
+
+      <div class="fx-col fx-keep reveal">
+        <h3 class="fx-head">Keep in touch</h3>
+        <p class="small muted">New availability and aftercare, occasionally. No spam.</p>
         <form class="newsletter" id="newsletterForm" novalidate>
           <label for="nlEmail" class="visually-hidden">Email address</label>
           <input class="input" id="nlEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email address">
           <button class="btn" type="submit">Join</button>
         </form>
         <p class="small muted" id="newsletterNote" role="status"></p>
-        <div>
-          <span class="label label-plain" style="display:block;margin-bottom:var(--s-1)">Studio</span>
-          <ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px" class="small muted" id="footStudio"></ul>
-        </div>
       </div>
-    </div>
 
-    <nav class="footer-links" aria-label="Footer">
-      <a href="./#services">Services</a>
-      <a href="./#work">Work</a>
-      <a href="#book">Book</a>
-      <a href="./aftercare.html">Aftercare</a>
-      <a href="./shop.html">Shop</a>
-      <a href="./#faq">FAQ</a>
-    </nav>
+    </div>
   </div>
 
   <div class="legal-bar">
@@ -291,7 +322,5 @@
 </footer>
 
 <script src="./js/app.js" type="module"></script>
-
-<script type="module" src="./js/app.js"></script>
 </body>
 </html>
