@@ -17,6 +17,7 @@ import { resolveApiBase } from './api-base.js';
 import { createCoverflow } from './coverflow.js';
 import { createReveal } from './reveal.js';
 import { createTiltCard } from './tiltcard.js';
+import { createScrollRail } from './scrollrail.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -347,11 +348,26 @@ function renderAftercare() {
   put('#aftercareIntro', 'textContent', care.intro);
   put('#aftercareNote', 'textContent', care.note);
 
-  list.innerHTML = care.steps.map(() => '<li class="ac-step"><h3></h3><p></p></li>').join('');
-  $$('#aftercareList .ac-step').forEach((li, i) => {
-    li.querySelector('h3').textContent = care.steps[i].title;
-    li.querySelector('p').textContent = care.steps[i].text;
-  });
+  /*
+   * The companion photographs are her own work, and that is all they claim to
+   * be: the alt text is empty and the column is aria-hidden, because pairing
+   * photograph four with "rest beautifully" would be asserting a link between
+   * a step and a picture that nobody has established. They are here as the
+   * thing aftercare is protecting, and they change as you move down the guide.
+   *
+   * Filtered through havePhoto so a file that is not in the repository yet
+   * drops out rather than leaving a broken frame pinned beside her writing.
+   */
+  const visuals = [
+    { file: 'work-blonde.jpg', width: 1000, height: 1250 },
+    { file: 'work-braid.jpg', width: 1000, height: 1250 },
+    { file: 'work-brunette.jpg', width: 1000, height: 1250 },
+    { file: 'work-01.jpg', width: 1200, height: 1500 },
+  ]
+    .filter((v) => havePhoto(v.file))
+    .map((v) => ({ src: `./images/${v.file}`, width: v.width, height: v.height }));
+
+  createScrollRail(list, { steps: care.steps, visuals });
 }
 
 function renderPortfolio() {
