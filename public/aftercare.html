@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aftercare — Hair by Chrissy</title>
+<meta name="description" content="How to care for your extensions between appointments: washing, brushing, drying, heat, sleeping, products and maintenance.">
+<meta name="theme-color" content="#33261c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hair by Chrissy">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:title" content="Aftercare — Hair by Chrissy">
+<meta property="og:description" content="Your guide to caring for your extensions between appointments.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="./images/logo.jpg">
+<!-- Relative throughout: this same file is served from a domain root by the
+     Node app and from a /repo-name/ subpath by GitHub Pages. -->
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/app.css">
+</head>
+<body data-page="aftercare">
+
+<a class="btn skip-link" href="#main">Skip to content</a>
+
+<!-- ============================================================= HEADER -->
+<header class="site-header">
+  <div class="shell">
+    <div class="nav-left">
+      <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false" aria-controls="primaryNav"><span class="bars" aria-hidden="true"></span></button>
+      <nav id="primaryNav" aria-label="Primary">
+        <a href="./#services">Services</a>
+        <a href="./#work">Work</a>
+        <a href="./book.html">Book</a>
+        <a href="#aftercare">Aftercare</a>
+        <a href="./#faq">FAQ</a>
+      </nav>
+    </div>
+    <a class="wordmark brand" href="#main">
+      <img class="brand-mark" src="./images/mark.png" srcset="./images/mark.png 1x, ./images/mark@2x.png 2x"
+           alt="" width="40" height="40" decoding="async">
+      <span>Hair by Chrissy</span>
+    </a>
+    <div class="nav-right">
+      <a id="navInstagram" href="https://www.instagram.com/hairbychrissy_x" target="_blank" rel="noopener">Instagram</a>
+      <a class="btn btn-sm btn-cta nav-cta" href="./book.html">Book your slot</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ========================================================== AFTERCARE -->
+<!--
+  Her own aftercare guidance, all eight items rendered from lib/seed.js.
+
+  Its own page rather than another band on the landing page: it is 450 words
+  of clinical detail that a client reads once after a fitting and comes back
+  to at eleven at night with a question, and neither of those readers should
+  have to scroll past a portfolio to reach it.
+-->
+<section class="band band-lean" id="aftercare">
+  <div class="shell">
+    <div class="care-head reveal">
+      <div>
+        <span class="label">The Chrissy standard</span>
+        <h2 class="display-sm">Your guide to aftercare</h2>
+      </div>
+      <p class="care-intro" id="aftercareIntro"></p>
+    </div>
+    <ol class="ac-list reveal" id="aftercareList"></ol>
+    <div class="ac-foot reveal">
+      <p class="small muted" id="aftercareNote"></p>
+      <a class="btn btn-cta" href="./book.html">Book your slot</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================= FOOTER -->
+<!-- Ported from a React footer section: a centred stack — wordmark, links,
+     social marks, a hatched rule, one closing line. Her palette and her
+     wordmark throughout, as asked.
+
+     Kept from what was here: the newsletter form and the studio lines. The
+     component has neither, but deleting a working sign-up and the only
+     statement of where she works would be losing function to gain a layout.
+     Both are centred into the stack instead.
+
+     Its 20-second scrolling hatch is static here — the rule is a divider, and
+     a divider that never stops moving is decoration this page's motion system
+     does not allow. -->
+<!-- Ported from a React multi-column footer: a brand block beside columns of
+     links, closing on one line.
+
+     Its four columns carried about fourteen links — Documentation, Pricing,
+     Privacy Policy, Our Story, Terms of Service. She has four pages and two
+     accounts. Inventing the rest would put a row of dead anchors in the
+     footer of a real business, so the columns are built from what exists:
+     where to go on the site, where else to find her, where she works, and
+     how to hear from her. -->
+<footer class="site-footer footer-cols">
+  <div class="shell">
+    <div class="fx-grid">
+
+      <div class="fx-brand reveal">
+        <span class="fx-mark">Hair by Chrissy</span>
+        <p class="fx-signoff" id="signoff"></p>
+        <span class="fx-social" id="footerSocial"></span>
+      </div>
+
+      <nav class="fx-col reveal" aria-labelledby="fxExplore">
+        <h3 class="fx-head" id="fxExplore">Explore</h3>
+                <ul>
+          <li><a href="./#services">Services</a></li>
+          <li><a href="./#work">Work</a></li>
+          <li><a href="./book.html">Book</a></li>
+          <li><a href="#aftercare">Aftercare</a></li>
+          <li><a href="./#faq">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav class="fx-col reveal" aria-labelledby="fxElse">
+        <h3 class="fx-head" id="fxElse">Elsewhere</h3>
+        <ul id="fxElsewhere"></ul>
+      </nav>
+
+      <div class="fx-col reveal">
+        <h3 class="fx-head">Studio</h3>
+        <ul id="footStudio"></ul>
+      </div>
+
+      <div class="fx-col fx-keep reveal">
+        <h3 class="fx-head">Keep in touch</h3>
+        <p class="small muted">New availability and aftercare, occasionally. No spam.</p>
+        <form class="newsletter" id="newsletterForm" novalidate>
+          <label for="nlEmail" class="visually-hidden">Email address</label>
+          <input class="input" id="nlEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email address">
+          <button class="btn" type="submit">Join</button>
+        </form>
+        <p class="small muted" id="newsletterNote" role="status"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="legal-bar">
+    <div class="shell">
+      <span id="legalCopy"></span>
+      <span id="legalNotice"></span>
+      <span id="legalCredit"></span>
+      <a href="./admin">Stylist login</a>
+    </div>
+  </div>
+</footer>
+
+<script src="./js/app.js" type="module"></script>
+</body>
+</html>

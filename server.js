@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { read, write, nextRef, flush, commit, init as initStore, backend } from './lib/store.js';
-import { brand, reviews, gallery, faqs, offers, benefits, maintenance, transformations, reels } from './lib/seed.js';
+import { brand, reviews, gallery, faqs, offers, benefits, maintenance, aftercare, methods, transformations, reels } from './lib/seed.js';
 import { slotsFor, monthSummary, validateSlot, validateAdminSlot, clashesWith, getService, dateClosedReason } from './lib/availability.js';
 import { isValidDate, toMinutes, toHHMM, longDate, nowIn, addDays } from './lib/time.js';
 import { checkPassword, makeToken, isAdmin, sessionCookie, clearCookie, usingDefaultPassword } from './lib/auth.js';
@@ -315,6 +315,10 @@ function siteConfig() {
     offers,
     benefits,
     maintenance,
+  aftercare,
+  methods,
+    aftercare,
+    methods,
     transformations,
     reels,
     reviews,

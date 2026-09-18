@@ -132,6 +132,7 @@ function renderStatic() {
   }
 
   renderCare();
+  renderAftercare();
 
   if (brand.signoff) put('#signoff', 'textContent', brand.signoff);
 
@@ -297,6 +298,30 @@ function renderCare() {
         )
         .join('')}
     </ol>`;
+}
+
+/*
+ * The aftercare page. Absent on every other page, so it leaves quietly — the
+ * same shape as every other renderer here, which is what lets one bundle serve
+ * five pages without a router.
+ *
+ * Her words go in as TEXT, not innerHTML. They are prose she wrote, with
+ * en-dashes and semicolons in it, and prose belongs in a text node: there is no
+ * markup to honour and nothing to gain from parsing it as HTML.
+ */
+function renderAftercare() {
+  const list = $('#aftercareList');
+  const care = state.site.aftercare;
+  if (!list || !care?.steps?.length) return;
+
+  put('#aftercareIntro', 'textContent', care.intro);
+  put('#aftercareNote', 'textContent', care.note);
+
+  list.innerHTML = care.steps.map(() => '<li class="ac-step"><h3></h3><p></p></li>').join('');
+  $$('#aftercareList .ac-step').forEach((li, i) => {
+    li.querySelector('h3').textContent = care.steps[i].title;
+    li.querySelector('p').textContent = care.steps[i].text;
+  });
 }
 
 function renderPortfolio() {

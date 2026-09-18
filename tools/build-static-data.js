@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { brand, reviews, gallery, faqs, offers, benefits, maintenance, transformations, reels, services, workingHours, rules } from '../lib/seed.js';
+import { brand, reviews, gallery, faqs, offers, benefits, maintenance, aftercare, methods, transformations, reels, services, workingHours, rules } from '../lib/seed.js';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const out = path.join(root, 'public', 'data', 'site.json');
@@ -34,6 +34,8 @@ const payload = {
   offers,
   benefits,
   maintenance,
+  aftercare,
+  methods,
   transformations,
   reels,
   reviews,
