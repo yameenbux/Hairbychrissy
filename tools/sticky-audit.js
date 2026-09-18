@@ -74,9 +74,25 @@ const WIDTHS = [1280, 1440, 1920];
      * now called out as exactly that, rather than being dressed up as a
      * difference of opinion about labels.
      */
+    /*
+     * COMPARED AS SETS, and the header side now includes the links that sit to
+     * the RIGHT of the wordmark.
+     *
+     * The header's site links live in two groups since Shop moved across to
+     * where Instagram used to be, so an ordered comparison would fail on the
+     * order alone while every destination was present in both. What this check
+     * is actually for is "can you reach the same places from the footer as
+     * from the header" — a link in one and not the other. Sorting both sides
+     * tests exactly that and nothing else.
+     *
+     * The CTA is excluded: it is a button that happens to live in the nav, and
+     * the footer is not expected to repeat it.
+     */
     const [head, foot] = await Promise.all([
-      page.$$eval('.site-header nav a', (as) => as.map((a) => a.textContent.trim().toLowerCase())),
-      page.$$eval('[aria-labelledby="fxExplore"] a', (as) => as.map((a) => a.textContent.trim().toLowerCase())),
+      page.$$eval('.site-header nav a, .site-header .nav-right a:not(.btn)',
+        (as) => as.map((a) => a.textContent.trim().toLowerCase()).sort()),
+      page.$$eval('[aria-labelledby="fxExplore"] a',
+        (as) => as.map((a) => a.textContent.trim().toLowerCase()).sort()),
     ]);
     if (!head.length || !foot.length) {
       failures += 1;

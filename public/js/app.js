@@ -116,7 +116,6 @@ function renderStatic() {
   put('#heroLocation', 'textContent',
     brand.location.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()));
   put('#heroIntro', 'textContent', brand.intro);
-  put('#navInstagram', 'href', brand.instagram);
   if (brand.strapline) put('#strapline', 'textContent', brand.strapline);
 
   // Her three headline services, in her own words, above the price list.
