@@ -110,7 +110,11 @@ const put = (sel, prop, value) => { const el = $(sel); if (el) el[prop] = value;
 function renderStatic() {
   const { brand, services, reviews, faqs } = state.site;
 
-  put('#heroLocation', 'textContent', brand.location.toLowerCase().replace(/^\w/, (c) => c.toUpperCase()));
+  // Title case per WORD, not per string: the old version lowercased the lot and
+  // capitalised only the first letter, which read "Bermondsey · london" the
+  // moment the location grew a second word.
+  put('#heroLocation', 'textContent',
+    brand.location.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()));
   put('#heroIntro', 'textContent', brand.intro);
   put('#navInstagram', 'href', brand.instagram);
   if (brand.strapline) put('#strapline', 'textContent', brand.strapline);
@@ -309,6 +313,19 @@ function renderCare() {
  * en-dashes and semicolons in it, and prose belongs in a text node: there is no
  * markup to honour and nothing to gain from parsing it as HTML.
  */
+/*
+ * The deposit rule, client side. Mirrors depositForService in lib/seed.js —
+ * the client has no import of the server's modules, and the two MUST agree:
+ * a page promising "£9 now" while the server charges £45 is the worst kind of
+ * bug, because it only shows up at the moment somebody pays.
+ */
+function depositFor(s) {
+  if (!s || s.priceOnRequest || !(s.price > 0)) return 0;
+  const pct = state.site?.rules?.depositPercent ?? 0;
+  if (s.deposit > 0) return Math.min(s.deposit, s.price);
+  return Math.min(Math.round((s.price * pct) / 100), s.price);
+}
+
 function renderAftercare() {
   const list = $('#aftercareList');
   const care = state.site.aftercare;
@@ -670,6 +687,24 @@ function buildServiceSelect() {
     .map((s) => `<option value="${esc(s.id)}">${esc(s.name)} — ${s.priceOnRequest ? 'price on request' : money(s.price)}</option>`)
     .join('');
 
+  /*
+   * The "new here" shortcut. It does exactly what a client would do by hand —
+   * pick the consultation, then press on — rather than taking its own route
+   * into the flow, so there is only one path to keep working.
+   *
+   * It lives HERE, in the one-time setup, because the first version sat inside
+   * the function that runs whenever a service changes: on page load nothing
+   * was bound at all, so the button did nothing, and every later change added
+   * another duplicate listener.
+   */
+  $('#pickConsult')?.addEventListener('click', () => {
+    const consult = state.site.services.find((x) => x.priceOnRequest) || state.site.services[0];
+    if (!consult) return;
+    select.value = consult.id;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    $('#serviceNext')?.click();
+  });
+
   select.addEventListener('change', () => {
     const next = $('#serviceNext');
     if (!select.value) {
@@ -891,14 +926,15 @@ function renderPayCopy() {
   }
 
   if (cardOption) cardOption.hidden = false;
-  const deposit = s ? (s.deposit > 0 ? Math.min(s.deposit, s.price) : s.price) : 0;
+  const rule = depositFor(s);
+  const deposit = s ? (rule > 0 ? rule : s.price) : 0;
   $('#cashCopy').textContent = s
     ? `Nothing taken now. ${money(s.price)} paid in the studio on the day.`
     : 'Nothing taken now — you pay in the studio on the day.';
   $('#cardCopy').textContent = !s
     ? 'Pay by card.'
-    : s.deposit > 0
-      ? `${money(s.deposit)} deposit secures the slot. ${money(s.price - s.deposit)} on the day.`
+    : rule > 0
+      ? `${money(rule)} deposit secures the slot. ${money(s.price - rule)} on the day.`
       : `Pay the full ${money(deposit)} now and there is nothing to settle on the day.`;
 
   if (state.site.cardMode === 'demo') {
@@ -1098,7 +1134,8 @@ function updateSummary() {
   $('#sumTotal').textContent = s ? (quoted ? 'On request' : money(s.price)) : '—';
 
   const payingByCard = s && !quoted && state.payment === 'card';
-  const deposit = payingByCard ? (s.deposit > 0 ? Math.min(s.deposit, s.price) : s.price) : 0;
+  const ruleDeposit = depositFor(s);
+  const deposit = payingByCard ? (ruleDeposit > 0 ? ruleDeposit : s.price) : 0;
   $('#sumDueNow').textContent = quoted ? 'Nothing' : deposit ? money(deposit) : 'Nothing now';
   const later = s && !quoted ? s.price - deposit : 0;
   $('#sumDueLater').textContent = s ? (quoted ? 'Quoted on the day' : later ? money(later) : 'Nothing') : '—';
