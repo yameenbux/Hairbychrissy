@@ -1082,6 +1082,67 @@ a { color: inherit; text-decoration: none; }
 .benefit h3 { font-size: var(--t-sm); letter-spacing: var(--ls-label); text-transform: uppercase; margin-bottom: var(--s-2); }
 .benefit p { color: var(--espresso-70); max-width: 44ch; }
 
+/* ----------------------------------------------- what she offers (trio) */
+/*
+ * Her three headline services, above the price gallery in the same band.
+ *
+ * Drawn like .benefit — hairline rule, a clay tick over it, uppercase name —
+ * because it is the same kind of thing: a short titled statement in her own
+ * words, not a card with a price. Reusing the language means the page has one
+ * idea of what that looks like rather than two.
+ *
+ * Three up, and it stays three up further down than .benefit's two, because
+ * these are two lines each rather than a paragraph.
+ */
+.offers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-5) clamp(24px, 3.5vw, 64px);
+  margin-bottom: var(--stack);
+}
+.offer {
+  position: relative;
+  padding-top: 26px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.offer::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 42px;
+  height: 1px;
+  background: var(--clay);
+}
+/* clay-deep, not clay: this is 13px type, and plain clay is 3.37:1 on paper.
+   The same trap the aftercare numerals were in. */
+.offer-kicker {
+  display: block;
+  font-size: var(--t-xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--clay-deep);
+  margin-bottom: var(--s-2);
+}
+.offer h3 {
+  font-size: var(--t-sm);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  margin-bottom: var(--s-2);
+}
+.offer p {
+  color: var(--espresso-70);
+  font-size: var(--t-sm);
+  max-width: 38ch;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  /* One column, not two. Two would leave the third alone on its own row,
+     which reads as a layout that ran out rather than a decision. */
+  .offers { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+}
+
 /* ------------------------------------------------------------ reviews */
 
 .reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--stack) clamp(24px, 4vw, 56px); }
